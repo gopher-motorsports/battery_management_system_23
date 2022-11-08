@@ -39,18 +39,38 @@ void runMain()
 //			readRegister(R_CONFIG_3);
 			writeAll(0x13, 0x0001, spiRecvBuffer, numBmbs);
 			readAll(0x2C, 1U, spiRecvBuffer);
-			uint32_t stackVRaw = ((spiRecvBuffer[4] << 8) | spiRecvBuffer[3]) >> 2;
-			float stackV = (stackVRaw * 362U) / 100000.0f;
-			printf("StackV: \t%.3f\n", stackV);
+			for (int i = 0; i < numBmbs; i++)
+			{
+				const uint32_t stackVRaw = ((spiRecvBuffer[4+(2*i)] << 8) | spiRecvBuffer[3+(2*i)]) >> 2;
+				const float stackV = (stackVRaw * 362U) / 100000.0f;
+				gPack.bmb[i].stackV = stackV;
+			}
+			// Iterate through all of the cells
 			for (uint8_t i = 0; i < 12; i++)
 			{
 				uint8_t cellReg = i + 0x20;
+				// TODO: add catch if readAll fails
 				readAll(cellReg, 1U, spiRecvBuffer);
-				uint32_t brickVRaw = ((spiRecvBuffer[4] << 8) | spiRecvBuffer[3]) >> 2;
-				// 5V range & 14 bit ADC - 5/(2^14) = 305.176 uV/bit
-				float brickV = brickVRaw * 0.000305176f;
-				printf("B%d: \t%.3f\n", i, brickV);
+				// Iterate through received data and update
+				for (int j = 0; j < numBmbs; j++)
+				{
+					const uint32_t brickVRaw = ((spiRecvBuffer[4+(2*j)] << 8) | spiRecvBuffer[3+(2*j)]) >> 2;
+					// 5V range & 14 bit ADC - 5/(2^14) = 305.176 uV/bit
+					const float brickV = brickVRaw * 0.000305176f;
+					gPack.bmb[j].brickV[i] = brickV;
+				}
 			}
+			printf("|  BMB  | StackV |   1   |   2   |   3   |   4   |   5   |   6   |   7   |   8   |   9   |  10   |  11   |  12   |\n");
+			for (int i = 0; i < numBmbs; i++)
+			{
+				printf("|   %02d  |  %05.2f |", i + 1, gPack.bmb[i].stackV);
+				for (int j = 0; j < 12; j++)
+				{
+					printf(" %1.3f |", gPack.bmb[i].brickV[j]);
+				}
+				printf("\n");
+			}
+
 		}
 
 	}
