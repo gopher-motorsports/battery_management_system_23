@@ -33,13 +33,6 @@ void runMain()
 		if (initialized)
 		{
 			printf("Number of BMBs detected: %lu\n", numBmbs);
-//			if (numBmbs != NUM_BMBS_PER_PACK)
-//			{
-//				while(true)
-//				{
-//					printf("Error during initialization!\n");
-//				}
-//			}
 			initBatteryPack(numBmbs);
 //			updateBmbData();
 //			aggregateBrickVoltages();
@@ -48,6 +41,7 @@ void runMain()
 			readAll(0x2C, 1U, spiRecvBuffer);
 			uint32_t stackVRaw = ((spiRecvBuffer[4] << 8) | spiRecvBuffer[3]) >> 2;
 			float stackV = (stackVRaw * 362U) / 100000.0f;
+			printf("StackV: \t%.3f\n", stackV);
 			for (uint8_t i = 0; i < 12; i++)
 			{
 				uint8_t cellReg = i + 0x20;

@@ -88,13 +88,6 @@ typedef enum
 
 typedef enum
 {
-	BIT_CLEAR = 0,
-	BIT_SET,
-	MAX_BIT_STATUS
-} Bit_Status_E;
-
-typedef enum
-{
 	EQUALS = 0,
 	NOT_EQUALS,
 	AND,
@@ -118,8 +111,8 @@ void clearTxBuffer();
 
 bool clearRxIntFlags();
 bool clearTxIntFlags();
-bool writeRxIntStop(Bit_Status_E bitStatus);
-bool writeRegisterBit(uint8_t registerAddress, uint8_t bitNumber, Bit_Status_E bitStatus);
+bool writeRxIntStop(bool bitSet);
+bool writeRegisterBit(uint8_t registerAddress, uint8_t bitNumber, bool bitSet);
 
 uint8_t readRegister(uint8_t registerAddress);
 void writeRegister(uint8_t registerAddress, uint8_t value);

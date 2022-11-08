@@ -97,50 +97,56 @@ void sendSPI(uint8_t value)
 	HAL_SPI_Transmit_IT(&hspi1, (uint8_t *)&value, 1);
 	if (!(xSemaphoreTake(binSemHandle, 10) == pdTRUE))
 	{
-		printf("FUCK\n");
+		printf("Interrupt failed to occur during SPI transmit\n");
 	}
 	ssOff();
 }
+
 void clearRxBuffer()
 {
 	sendSPI(CMD_CLR_RX_BUF);
 }
+
 void clearTxBuffer()
 {
 	sendSPI(CMD_CLR_TX_BUF);
 }
+
 bool clearRxIntFlags()
 {
 	writeRegister(R_RX_INTERRUPT_FLAGS, 0x00);
 	uint8_t result = readRegister(R_RX_INTERRUPT_FLAGS);
 	return ((result & ~(0x40)) == 0x00);
 }
+
 bool clearTxIntFlags()
 {
 	return writeAndVerifyRegister(R_TX_INTERRUPT_FLAGS, 0x00);
 }
-bool writeRxIntStop(Bit_Status_E bitStatus)
+
+bool writeRxIntStop(bool bitSet)
 {
-	return writeRegisterBit(R_RX_INTERRUPT_ENABLE, 1U, bitStatus);
+	return writeRegisterBit(R_RX_INTERRUPT_ENABLE, 1U, bitSet);
 }
 
-bool writeRegisterBit(uint8_t registerAddress, uint8_t bitNumber, Bit_Status_E bitStatus)
+// TODO: Add multiple attempts
+bool writeRegisterBit(uint8_t registerAddress, uint8_t bitNumber, bool bitSet)
 {
 	if (bitNumber >= 8) return false;	// Invalid input
 
 	const uint8_t bitMask = (0x01 << bitNumber);
 	const uint8_t regData = readRegister(registerAddress);
 
-	if (bitStatus == BIT_SET)
+	if (bitSet)
 	{
 		writeRegister(registerAddress, (regData | bitMask));
 	}
-	else if (bitStatus == BIT_CLEAR)
+	else
 	{
 		writeRegister(registerAddress, (regData & (~bitMask)));
 	}
-
-	if ((readRegister(registerAddress) & bitMask) == (uint8_t)bitStatus)
+	// TODO: Check this line
+	if (!!(readRegister(registerAddress) & bitMask) == bitSet)
 	{
 		return true;
 	}
@@ -160,11 +166,12 @@ uint8_t readRegister(uint8_t registerAddress)
 	if (!(xSemaphoreTake(binSemHandle, 10) == pdTRUE))
 	{
 		// TODO figure this out
-		printf("FUCK\n");
+		printf("Interrupt failed to occur during readRegister operation\n");
 	}
 	ssOff();
 	return recvBuffer[1];
 }
+
 void writeRegister(uint8_t registerAddress, uint8_t value)
 {
 	ssOn();
@@ -236,10 +243,11 @@ bool writeAndVerifyRegister(uint8_t registerAddress, uint8_t value)
 
 bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 {
-	bool queueDataVerified = false;
 	uint8_t sendBuffer[SPI_BUFF_SIZE] = { 0 };
 	for (int i = 0; i < NUM_DATA_CHECKS; i++)
 	{
+		bool queueDataVerified = false;
+
 		// Write queue
 		ssOn();
 		HAL_SPI_Transmit_IT(&hspi1, data_p, numBytes);
@@ -259,9 +267,13 @@ bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 		}
 		ssOff();
 
-		// Verify data in load queue
+		// Verify data in load queue - read back data should match data sent
 		queueDataVerified = !(bool)memcmp(&data_p[1], &spiRecvBuffer[1], numBytes - 1);
-		if (queueDataVerified) { return true; }
+		if (queueDataVerified)
+		{
+			// Data integrity verified. Return true
+			return true;
+		}
 	}
 	printf("Failed to load and verify TX queue\n");
 	return false;
@@ -314,7 +326,7 @@ bool writeAll(uint8_t address, uint16_t value, uint8_t *data_p, uint32_t numBmbs
 			break;
 		}
 
-		writeRxIntStop(BIT_SET);
+		writeRxIntStop(true);
 		clearRxIntFlags();
 
 		sendSPI(CMD_WR_NXT_LD_Q_L0);
@@ -333,6 +345,7 @@ bool writeAll(uint8_t address, uint16_t value, uint8_t *data_p, uint32_t numBmbs
 		}
 
 		// Verify that the command we sent out matches the command we received
+		// We don't need CMD_WR_LD_Q, data length and alive counter
 		writeAllSuccess &= !(bool)memcmp(&spiSendBuffer[2], &spiRecvBuffer[1], numDataBytes - 3);
 
 		// Verify the alive counter
@@ -368,7 +381,7 @@ bool readAll(uint8_t address, uint32_t numBmbs, uint8_t *data_p)
 			break;
 		}
 
-		writeRxIntStop(BIT_SET);
+		writeRxIntStop(true);
 		clearRxIntFlags();
 
 		sendSPI(CMD_WR_NXT_LD_Q_L0);
@@ -386,6 +399,7 @@ bool readAll(uint8_t address, uint32_t numBmbs, uint8_t *data_p)
 			break;
 		}
 
+		// Calculate CRC code based on received data
 		const uint8_t calculatedCrc = calcCrc(&spiRecvBuffer[1], 3 + (2 * numBmbs));
 		uint8_t recvCrc = spiRecvBuffer[4 + (2 * numBmbs)];
 
