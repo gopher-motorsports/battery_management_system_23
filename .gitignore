@@ -4,25 +4,7 @@ Debug/
 #Ignore all drivers
 Drivers/
 
-#Ignore all middlewars
+#Ignore all middlewares
 Middlewares/
 
-Core/Inc/stm32f4xx_hal_conf.h
-Core/Inc/stm32f4xx_it.h
 
-Core/Src/stm32f4xx*
-Core/Src/syscalls.c
-Core/Src/sysmem.c
-Core/Src/system_stm32f4xx.c
-
-
-Core/Startup/
-
-
-.settings/
-.cproject
-.mxproject
-.project
-BMSF4 Debug.launch
-STM32F446RETX_FLASH.ld
-STM32F446RETX_RAM.ld

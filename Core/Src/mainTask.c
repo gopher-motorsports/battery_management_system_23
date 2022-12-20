@@ -4,12 +4,12 @@
  *  Created on: Aug 6, 2022
  *      Author: sebas
  */
+#include <bmb.h>
 #include "main.h"
 #include "cmsis_os.h"
 
 #include "mainTask.h"
 #include "spiUtils.h"
-#include "batteryPack.h"
 
 extern osSemaphoreId 		binSemHandle;
 extern SPI_HandleTypeDef 	hspi1;
