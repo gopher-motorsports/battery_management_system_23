@@ -144,6 +144,36 @@ void setGpio(uint32_t numBmbs, uint16_t gpioSetting)
 	writeAll(GPIO, data, spiRecvBuffer, numBmbs);
 }
 
+void readBoardTemps(uint32_t numBmbs)
+{
+	Pack_S* pPack = &gPack;
+
+	// Internal board temps are on MUX7 and MUX8
+	for (int muxGpio = MUX7; muxGpio <= MUX8; muxGpio++)
+	{
+		setGpio(numBmbs, muxGpio);		// Set GPIO for desired MUX
+		// Start acquisition
+		writeAll(SCANCTRL, 0x0001, spiRecvBuffer, numBmbs);
+		// TODO implement error checking in the case of bad data or broken comms
+		// Read AUX registers
+		for (int auxChannel = AIN1; auxChannel <= AIN2; auxChannel++)
+		{
+			// Read temperature from BMBs
+			readAll(auxChannel, numBmbs, spiRecvBuffer);
+			// TODO add catch if readall fails
+			// Parse received data
+			for (uint8_t i = 0; i < numBmbs; i++)
+			{
+				// Read AUX voltage in [15:4]
+				uint32_t auxRaw = ((spiRecvBuffer[4 + 2*i] << 8) | spiRecvBuffer[3 + 2*i]) >> 4;
+				float auxV = auxRaw * CONVERT_12BIT_TO_3V3;
+				// Determine boardTempVoltage index for current reading
+				int tempIdx = muxGpio - MUX7 + ((auxChannel == AIN2) ? 2 : 0);
+				pPack->bmb[i].boardTempVoltage[tempIdx] = auxV;
+			}
+		}
+	}
+}
 
 void updateBmbData(uint32_t numBmbs)
 {
@@ -155,7 +185,7 @@ void updateBmbData(uint32_t numBmbs)
 	// TODO implement error checking in the case of bad data or broken comms
 	for (uint8_t i = 0; i < 12; i++)
 	{
-		uint8_t cellReg = i + 0x20;
+		uint8_t cellReg = i + CELLn;
 		if (!readAll(cellReg, numBmbs, spiRecvBuffer))
 		{
 			printf("Error during readAll!\r\n");
@@ -165,20 +195,18 @@ void updateBmbData(uint32_t numBmbs)
 		{
 			// Read brick voltage in [15:2]
 			uint32_t brickVRaw = ((spiRecvBuffer[4 + 2*j] << 8) | spiRecvBuffer[3 + 2*j]) >> 2;
-			// 5V range & 14 bit ADC - 5/(2^14) = 305.176 uV/bit
-			float brickV = brickVRaw * 0.000305176f;
+			float brickV = brickVRaw * CONVERT_14BIT_TO_5V;
 			pPack->bmb[j].brickV[i] = brickV;
 		}
 	}
 	// Read VBLOCK register
-	if (!readAll(0x2C, numBmbs, spiRecvBuffer))
+	if (!readAll(VBLOCK, numBmbs, spiRecvBuffer))
 	{
 		for (uint8_t j = 0; j < numBmbs; j++)
 		{
 			// Read block voltage in [15:2]
 			uint32_t blockVRaw = ((spiRecvBuffer[4 + 2*j] << 8) | spiRecvBuffer[3 + 2*j]) >> 2;
-			// 60V range & 14 bit ADC - 60/(2^14) = 3.6621 mV/bit
-			float blockV = blockVRaw * 0.0036621f;
+			float blockV = blockVRaw * CONVERT_14BIT_TO_60V;
 			pPack->bmb[j].blockV = blockV;
 		}
 	}

@@ -4,12 +4,13 @@
  *  Created on: Aug 6, 2022
  *      Author: sebas
  */
-#include <bmb.h>
 #include "main.h"
 #include "cmsis_os.h"
 
 #include "mainTask.h"
 #include "spiUtils.h"
+#include "bmb.h"
+#include "batteryPack.h"
 
 extern osSemaphoreId 		binSemHandle;
 extern SPI_HandleTypeDef 	hspi1;
@@ -37,8 +38,9 @@ void runMain()
 //			updateBmbData();
 //			aggregateBrickVoltages();
 //			readRegister(R_CONFIG_3);
-			writeAll(0x13, 0x0001, spiRecvBuffer, numBmbs);
-			readAll(0x2C, 1U, spiRecvBuffer);
+			writeAll(ACQCFG, 0xFFFF, spiRecvBuffer, numBmbs);	// set THRM manual ON
+			writeAll(SCANCTRL, 0x0001, spiRecvBuffer, numBmbs);
+			readAll(VBLOCK, 1U, spiRecvBuffer);
 			for (int i = 0; i < numBmbs; i++)
 			{
 				const uint32_t stackVRaw = ((spiRecvBuffer[4+(2*i)] << 8) | spiRecvBuffer[3+(2*i)]) >> 2;
@@ -69,6 +71,14 @@ void runMain()
 					printf(" %1.3f |", gPack.bmb[i].brickV[j]);
 				}
 				printf("\n");
+			}
+			readBoardTemps(numBmbs);
+			for (int i = 0; i < numBmbs; i++)
+			{
+				for (int j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
+				{
+					printf("%d - %1.3f\n", j, gPack.bmb[i].boardTempVoltage[j]);
+				}
 			}
 
 		}
