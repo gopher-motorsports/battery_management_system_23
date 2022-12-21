@@ -8,6 +8,7 @@
 #include "cmsis_os.h"
 #include "bmb.h"
 #include "spiUtils.h"
+#include "bmbUtils.h"
 
 extern osSemaphoreId binSemHandle;
 extern uint8_t spiRecvBuffer[64];
@@ -15,11 +16,11 @@ extern uint8_t spiSendBuffer[64];
 
 Pack_S gPack;
 
-
 bool initASCI(uint32_t *numBmbs)
 {
 	disableASCI();
 	HAL_Delay(10);
+	//Test
 	enableASCI();
 	ssOff();
 	bool successfulConfig = true;
@@ -175,6 +176,21 @@ void readBoardTemps(uint32_t numBmbs)
 			}
 		}
 	}
+	memcpy(ntcLookup.x, ntcVoltArr, sizeof ntcVoltArr);
+    memcpy(ntcLookup.y, tempArr, sizeof tempArr);
+
+	ntcLookup.length = tableLength;
+
+	for (uint8_t i = 0; i < numBmbs; i++)
+	{
+		for (int j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
+		{
+			float ntcV = pPack->bmb[i].boardTempVoltage[j];
+			lookup(ntcV, &ntcLookup);
+		}
+	}
+
+
 }
 
 void updateBmbData(uint32_t numBmbs)
