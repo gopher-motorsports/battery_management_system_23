@@ -159,10 +159,11 @@ void readBoardTemps(uint32_t numBmbs)
 		// Read AUX registers
 		for (int auxChannel = AIN1; auxChannel <= AIN2; auxChannel++)
 		{
+			// Temperature index for Bmb_S struct board temp
+			int tempIdx = muxGpio - MUX7 + ((auxChannel == AIN2) ? 2 : 0);
 			// Read temperature from BMBs
 			if (readAll(auxChannel, numBmbs, spiRecvBuffer))
 			{
-				// TODO add catch if readall fails
 				// Parse received data
 				for (uint8_t i = 0; i < numBmbs; i++)
 				{
@@ -170,23 +171,27 @@ void readBoardTemps(uint32_t numBmbs)
 					uint32_t auxRaw = ((spiRecvBuffer[4 + 2*i] << 8) | spiRecvBuffer[3 + 2*i]) >> 4;
 					float auxV = auxRaw * CONVERT_12BIT_TO_3V3;
 					// Determine boardTempVoltage index for current reading
-					int tempIdx = muxGpio - MUX7 + ((auxChannel == AIN2) ? 2 : 0);
 					pPack->bmb[i].boardTempVoltage[tempIdx] = auxV;
+				}
+			}
+			else
+			{
+				// Failed to acquire data. Set status to MIA
+				for (int i = 0; i < numBmbs; i++)
+				{
+					pPack->bmb[i].boardTempStatus[tempIdx] = MIA;
 				}
 			}
 		}
 	}
-	memcpy(ntcLookup.x, ntcVoltArr, sizeof ntcVoltArr);
-    memcpy(ntcLookup.y, tempArr, sizeof tempArr);
-
-	ntcLookup.length = tableLength;
 
 	for (uint8_t i = 0; i < numBmbs; i++)
 	{
 		for (int j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
 		{
 			float ntcV = pPack->bmb[i].boardTempVoltage[j];
-			lookup(ntcV, &ntcLookup);
+
+			pPack->bmb[i].boardTemp[j] = lookup(ntcV, &ntcTable);
 		}
 	}
 

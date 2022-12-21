@@ -55,7 +55,8 @@ void runMain()
 			{
 				for (int j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
 				{
-					printf("%d - %1.3f\n", j, gPack.bmb[i].boardTempVoltage[j]);
+					printf("%d - %1.3f - %1.3fC\n", j, gPack.bmb[i].boardTempVoltage[j], gPack.bmb[i].boardTemp[j]);
+
 				}
 			}
 

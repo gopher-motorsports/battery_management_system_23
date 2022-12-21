@@ -41,15 +41,28 @@
 // 60V range & 14 bit ADC 	   - 60/(2^14)  = 3.6621 mV/bit
 #define CONVERT_14BIT_TO_60V	0.0036621f
 
+typedef enum
+{
+	SNA = 0,	// Value on startup
+	GOOD,		// Data nominal
+	BAD,		// Data was acquired but isn't trustworthy
+	MIA			// Data wasn't aquired
+} Bmb_Sensor_Status_E;
+
 typedef struct
 {
 	uint32_t numBricks;
+	// TODO - set initial status value to SNA
+	Bmb_Sensor_Status_E brickVStatus[NUM_BRICKS_PER_BMB];
 	float brickV[NUM_BRICKS_PER_BMB];
 	float stackV;
 	float blockV;
 
+	Bmb_Sensor_Status_E brickTempStatus[NUM_BRICKS_PER_BMB];
 	float brickTempVoltage[NUM_BRICKS_PER_BMB];
 	float brickTemp[NUM_BRICKS_PER_BMB];
+
+	Bmb_Sensor_Status_E boardTempStatus[NUM_BRICKS_PER_BMB];
 	float boardTempVoltage[NUM_BOARD_TEMP_PER_BMB];
 	float boardTemp[NUM_BOARD_TEMP_PER_BMB];
 
