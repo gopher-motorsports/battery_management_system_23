@@ -35,33 +35,11 @@ void runMain()
 		{
 			printf("Number of BMBs detected: %lu\n", numBmbs);
 			initBatteryPack(numBmbs);
-//			updateBmbData();
-//			aggregateBrickVoltages();
-//			readRegister(R_CONFIG_3);
+			// TODO verify number of BMBs
 			writeAll(ACQCFG, 0xFFFF, spiRecvBuffer, numBmbs);	// set THRM manual ON
-			writeAll(SCANCTRL, 0x0001, spiRecvBuffer, numBmbs);
-			readAll(VBLOCK, 1U, spiRecvBuffer);
-			for (int i = 0; i < numBmbs; i++)
-			{
-				const uint32_t stackVRaw = ((spiRecvBuffer[4+(2*i)] << 8) | spiRecvBuffer[3+(2*i)]) >> 2;
-				const float stackV = (stackVRaw * 362U) / 100000.0f;
-				gPack.bmb[i].stackV = stackV;
-			}
-			// Iterate through all of the cells
-			for (uint8_t i = 0; i < 12; i++)
-			{
-				uint8_t cellReg = i + 0x20;
-				// TODO: add catch if readAll fails
-				readAll(cellReg, 1U, spiRecvBuffer);
-				// Iterate through received data and update
-				for (int j = 0; j < numBmbs; j++)
-				{
-					const uint32_t brickVRaw = ((spiRecvBuffer[4+(2*j)] << 8) | spiRecvBuffer[3+(2*j)]) >> 2;
-					// 5V range & 14 bit ADC - 5/(2^14) = 305.176 uV/bit
-					const float brickV = brickVRaw * 0.000305176f;
-					gPack.bmb[j].brickV[i] = brickV;
-				}
-			}
+
+			updateBmbData(numBmbs);
+			aggregateBrickVoltages(numBmbs);
 			printf("|  BMB  | StackV |   1   |   2   |   3   |   4   |   5   |   6   |   7   |   8   |   9   |  10   |  11   |  12   |\n");
 			for (int i = 0; i < numBmbs; i++)
 			{
@@ -84,59 +62,6 @@ void runMain()
 		}
 
 	}
-
-	// Toggle pins
-//	vTaskDelay(3000);
-//	writeAll(0x11, 0xF00F, spiRecvBuffer);
-//	printf("HIGH\n");
-//
-//	vTaskDelay(3000);
-//	writeAll(0x11, 0xF000, spiRecvBuffer);
-//	printf("LOW\n");
-
-
-
-
-
-
-	// Todo verify that numBmbs is as expected
-//	writeAll(0x13, 0x0001, spiRecvBuffer);
-//	readAll(0x2C, 1U, spiRecvBuffer);
-//	uint32_t stackVRaw = ((spiRecvBuffer[4] << 8) | spiRecvBuffer[3]) >> 2;
-//	float stackV = (stackVRaw * 362U) / 100000.0f;
-//	for (uint8_t i = 0; i < 12; i++)
-//	{
-//		uint8_t cellReg = i + 0x20;
-//		readAll(cellReg, 1U, spiRecvBuffer);
-//		uint32_t brickVRaw = ((spiRecvBuffer[4] << 8) | spiRecvBuffer[3]) >> 2;
-//		// 5V range & 14 bit ADC - 5/(2^14) = 305.176 uV/bit
-//		float brickV = brickVRaw * 0.000305176f;
-//		printf("B%d: \t%f\n", i, brickV);
-//	}
-
-
-
-
-	// Read device config
-//	readAll(0x00, 1U, spiRecvBuffer);
-//
-//
-//	printf("Starting brick voltage acquisition:\n");
-//	// Read cell
-//	readAll(0x21, 1U, spiRecvBuffer);
-//	// read bulk
-//	readAll(0x2C, 1U, spiRecvBuffer);
-//
-//	for (uint8_t i = 0; i < 12; i++)
-//	{
-//		uint8_t cellReg = i + 0x20;
-//		readAll(cellReg, 1U, spiRecvBuffer);
-//		uint32_t brickVRaw = ((spiRecvBuffer[4] << 8) | spiRecvBuffer[3]) >> 2;
-//		// 5V range & 14 bit ADC - 5/(2^14) = 305.176 uV/bit
-//		float brickV = brickVRaw * 0.000305176f;
-//		printf("B%d: \t%.4gV\n", i, brickV);
-//	}
-
 
 	// New functions to add UpdateBrickVoltages() - reads in all brick voltages
 	// Read Stack Voltages  - reads all stack voltages

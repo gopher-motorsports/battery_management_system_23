@@ -159,17 +159,19 @@ void readBoardTemps(uint32_t numBmbs)
 		for (int auxChannel = AIN1; auxChannel <= AIN2; auxChannel++)
 		{
 			// Read temperature from BMBs
-			readAll(auxChannel, numBmbs, spiRecvBuffer);
-			// TODO add catch if readall fails
-			// Parse received data
-			for (uint8_t i = 0; i < numBmbs; i++)
+			if (readAll(auxChannel, numBmbs, spiRecvBuffer))
 			{
-				// Read AUX voltage in [15:4]
-				uint32_t auxRaw = ((spiRecvBuffer[4 + 2*i] << 8) | spiRecvBuffer[3 + 2*i]) >> 4;
-				float auxV = auxRaw * CONVERT_12BIT_TO_3V3;
-				// Determine boardTempVoltage index for current reading
-				int tempIdx = muxGpio - MUX7 + ((auxChannel == AIN2) ? 2 : 0);
-				pPack->bmb[i].boardTempVoltage[tempIdx] = auxV;
+				// TODO add catch if readall fails
+				// Parse received data
+				for (uint8_t i = 0; i < numBmbs; i++)
+				{
+					// Read AUX voltage in [15:4]
+					uint32_t auxRaw = ((spiRecvBuffer[4 + 2*i] << 8) | spiRecvBuffer[3 + 2*i]) >> 4;
+					float auxV = auxRaw * CONVERT_12BIT_TO_3V3;
+					// Determine boardTempVoltage index for current reading
+					int tempIdx = muxGpio - MUX7 + ((auxChannel == AIN2) ? 2 : 0);
+					pPack->bmb[i].boardTempVoltage[tempIdx] = auxV;
+				}
 			}
 		}
 	}
