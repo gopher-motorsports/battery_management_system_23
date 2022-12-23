@@ -1,39 +1,31 @@
-#ifndef INC_BMBUTILS_H_
-#define INC_BMBUTILS_H_
+#ifndef INC_BMS_H_
+#define INC_BMS_H_
+
 
 /* ==================================================================== */
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
-#include <math.h>
+#include <stdio.h>
 #include <stdbool.h>
-#include <stdint.h>
+#include <string.h>
+#include <bmb.h>
 
 
 /* ==================================================================== */
 /* ============================== STRUCTS============================== */
 /* ==================================================================== */
-//Generic Lookup Table
 typedef struct
 {
-    const uint32_t length;
-    const float* x;			// Pointer to x array
-    const float* y;			// Pointer to y array
-} LookupTable;
-
-/* ==================================================================== */
-/* ======================= EXTERNAL VARIABLES ========================= */
-/* ==================================================================== */
-extern LookupTable ntcTable;
-extern LookupTable zenerTable;
+	uint32_t numBmbs;
+	Bmb_S bmb[NUM_BMBS_PER_PACK];
+} Bms_S;
 
 
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */
 /* ==================================================================== */
-// TODO - add description
-float lookup(float x, const LookupTable* table);
+void initBatteryPack(uint32_t numBmbs);
 
 
 
-
-#endif /* INC_BMBUTILS_H_ */
+#endif /* INC_BMS_H_ */

@@ -8,15 +8,8 @@
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
 #define EPSILON 1e-4f
-
-
-/* ==================================================================== */
-/* =================== LOCAL FUNCTION DECLARATIONS ==================== */
-/* ==================================================================== */
-bool equals(float f1, float f2);
-uint32_t binarySearch(const float *arr, const float target, int low, int high, int depth);
-float interpolate(float x, float x1, float x2, float y1, float y2);
-
+#define MAX_DEPTH 20
+#define TABLE_SIZE 33
 
 /* ==================================================================== */
 /* ========================= LOCAL VARIABLES ========================== */
@@ -46,6 +39,14 @@ const float temperatureArray[33] =
 /* ==================================================================== */
 LookupTable ntcTable = {tableLength, ntcVoltageArray, temperatureArray};
 LookupTable zenerTable= {tableLength, zenerVoltageArray, temperatureArray};
+
+
+/* ==================================================================== */
+/* =================== LOCAL FUNCTION DECLARATIONS ==================== */
+/* ==================================================================== */
+bool equals(float f1, float f2);
+uint32_t binarySearch(const float *arr, const float target, int low, int high, int depth);
+float interpolate(float x, float x1, float x2, float y1, float y2);
 
 
 /* ==================================================================== */

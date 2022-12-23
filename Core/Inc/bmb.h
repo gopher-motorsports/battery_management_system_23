@@ -1,15 +1,25 @@
-/*
- * batteryPack.h
- *
- *  Created on: Aug 14, 2022
- *      Author: sebas
- */
-
 #ifndef INC_BMB_H_
 #define INC_BMB_H_
 
+
+/* ==================================================================== */
+/* ============================= INCLUDES ============================= */
+/* ==================================================================== */
 #include <stdio.h>
 #include <stdbool.h>
+
+
+/* ==================================================================== */
+/* ============================= DEFINES ============================== */
+/* ==================================================================== */
+#define MUX1		0x00
+#define MUX2		0x01
+#define MUX3		0x02
+#define MUX4		0x03
+#define MUX5		0x04
+#define MUX6		0x05
+#define MUX7		0x06
+#define MUX8		0x07
 
 #define DEVCFG1		0x10
 #define GPIO 		0x11
@@ -20,15 +30,6 @@
 #define VBLOCK		0x2C
 #define AIN1		0x2D
 #define AIN2		0x2E
-
-#define MUX1		0x00
-#define MUX2		0x01
-#define MUX3		0x02
-#define MUX4		0x03
-#define MUX5		0x04
-#define MUX6		0x05
-#define MUX7		0x06
-#define MUX8		0x07
 
 #define NUM_BRICKS_PER_BMB		12
 #define NUM_BOARD_TEMP_PER_BMB 	4
@@ -41,6 +42,11 @@
 // 60V range & 14 bit ADC 	   - 60/(2^14)  = 3.6621 mV/bit
 #define CONVERT_14BIT_TO_60V	0.0036621f
 
+
+/* ==================================================================== */
+/* ========================= ENUMERATED TYPES========================== */
+/* ==================================================================== */
+// TODO add description
 typedef enum
 {
 	SNA = 0,	// Value on startup
@@ -49,6 +55,11 @@ typedef enum
 	MIA			// Data wasn't aquired
 } Bmb_Sensor_Status_E;
 
+
+/* ==================================================================== */
+/* ============================== STRUCTS============================== */
+/* ==================================================================== */
+// TODO add description
 typedef struct
 {
 	uint32_t numBricks;
@@ -84,20 +95,38 @@ typedef struct
 
 } Bmb_S;
 
-typedef struct
-{
-	uint32_t numBmbs;
-	Bmb_S bmb[NUM_BMBS_PER_PACK];
-} Pack_S;
 
-
+/* ==================================================================== */
+/* =================== GLOBAL FUNCTION DECLARATIONS =================== */
+/* ==================================================================== */
+/*!
+  @brief   Initialize ASCI and BMB daisy chain. Enumerate BMBs
+  @param   numBmbs - Updated with number of enumerated BMBs from HELLOALL command
+  @return  True if successful initialization, false otherwise
+*/
 bool initASCI(uint32_t *numBmbs);
 
+/*!
+  @brief   Initialize the BMBs by configuring registers
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+  @return  True if successful initialization, false otherwise
+*/
 void initBmbs(uint32_t numBmbs);
+
+// TODO update description
 void setGpio(uint32_t numBmbs, uint16_t gpioSetting);
-void readBoardTemps(uint32_t numBmbs);
-void updateBmbData(uint32_t numBmbs);
-void aggregateBrickVoltages(uint32_t numBmbs);
+
+// TODO update description
+void readBoardTemps(Bmb_S* bmb,uint32_t numBmbs);
+
+// TODO update description
+void updateBmbData(Bmb_S* bmb,uint32_t numBmbs);
+
+/*!
+  @brief   Update BMB data statistics. Min/Max/Avg
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
+void aggregateBrickVoltages(Bmb_S* bmb,uint32_t numBmbs);
 
 
 #endif /* INC_BMB_H_ */
