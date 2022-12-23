@@ -35,7 +35,7 @@
 #define CONVERT_14BIT_TO_60V	0.0036621f
 
 
-#define DATA_REFRESH_DELAY_MILLIS 100
+#define DATA_REFRESH_DELAY_MILLIS 1000
 
 
 /* ==================================================================== */
@@ -60,7 +60,7 @@ typedef enum
 	MUX6,
 	MUX7,
 	MUX8,
-	NUM_MUXES
+	NUM_MUX_CHANNELS
 } Mux_State;
 
 

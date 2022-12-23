@@ -213,7 +213,7 @@ void cyclicUpdateBMBData(Bmb_S* bmb, uint32_t numBmbs)
 					// Read AUX voltage in [15:4]
 					uint32_t auxRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 4;
 					float auxV = auxRaw * CONVERT_12BIT_TO_3V3;
-					bmb[j].tempVoltage[muxState + ((auxChannel == AIN2) ? NUM_MUXES : 0)] = auxV;
+					bmb[j].tempVoltage[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = auxV;
 
 					// Convert temp voltage registers to temperature readings
 					if(muxState == (MUX7 || MUX8)) // NTC/ON-Board Temp Channel
@@ -222,7 +222,7 @@ void cyclicUpdateBMBData(Bmb_S* bmb, uint32_t numBmbs)
 					}
 					else // Zener/Brick Temp Channel
 					{
-						bmb[j].brickTemp[muxState + ((auxChannel == AIN2) ? NUM_MUXES : 0)] = lookup(auxV, &zenerTable);
+						bmb[j].brickTemp[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = lookup(auxV, &zenerTable);
 					}
 				}
 			}
@@ -237,7 +237,7 @@ void cyclicUpdateBMBData(Bmb_S* bmb, uint32_t numBmbs)
 		}
 
 		// Cycle to next MUX configuration
-		setMux(numBmbs, (muxState + 1) % NUM_MUXES	);
+		setMux(numBmbs, (muxState + 1) % NUM_MUX_CHANNELS	);
 
 		// Update lastUpdate
 		lastUpdate = HAL_GetTick();
@@ -305,7 +305,7 @@ void updateBMBTempData(Bmb_S* bmb, uint32_t numBmbs)
 {
 	// Cycle through MUX channels
 	setMux(numBmbs, MUX1);
-	for(int i = MUX1; i < NUM_MUXES; i++)
+	for(int i = MUX1; i < NUM_MUX_CHANNELS; i++)
 	{
 		// Read AUX/TEMP registers
 		for (int auxChannel = AIN1; auxChannel <= AIN2; auxChannel++)
@@ -318,7 +318,7 @@ void updateBMBTempData(Bmb_S* bmb, uint32_t numBmbs)
 					// Read AUX voltage in [15:4]
 					uint32_t auxRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 4;
 					float auxV = auxRaw * CONVERT_12BIT_TO_3V3;
-					bmb[j].tempVoltage[muxState + ((auxChannel == AIN2) ? NUM_MUXES : 0)] = auxV;
+					bmb[j].tempVoltage[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = auxV;
 
 					// Convert temp voltage registers to temperature readings
 					if(muxState == (MUX7 || MUX8)) // NTC/ON-Board Temp Channel
@@ -327,7 +327,7 @@ void updateBMBTempData(Bmb_S* bmb, uint32_t numBmbs)
 					}
 					else // Zener/Brick Temp Channel
 					{
-						bmb[j].brickTemp[muxState + ((auxChannel == AIN2) ? NUM_MUXES : 0)] = lookup(auxV, &zenerTable);
+						bmb[j].brickTemp[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = lookup(auxV, &zenerTable);
 					}
 				}
 			}
