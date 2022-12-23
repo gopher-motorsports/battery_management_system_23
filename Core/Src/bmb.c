@@ -9,7 +9,7 @@ extern osSemaphoreId binSemHandle;
 uint8_t recvBuffer[SPI_BUFF_SIZE];
 uint8_t sendBuffer[SPI_BUFF_SIZE];
 
-static Mux_State muxState = 0x00;
+static Mux_State_E muxState = 0x00;
 static bool gpio3State = 0;
 static uint32_t lastUpdate = 0;
 
@@ -216,7 +216,7 @@ void cyclicUpdateBMBData(Bmb_S* bmb, uint32_t numBmbs)
 					bmb[j].tempVoltage[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = auxV;
 
 					// Convert temp voltage registers to temperature readings
-					if(muxState == (MUX7 || MUX8)) // NTC/ON-Board Temp Channel
+					if(muxState == MUX7 || muxState == MUX8) // NTC/ON-Board Temp Channel
 					{
 						bmb[j].boardTemp[muxState - MUX7 + ((auxChannel == AIN2) ? 2 : 0)] = lookup(auxV, &ntcTable);
 					}

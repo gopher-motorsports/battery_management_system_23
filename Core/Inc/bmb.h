@@ -61,7 +61,7 @@ typedef enum
 	MUX7,
 	MUX8,
 	NUM_MUX_CHANNELS
-} Mux_State;
+} Mux_State_E;
 
 
 /* ==================================================================== */
