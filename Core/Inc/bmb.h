@@ -121,13 +121,13 @@ bool initASCI(uint32_t *numBmbs);
 void initBmbs(uint32_t numBmbs);
 
 // TODO update description
-void cyclicUpdateBMBData(Bmb_S* bmb, uint32_t numBmbs);
+void cyclicUpdateBmbData(Bmb_S* bmb, uint32_t numBmbs);
 
 // TODO update description
-void updateBMBVoltageData(Bmb_S* bmb, uint32_t numBmbs);
+void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs);
 
 // TODO update description
-void updateBMBTempData(Bmb_S* bmb, uint32_t numBmbs);
+void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs);
 
 void setMux(uint32_t numBmbs, uint8_t muxSetting);
 

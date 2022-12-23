@@ -29,7 +29,7 @@ void runMain()
 		// TODO verify number of BMBs
 		writeAll(ACQCFG, 0xFFFF, numBmbs);	// set THRM manual ON
 
-		cyclicUpdateBMBData(gBms.bmb, numBmbs);
+		cyclicUpdateBmbData(gBms.bmb, numBmbs);
 		aggregateBrickVoltages(gBms.bmb,numBmbs);
 
 		printf("|  BMB  | StackV |   1   |   2   |   3   |   4   |   5   |   6   |   7   |   8   |   9   |  10   |  11   |  12   |\n");
