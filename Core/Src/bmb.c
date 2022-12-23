@@ -132,6 +132,7 @@ void initBmbs(uint32_t numBmbs)
 {
 	// Enable alive counter byte
 	// numBmbs set to 0 since alive counter not yet enabled
+
 	writeAll(DEVCFG1, 0x1042, 0);
 
 	// Enable measurement channels
@@ -153,7 +154,10 @@ void cyclicUpdateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		lastUpdate = HAL_GetTick();
 
 		// Start acquisition
-		writeAll(SCANCTRL, 0x0001, numBmbs);
+		if(!writeAll(SCANCTRL, 0x0001, numBmbs))
+		{
+			printf("SHIT!\n");
+		}
 
 		// Update cell data
 		for (uint8_t i = 0; i < 12; i++)
@@ -231,6 +235,7 @@ void cyclicUpdateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			}
 			else
 			{
+				printf("Error during TEMP readAll!\n");
 				// Failed to acquire data. Set status to MIA
 				for (int j = 0; j < numBmbs; j++)
 				{
@@ -240,7 +245,7 @@ void cyclicUpdateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		}
 
 		// Cycle to next MUX configuration
-		setMux(numBmbs, (muxState + 1) % NUM_MUX_CHANNELS	);
+		setMux(numBmbs, (muxState + 1) % NUM_MUX_CHANNELS);
 	}
 }
 
@@ -301,7 +306,7 @@ void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 	// TODO Add check - Compare VBLOCK with sum of brick voltages
 }
 
-void updateBMBTempData(Bmb_S* bmb, uint32_t numBmbs)
+void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs)
 {
 	// Cycle through MUX channels
 	for(Mux_State_E mux = MUX1; mux < NUM_MUX_CHANNELS; mux++)
