@@ -9,6 +9,10 @@ extern osSemaphoreId binSemHandle;
 uint8_t recvBuffer[SPI_BUFF_SIZE];
 uint8_t sendBuffer[SPI_BUFF_SIZE];
 
+static Mux_State muxState = 0x00;
+static bool gpio3State = 0;
+static uint32_t lastUpdate = 0;
+
 /*!
   @brief   Initialize ASCI and BMB daisy chain. Enumerate BMBs
   @param   numBmbs - Updated with number of enumerated BMBs from HELLOALL command
@@ -133,100 +137,147 @@ void initBmbs(uint32_t numBmbs)
 	// Enable measurement channels
 	writeAll(MEASUREEN, 0xFFFF, numBmbs);
 
-	// Enable GPIOs as outputs
-	writeAll(GPIO, 0xF000, numBmbs);
+	// Reset GPIO to 0 state
+	setGpio(numBmbs, 0, 0, 0, 0);
 
 	// Set brickOV voltage alert threshold
 	// Set brickUV voltage alert threshold
 
 }
 
-// TODO - Isaiah fix
-void setGpio(uint32_t numBmbs, uint16_t gpioSetting)
+void cyclicUpdateBMBData(Bmb_S* bmb, uint32_t numBmbs)
 {
-	// Assuming all GPIOs configured as OUTPUT
-	uint16_t data = 0xF000;
-	data |= (gpioSetting & 0x000F);	// Extract last 4 bits from gpioSetting
-	writeAll(GPIO, data, numBmbs);
-}
-
-// TODO - Isaiah Fix
-void readBoardTemps(Bmb_S* bmb, uint32_t numBmbs)
-{
-	// Internal board temps are on MUX7 and MUX8
-	for (int muxGpio = MUX7; muxGpio <= MUX8; muxGpio++)
+	if((HAL_GetTick() - lastUpdate) >= DATA_REFRESH_DELAY_MILLIS)
 	{
-		setGpio(numBmbs, muxGpio);		// Set GPIO for desired MUX
 		// Start acquisition
 		writeAll(SCANCTRL, 0x0001, numBmbs);
-		// TODO implement error checking in the case of bad data or broken comms
-		// Read AUX registers
+
+		// Update cell data
+		for (uint8_t i = 0; i < 12; i++)
+		{
+			uint8_t cellReg = i + CELLn;
+			if (readAll(cellReg, recvBuffer, numBmbs))
+			{
+				for (uint8_t j = 0; j < numBmbs; j++)
+				{
+					// Read brick voltage in [15:2]
+					uint32_t brickVRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
+					float brickV = brickVRaw * CONVERT_14BIT_TO_5V;
+					bmb[j].brickV[i] = brickV;
+				}
+			}
+			else
+			{
+				printf("Error during cellReg readAll!\r\n");
+
+				// Failed to acquire data. Set status to MIA
+				for (int j = 0; j < numBmbs; j++)
+				{
+					bmb[j].brickVStatus[i] = MIA;
+				}
+			}
+		}
+
+		// Read VBLOCK register
+		if (readAll(VBLOCK, recvBuffer, numBmbs))
+		{
+			for (uint8_t j = 0; j < numBmbs; j++)
+			{
+				// Read block voltage in [15:2]
+				uint32_t blockVRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
+				float blockV = blockVRaw * CONVERT_14BIT_TO_60V;
+				bmb[j].blockV = blockV;
+			}
+		}
+		else
+		{
+			printf("Error during VBLOCK readAll!\r\n");
+
+			// Failed to acquire data. Set status to MIA
+			for (int j = 0; j < numBmbs; j++)
+			{
+				bmb[j].blockVStatus = MIA;
+			}
+		}
+
+		// TODO Add check - Compare VBLOCK with sum of brick voltages
+
+		// Read AUX/TEMP registers
 		for (int auxChannel = AIN1; auxChannel <= AIN2; auxChannel++)
 		{
-			// Temperature index for Bmb_S struct board temp
-			int tempIdx = muxGpio - MUX7 + ((auxChannel == AIN2) ? 2 : 0);
-			// Read temperature from BMBs
 			if (readAll(auxChannel, recvBuffer, numBmbs))
 			{
 				// Parse received data
-				for (uint8_t i = 0; i < numBmbs; i++)
+				for (uint8_t j = 0; j < numBmbs; j++)
 				{
 					// Read AUX voltage in [15:4]
-					uint32_t auxRaw = ((recvBuffer[4 + 2*i] << 8) | recvBuffer[3 + 2*i]) >> 4;
+					uint32_t auxRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 4;
 					float auxV = auxRaw * CONVERT_12BIT_TO_3V3;
-					// Determine boardTempVoltage index for current reading
-					bmb[i].boardTempVoltage[tempIdx] = auxV;
+					bmb[j].tempVoltage[muxState + ((auxChannel == AIN2) ? NUM_MUXES : 0)] = auxV;
+
+					// Convert temp voltage registers to temperature readings
+					if(muxState == (MUX7 || MUX8)) // NTC/ON-Board Temp Channel
+					{
+						bmb[j].boardTemp[muxState - MUX7 + ((auxChannel == AIN2) ? 2 : 0)] = lookup(auxV, &ntcTable);
+					}
+					else // Zener/Brick Temp Channel
+					{
+						bmb[j].brickTemp[muxState + ((auxChannel == AIN2) ? NUM_MUXES : 0)] = lookup(auxV, &zenerTable);
+					}
 				}
 			}
 			else
 			{
 				// Failed to acquire data. Set status to MIA
-				for (int i = 0; i < numBmbs; i++)
+				for (int j = 0; j < numBmbs; j++)
 				{
-					bmb[i].boardTempStatus[tempIdx] = MIA;
+					bmb[j].tempStatus[muxState + ((auxChannel == AIN2) ? 8 : 0)] = MIA;
 				}
+			}
+		}
+
+		// Cycle to next MUX configuration
+		setMux(numBmbs, (muxState + 1) % NUM_MUXES	);
+
+		// Update lastUpdate
+		lastUpdate = HAL_GetTick();
+	}
+}
+
+
+void updateBMBVoltageData(Bmb_S* bmb, uint32_t numBmbs)
+{
+	// Start acquisition
+	writeAll(SCANCTRL, 0x0001, numBmbs);
+
+	// Update cell data
+	for (uint8_t i = 0; i < 12; i++)
+	{
+		uint8_t cellReg = i + CELLn;
+		if (readAll(cellReg, recvBuffer, numBmbs))
+		{
+			for (uint8_t j = 0; j < numBmbs; j++)
+			{
+				// Read brick voltage in [15:2]
+				uint32_t brickVRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
+				float brickV = brickVRaw * CONVERT_14BIT_TO_5V;
+				bmb[j].brickV[i] = brickV;
+			}
+		}
+		else
+		{
+			printf("Error during cellReg readAll!\r\n");
+
+			// Failed to acquire data. Set status to MIA
+			for (int j = 0; j < numBmbs; j++)
+			{
+				bmb[j].brickVStatus[i] = MIA;
 			}
 		}
 	}
 
-	for (uint8_t i = 0; i < numBmbs; i++)
-	{
-		for (int j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
-		{
-			float ntcV = bmb[i].boardTempVoltage[j];
-
-			bmb[i].boardTemp[j] = lookup(ntcV, &ntcTable);
-		}
-	}
-
-
-}
-
-// TODO - Isaiah fix
-void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
-{
-	// Start acquisition
-	writeAll(SCANCTRL, 0x0001, numBmbs);
-	// Update cell data
-	// TODO implement error checking in the case of bad data or broken comms
-	for (uint8_t i = 0; i < 12; i++)
-	{
-		uint8_t cellReg = i + CELLn;
-		if (!readAll(cellReg, recvBuffer, numBmbs))
-		{
-			printf("Error during readAll!\r\n");
-			break;
-		}
-		for (uint8_t j = 0; j < numBmbs; j++)
-		{
-			// Read brick voltage in [15:2]
-			uint32_t brickVRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
-			float brickV = brickVRaw * CONVERT_14BIT_TO_5V;
-			bmb[j].brickV[i] = brickV;
-		}
-	}
 	// Read VBLOCK register
-	if (!readAll(VBLOCK, recvBuffer, numBmbs))
+	if (readAll(VBLOCK, recvBuffer, numBmbs))
 	{
 		for (uint8_t j = 0; j < numBmbs; j++)
 		{
@@ -236,6 +287,84 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			bmb[j].blockV = blockV;
 		}
 	}
+	else
+	{
+		printf("Error during VBLOCK readAll!\r\n");
+
+		// Failed to acquire data. Set status to MIA
+		for (int j = 0; j < numBmbs; j++)
+		{
+			bmb[j].blockVStatus = MIA;
+		}
+	}
+
+	// TODO Add check - Compare VBLOCK with sum of brick voltages
+}
+
+void updateBMBTempData(Bmb_S* bmb, uint32_t numBmbs)
+{
+	// Cycle through MUX channels
+	setMux(numBmbs, MUX1);
+	for(int i = MUX1; i < NUM_MUXES; i++)
+	{
+		// Read AUX/TEMP registers
+		for (int auxChannel = AIN1; auxChannel <= AIN2; auxChannel++)
+		{
+			if (readAll(auxChannel, recvBuffer, numBmbs))
+			{
+				// Parse received data
+				for (uint8_t j = 0; j < numBmbs; j++)
+				{
+					// Read AUX voltage in [15:4]
+					uint32_t auxRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 4;
+					float auxV = auxRaw * CONVERT_12BIT_TO_3V3;
+					bmb[j].tempVoltage[muxState + ((auxChannel == AIN2) ? NUM_MUXES : 0)] = auxV;
+
+					// Convert temp voltage registers to temperature readings
+					if(muxState == (MUX7 || MUX8)) // NTC/ON-Board Temp Channel
+					{
+						bmb[j].boardTemp[muxState - MUX7 + ((auxChannel == AIN2) ? 2 : 0)] = lookup(auxV, &ntcTable);
+					}
+					else // Zener/Brick Temp Channel
+					{
+						bmb[j].brickTemp[muxState + ((auxChannel == AIN2) ? NUM_MUXES : 0)] = lookup(auxV, &zenerTable);
+					}
+				}
+			}
+			else
+			{
+				// Failed to acquire data. Set status to MIA
+				for (int j = 0; j < numBmbs; j++)
+				{
+					bmb[j].tempStatus[muxState + ((auxChannel == AIN2) ? 8 : 0)] = MIA;
+				}
+			}
+		}
+	}
+}
+
+void setMux(uint32_t numBmbs, uint8_t muxSetting)
+{
+	bool gpio[3];
+	for(int i = 0; i < 3; i++)
+	{
+		gpio[i] = (muxSetting >> i) & 1;
+	}
+	setGpio(numBmbs, gpio[0], gpio[1], gpio[2], gpio3State); // Currently sets GPIO 4 to 0 when updating MUX
+}
+
+void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3)
+{
+	// First 4 bits set GPIO to output mode
+	// Last 4 bits set GPIO logic state for channels 3, 2, 1, 0 respectively
+	uint16_t data = 0xF000 | (gpio0) | (gpio1 << 1) | (gpio2 << 2) | (gpio3 << 3);
+	writeAll(GPIO, data, numBmbs);
+
+	// Update Mux state depending on only GPIO settings 0, 1, 2
+	muxState = data & 0x0007;
+
+	// Update gpio4 state
+	gpio3State = gpio3;
 }
 
 /*!

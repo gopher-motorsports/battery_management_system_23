@@ -12,14 +12,6 @@
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
-#define MUX1		0x00
-#define MUX2		0x01
-#define MUX3		0x02
-#define MUX4		0x03
-#define MUX5		0x04
-#define MUX6		0x05
-#define MUX7		0x06
-#define MUX8		0x07
 
 #define DEVCFG1		0x10
 #define GPIO 		0x11
@@ -43,6 +35,9 @@
 #define CONVERT_14BIT_TO_60V	0.0036621f
 
 
+#define DATA_REFRESH_DELAY_MILLIS 100
+
+
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
 /* ==================================================================== */
@@ -54,6 +49,19 @@ typedef enum
 	BAD,		// Data was acquired but isn't trustworthy
 	MIA			// Data wasn't aquired
 } Bmb_Sensor_Status_E;
+
+typedef enum
+{
+	MUX1 = 0,
+	MUX2,
+	MUX3,
+	MUX4,
+	MUX5,
+	MUX6,
+	MUX7,
+	MUX8,
+	NUM_MUXES
+} Mux_State;
 
 
 /* ==================================================================== */
@@ -67,14 +75,13 @@ typedef struct
 	Bmb_Sensor_Status_E brickVStatus[NUM_BRICKS_PER_BMB];
 	float brickV[NUM_BRICKS_PER_BMB];
 	float stackV;
+
+	Bmb_Sensor_Status_E blockVStatus;
 	float blockV;
 
-	Bmb_Sensor_Status_E brickTempStatus[NUM_BRICKS_PER_BMB];
-	float brickTempVoltage[NUM_BRICKS_PER_BMB];
+	Bmb_Sensor_Status_E tempStatus[NUM_BRICKS_PER_BMB+NUM_BOARD_TEMP_PER_BMB];
+	float tempVoltage[NUM_BRICKS_PER_BMB+NUM_BOARD_TEMP_PER_BMB];
 	float brickTemp[NUM_BRICKS_PER_BMB];
-
-	Bmb_Sensor_Status_E boardTempStatus[NUM_BRICKS_PER_BMB];
-	float boardTempVoltage[NUM_BOARD_TEMP_PER_BMB];
 	float boardTemp[NUM_BOARD_TEMP_PER_BMB];
 
 	float maxBrickV;
@@ -114,13 +121,18 @@ bool initASCI(uint32_t *numBmbs);
 void initBmbs(uint32_t numBmbs);
 
 // TODO update description
-void setGpio(uint32_t numBmbs, uint16_t gpioSetting);
+void cyclicUpdateBMBData(Bmb_S* bmb, uint32_t numBmbs);
 
 // TODO update description
-void readBoardTemps(Bmb_S* bmb,uint32_t numBmbs);
+void updateBMBVoltageData(Bmb_S* bmb, uint32_t numBmbs);
 
 // TODO update description
-void updateBmbData(Bmb_S* bmb,uint32_t numBmbs);
+void updateBMBTempData(Bmb_S* bmb, uint32_t numBmbs);
+
+void setMux(uint32_t numBmbs, uint8_t muxSetting);
+
+// TODO update description
+void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3);
 
 /*!
   @brief   Update BMB data statistics. Min/Max/Avg
