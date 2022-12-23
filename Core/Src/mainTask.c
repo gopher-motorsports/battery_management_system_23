@@ -43,39 +43,42 @@ void runMain()
 			lastUpdateMain = HAL_GetTick();
 
 			printf("Cell Voltage:\n");
-			printf("|  BMB  |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    |  StackV  |\n");
+			printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    | StackV  |\n");
 			for (int i = 0; i < numBmbs; i++)
 			{
-				printf("|   %02d  |", i + 1);
+				printf("|    %02d   |", i + 1);
 				for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
 				{
-					printf("  %1.3f  |", gBms.bmb[i].brickV[j]);
+					printf("  %5.3f  |", gBms.bmb[i].brickV[j]);
 				}
-				printf("  %05.2f   |", gBms.bmb[i].stackV);
-				printf("\n\n");
+				printf("  %5.2f  |", gBms.bmb[i].stackV);
+				printf("\n");
 			}
+			printf("\n");
 			printf("Cell Temp:\n");
-			printf("|  BMB  |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    |\n");
+			printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    |\n");
 			for (int i = 0; i < numBmbs; i++)
 			{
-				printf("|   %02d  |", i + 1);
+				printf("|    %02d   |", i + 1);
 				for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
 				{
-					printf(" %1.2fC |", gBms.bmb[i].brickTemp[j]);
+					printf(" %5.1fC  |", gBms.bmb[i].brickTemp[j]);
 				}
-				printf("\n\n");
+				printf("\n");
 			}
+			printf("\n");
 			printf("Board Temp:\n");
-			printf("|  BMB  |    1    |    2    |    3    |    4    |\n");
+			printf("|   BMB   |    1    |    2    |    3    |    4    |\n");
 			for (int i = 0; i < numBmbs; i++)
 			{
-				printf("|   %02d  |", i + 1);
+				printf("|    %02d   |", i + 1);
 				for (int j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
 				{
-					printf(" %1.3fC |", gBms.bmb[i].boardTemp[j]);
+					printf(" %5.1fC  |", gBms.bmb[i].boardTemp[j]);
 				}
-				printf("\n\n");
+				printf("\n");
 			}
+			printf("\n");
 		}
 
 	}
