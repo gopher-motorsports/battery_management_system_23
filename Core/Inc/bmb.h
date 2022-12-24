@@ -35,9 +35,6 @@
 #define CONVERT_14BIT_TO_60V	0.0036621f
 
 
-#define DATA_REFRESH_DELAY_MILLIS 1000
-
-
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
 /* ==================================================================== */
@@ -121,7 +118,7 @@ bool initASCI(uint32_t *numBmbs);
 void initBmbs(uint32_t numBmbs);
 
 // TODO update description
-void cyclicUpdateBmbData(Bmb_S* bmb, uint32_t numBmbs);
+void updateBmbData(Bmb_S* bmb, uint32_t numBmbs);
 
 // TODO update description
 void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs);

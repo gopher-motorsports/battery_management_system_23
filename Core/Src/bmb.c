@@ -1,18 +1,37 @@
+/* ==================================================================== */
+/* ============================= INCLUDES ============================= */
+/* ==================================================================== */
 #include "main.h"
 #include "cmsis_os.h"
 #include "bmb.h"
 #include "spiUtils.h"
 #include "bmbUtils.h"
 
-extern osSemaphoreId binSemHandle;
+/* ==================================================================== */
+/* ============================= DEFINES ============================== */
+/* ==================================================================== */
+#define DATA_REFRESH_DELAY_MS 1000
 
-uint8_t recvBuffer[SPI_BUFF_SIZE];
-uint8_t sendBuffer[SPI_BUFF_SIZE];
 
+/* ==================================================================== */
+/* ========================= LOCAL VARIABLES ========================== */
+/* ==================================================================== */
 static Mux_State_E muxState = 0x00;
 static bool gpio3State = 0;
 static uint32_t lastUpdate = 0;
+uint8_t recvBuffer[SPI_BUFF_SIZE];
+uint8_t sendBuffer[SPI_BUFF_SIZE];
 
+
+/* ==================================================================== */
+/* ======================= EXTERNAL VARIABLES ========================= */
+/* ==================================================================== */
+extern osSemaphoreId binSemHandle;
+
+
+/* ==================================================================== */
+/* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
+/* ==================================================================== */
 /*!
   @brief   Initialize ASCI and BMB daisy chain. Enumerate BMBs
   @param   numBmbs - Updated with number of enumerated BMBs from HELLOALL command
@@ -146,9 +165,9 @@ void initBmbs(uint32_t numBmbs)
 
 }
 
-void cyclicUpdateBmbData(Bmb_S* bmb, uint32_t numBmbs)
+void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 {
-	if((HAL_GetTick() - lastUpdate) >= DATA_REFRESH_DELAY_MILLIS)
+	if((HAL_GetTick() - lastUpdate) >= DATA_REFRESH_DELAY_MS)
 	{
 		// Update lastUpdate
 		lastUpdate = HAL_GetTick();

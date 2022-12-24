@@ -34,7 +34,7 @@ void runMain()
 		// set THRM manual ON
 
 //		updateBmbTempData(gBms.bmb,numBmbs);
-		cyclicUpdateBmbData(gBms.bmb, numBmbs);
+		updateBmbData(gBms.bmb, numBmbs);
 		aggregateBrickVoltages(gBms.bmb,numBmbs);
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
