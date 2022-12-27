@@ -1,18 +1,37 @@
+/* ==================================================================== */
+/* ============================= INCLUDES ============================= */
+/* ==================================================================== */
 #include "main.h"
 #include "cmsis_os.h"
 #include "bmb.h"
 #include "spiUtils.h"
 #include "bmbUtils.h"
 
-extern osSemaphoreId binSemHandle;
+/* ==================================================================== */
+/* ============================= DEFINES ============================== */
+/* ==================================================================== */
+#define DATA_REFRESH_DELAY_MS 1000
 
+
+/* ==================================================================== */
+/* ========================= LOCAL VARIABLES ========================== */
+/* ==================================================================== */
+static Mux_State_E muxState = 0x00;
+static bool gpio3State = 0;
+static uint32_t lastUpdate = 0;
 uint8_t recvBuffer[SPI_BUFF_SIZE];
 uint8_t sendBuffer[SPI_BUFF_SIZE];
 
-static Mux_State muxState = 0x00;
-static bool gpio3State = 0;
-static uint32_t lastUpdate = 0;
 
+/* ==================================================================== */
+/* ======================= EXTERNAL VARIABLES ========================= */
+/* ==================================================================== */
+extern osSemaphoreId binSemHandle;
+
+
+/* ==================================================================== */
+/* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
+/* ==================================================================== */
 /*!
   @brief   Initialize ASCI and BMB daisy chain. Enumerate BMBs
   @param   numBmbs - Updated with number of enumerated BMBs from HELLOALL command
@@ -42,7 +61,7 @@ bool initASCI(uint32_t *numBmbs)
 
 	if (!(xSemaphoreTake(binSemHandle, 10) == pdTRUE))
 	{
-		printf("Interrupt failed to occur during initialization!\r\n");
+		printf("Interrupt failed to occur during initialization!\n");
 		return false;
 	}
 
@@ -80,7 +99,7 @@ bool initASCI(uint32_t *numBmbs)
 
 	if (!loadAndVerifyTxQueue((uint8_t *)&sendBuffer, 5))
 	{
-		printf("Failed to load all!\r\n");
+		printf("Failed to load all!\n");
 		return false;
 	}
 
@@ -92,7 +111,7 @@ bool initASCI(uint32_t *numBmbs)
 
 	if (!(xSemaphoreTake(binSemHandle, 10) == pdTRUE))
 	{
-		printf("Interrupt failed to occur during initialization!\r\n");
+		printf("Interrupt failed to occur during initialization!\n");
 		return false;
 	}
 
@@ -113,7 +132,7 @@ bool initASCI(uint32_t *numBmbs)
 
 	if (rxErrorsExist() || !successfulConfig)
 	{
-		printf("Detected errors during initialization...\r\n");
+		printf("Detected errors during initialization...\n");
 		return false;
 	}
 
@@ -132,6 +151,7 @@ void initBmbs(uint32_t numBmbs)
 {
 	// Enable alive counter byte
 	// numBmbs set to 0 since alive counter not yet enabled
+
 	writeAll(DEVCFG1, 0x1042, 0);
 
 	// Enable measurement channels
@@ -145,12 +165,18 @@ void initBmbs(uint32_t numBmbs)
 
 }
 
-void cyclicUpdateBMBData(Bmb_S* bmb, uint32_t numBmbs)
+void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 {
-	if((HAL_GetTick() - lastUpdate) >= DATA_REFRESH_DELAY_MILLIS)
+	if((HAL_GetTick() - lastUpdate) >= DATA_REFRESH_DELAY_MS)
 	{
+		// Update lastUpdate
+		lastUpdate = HAL_GetTick();
+
 		// Start acquisition
-		writeAll(SCANCTRL, 0x0001, numBmbs);
+		if(!writeAll(SCANCTRL, 0x0001, numBmbs))
+		{
+			printf("SHIT!\n");
+		}
 
 		// Update cell data
 		for (uint8_t i = 0; i < 12; i++)
@@ -168,7 +194,7 @@ void cyclicUpdateBMBData(Bmb_S* bmb, uint32_t numBmbs)
 			}
 			else
 			{
-				printf("Error during cellReg readAll!\r\n");
+				printf("Error during cellReg readAll!\n");
 
 				// Failed to acquire data. Set status to MIA
 				for (int j = 0; j < numBmbs; j++)
@@ -191,7 +217,7 @@ void cyclicUpdateBMBData(Bmb_S* bmb, uint32_t numBmbs)
 		}
 		else
 		{
-			printf("Error during VBLOCK readAll!\r\n");
+			printf("Error during VBLOCK readAll!\n");
 
 			// Failed to acquire data. Set status to MIA
 			for (int j = 0; j < numBmbs; j++)
@@ -216,36 +242,34 @@ void cyclicUpdateBMBData(Bmb_S* bmb, uint32_t numBmbs)
 					bmb[j].tempVoltage[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = auxV;
 
 					// Convert temp voltage registers to temperature readings
-					if(muxState == (MUX7 || MUX8)) // NTC/ON-Board Temp Channel
+					if(muxState == MUX7 || muxState == MUX8) // NTC/ON-Board Temp Channel
 					{
-						bmb[j].boardTemp[muxState - MUX7 + ((auxChannel == AIN2) ? 2 : 0)] = lookup(auxV, &ntcTable);
+						bmb[j].boardTemp[muxState - MUX7 + ((auxChannel == AIN2) ? (NUM_BOARD_TEMP_PER_BMB/2) : 0)] = lookup(auxV, &ntcTable);
 					}
 					else // Zener/Brick Temp Channel
 					{
-						bmb[j].brickTemp[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = lookup(auxV, &zenerTable);
+						bmb[j].brickTemp[muxState + ((auxChannel == AIN2) ? (NUM_BRICKS_PER_BMB/2) : 0)] = lookup(auxV, &zenerTable);
 					}
 				}
 			}
 			else
 			{
+				printf("Error during TEMP readAll!\n");
 				// Failed to acquire data. Set status to MIA
 				for (int j = 0; j < numBmbs; j++)
 				{
-					bmb[j].tempStatus[muxState + ((auxChannel == AIN2) ? 8 : 0)] = MIA;
+					bmb[j].tempStatus[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = MIA;
 				}
 			}
 		}
 
 		// Cycle to next MUX configuration
-		setMux(numBmbs, (muxState + 1) % NUM_MUX_CHANNELS	);
-
-		// Update lastUpdate
-		lastUpdate = HAL_GetTick();
+		setMux(numBmbs, (muxState + 1) % NUM_MUX_CHANNELS);
 	}
 }
 
 
-void updateBMBVoltageData(Bmb_S* bmb, uint32_t numBmbs)
+void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 {
 	// Start acquisition
 	writeAll(SCANCTRL, 0x0001, numBmbs);
@@ -266,7 +290,7 @@ void updateBMBVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 		}
 		else
 		{
-			printf("Error during cellReg readAll!\r\n");
+			printf("Error during cellReg readAll!\n");
 
 			// Failed to acquire data. Set status to MIA
 			for (int j = 0; j < numBmbs; j++)
@@ -289,7 +313,7 @@ void updateBMBVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 	}
 	else
 	{
-		printf("Error during VBLOCK readAll!\r\n");
+		printf("Error during VBLOCK readAll!\n");
 
 		// Failed to acquire data. Set status to MIA
 		for (int j = 0; j < numBmbs; j++)
@@ -301,12 +325,13 @@ void updateBMBVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 	// TODO Add check - Compare VBLOCK with sum of brick voltages
 }
 
-void updateBMBTempData(Bmb_S* bmb, uint32_t numBmbs)
+void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs)
 {
 	// Cycle through MUX channels
-	setMux(numBmbs, MUX1);
-	for(int i = MUX1; i < NUM_MUX_CHANNELS; i++)
+	for(Mux_State_E mux = MUX1; mux < NUM_MUX_CHANNELS; mux++)
 	{
+		// Set Mux configuration
+		setMux(numBmbs, mux);
 		// Read AUX/TEMP registers
 		for (int auxChannel = AIN1; auxChannel <= AIN2; auxChannel++)
 		{
@@ -321,13 +346,13 @@ void updateBMBTempData(Bmb_S* bmb, uint32_t numBmbs)
 					bmb[j].tempVoltage[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = auxV;
 
 					// Convert temp voltage registers to temperature readings
-					if(muxState == (MUX7 || MUX8)) // NTC/ON-Board Temp Channel
+					if(muxState == MUX7 || muxState == MUX8) // NTC/ON-Board Temp Channel
 					{
-						bmb[j].boardTemp[muxState - MUX7 + ((auxChannel == AIN2) ? 2 : 0)] = lookup(auxV, &ntcTable);
+						bmb[j].boardTemp[muxState - MUX7 + ((auxChannel == AIN2) ? (NUM_BOARD_TEMP_PER_BMB/2) : 0)] = lookup(auxV, &ntcTable);
 					}
 					else // Zener/Brick Temp Channel
 					{
-						bmb[j].brickTemp[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = lookup(auxV, &zenerTable);
+						bmb[j].brickTemp[muxState + ((auxChannel == AIN2) ? (NUM_BRICKS_PER_BMB/2) : 0)] = lookup(auxV, &zenerTable);
 					}
 				}
 			}
@@ -336,7 +361,7 @@ void updateBMBTempData(Bmb_S* bmb, uint32_t numBmbs)
 				// Failed to acquire data. Set status to MIA
 				for (int j = 0; j < numBmbs; j++)
 				{
-					bmb[j].tempStatus[muxState + ((auxChannel == AIN2) ? 8 : 0)] = MIA;
+					bmb[j].tempStatus[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = MIA;
 				}
 			}
 		}
@@ -357,7 +382,7 @@ void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3)
 {
 	// First 4 bits set GPIO to output mode
 	// Last 4 bits set GPIO logic state for channels 3, 2, 1, 0 respectively
-	uint16_t data = 0xF000 | (gpio0) | (gpio1 << 1) | (gpio2 << 2) | (gpio3 << 3);
+	uint16_t data = 0xF000 | (gpio3 << 3) | (gpio2 << 2) | (gpio1 << 1) | (gpio0);
 	writeAll(GPIO, data, numBmbs);
 
 	// Update Mux state depending on only GPIO settings 0, 1, 2

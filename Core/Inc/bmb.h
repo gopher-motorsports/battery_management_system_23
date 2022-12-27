@@ -35,9 +35,6 @@
 #define CONVERT_14BIT_TO_60V	0.0036621f
 
 
-#define DATA_REFRESH_DELAY_MILLIS 1000
-
-
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
 /* ==================================================================== */
@@ -61,7 +58,7 @@ typedef enum
 	MUX7,
 	MUX8,
 	NUM_MUX_CHANNELS
-} Mux_State;
+} Mux_State_E;
 
 
 /* ==================================================================== */
@@ -121,13 +118,13 @@ bool initASCI(uint32_t *numBmbs);
 void initBmbs(uint32_t numBmbs);
 
 // TODO update description
-void cyclicUpdateBMBData(Bmb_S* bmb, uint32_t numBmbs);
+void updateBmbData(Bmb_S* bmb, uint32_t numBmbs);
 
 // TODO update description
-void updateBMBVoltageData(Bmb_S* bmb, uint32_t numBmbs);
+void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs);
 
 // TODO update description
-void updateBMBTempData(Bmb_S* bmb, uint32_t numBmbs);
+void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs);
 
 void setMux(uint32_t numBmbs, uint8_t muxSetting);
 
