@@ -57,21 +57,22 @@ void runMain()
 	}
 	else if(initialized)
 	{
-		// TODO verify number of BMBs
-		writeAll(ACQCFG, 0xFFFF, numBmbs);
-		// set THRM manual ON
-
 		updateBmbData(gBms.bmb, numBmbs);
+
 		aggregateBrickVoltages(gBms.bmb,numBmbs);
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{
-			// Update lastUpdate
-			lastUpdateMain = HAL_GetTick();
+
+			// Clear console
+			printf("\e[1;1H\e[2J");
 
 			printCellVoltages();
 			printCellTemperatures();
 			printBoardTemperatures();
+
+			// Update lastUpdate
+			lastUpdateMain = HAL_GetTick();
 		}
 
 	}

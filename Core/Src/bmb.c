@@ -10,7 +10,7 @@
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
-#define DATA_REFRESH_DELAY_MS 1000
+#define DATA_REFRESH_DELAY_MS 50
 
 
 /* ==================================================================== */
@@ -156,6 +156,9 @@ void initBmbs(uint32_t numBmbs)
 
 	// Enable measurement channels
 	writeAll(MEASUREEN, 0xFFFF, numBmbs);
+
+	// Manual set THRM HIGH and config settling time
+	writeAll(ACQCFG, 0xFFFF, numBmbs);
 
 	// Reset GPIO to 0 state
 	setGpio(numBmbs, 0, 0, 0, 0);
