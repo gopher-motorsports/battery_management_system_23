@@ -398,7 +398,6 @@ void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3)
 */
 void aggregateBrickVoltages(Bmb_S* bmb, uint32_t numBmbs)
 {
-
 	for (int i = 0; i < numBmbs; i++)
 	{
 		Bmb_S* pBmb = &bmb[i];

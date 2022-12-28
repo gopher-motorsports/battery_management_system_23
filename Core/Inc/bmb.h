@@ -12,7 +12,6 @@
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
-
 #define DEVCFG1		0x10
 #define GPIO 		0x11
 #define MEASUREEN 	0x12
@@ -25,7 +24,6 @@
 
 #define NUM_BRICKS_PER_BMB		12
 #define NUM_BOARD_TEMP_PER_BMB 	4
-#define NUM_BMBS_PER_PACK		1
 
 // 3.3V range & 12 bit reading - 3.3/(2^12) = 805.664 uV/bit
 #define CONVERT_12BIT_TO_3V3	0.000805664f;
@@ -43,7 +41,6 @@ typedef enum
 {
 	SNA = 0,	// Value on startup
 	GOOD,		// Data nominal
-	BAD,		// Data was acquired but isn't trustworthy
 	MIA			// Data wasn't aquired
 } Bmb_Sensor_Status_E;
 
