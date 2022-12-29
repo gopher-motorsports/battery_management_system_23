@@ -37,8 +37,8 @@ const float temperatureArray[33] =
 /* ==================================================================== */
 /* ======================== GLOBAL VARIABLES ========================== */
 /* ==================================================================== */
-LookupTable ntcTable = {tableLength, ntcVoltageArray, temperatureArray};
-LookupTable zenerTable= {tableLength, zenerVoltageArray, temperatureArray};
+LookupTable_S ntcTable = {tableLength, ntcVoltageArray, temperatureArray};
+LookupTable_S zenerTable= {tableLength, zenerVoltageArray, temperatureArray};
 
 
 /* ==================================================================== */
@@ -129,7 +129,7 @@ float interpolate(float x, float x1, float x2, float y1, float y2)
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
 /* ==================================================================== */
-float lookup(float x, const LookupTable* table)
+float lookup(float x, const LookupTable_S* table)
 {
     //Clamp input to bounds of lookup table
     if(x < table->x[0])
@@ -152,4 +152,43 @@ float lookup(float x, const LookupTable* table)
 
     //Interpolate temperature from lookup table
     return interpolate(x, table->x[i], table->x[i+1], table->y[i], table->y[i+1]);
+}
+
+// Binary search function for inserting element in sorted array
+int brickBinarySearch(Brick_S *arr, int l, int r, float v)
+{
+  while (l <= r)
+  {
+    int m = l + (r - l) / 2;
+    if (equals(arr[m].brickV, v))
+    {
+    	return m;
+    }
+    if (arr[m].brickV < v)
+    {
+    	l = m + 1;
+    }
+    else
+    {
+    	r = m - 1;
+    }
+  }
+  return l;
+}
+
+// Insertion sort function for sorting array of structs by float value
+void insertionSort(Brick_S *arr, int numBricks)
+{
+  for (int unsortedIdx = 1; unsortedIdx < numBricks; unsortedIdx++)
+  {
+    Brick_S temp = arr[unsortedIdx];
+    int sortedIdx = unsortedIdx - 1;
+    int pos = brickBinarySearch(arr, 0, sortedIdx, temp.brickV);
+    while (sortedIdx >= pos)
+    {
+      arr[sortedIdx + 1] = arr[sortedIdx];
+      sortedIdx--;
+    }
+    arr[sortedIdx + 1] = temp;
+  }
 }

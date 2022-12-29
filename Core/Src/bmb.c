@@ -430,3 +430,61 @@ void aggregateBrickVoltages(Bmb_S* bmb, uint32_t numBmbs)
 		pBmb->avgBrickV = stackV / NUM_BRICKS_PER_BMB;
 	}
 }
+
+// TODO - add description
+// Sort cells based on highest bleed difference
+void balanceCells(Bmb_S* bmb, uint32_t numBmbs)
+{
+	for (int bmbIdx = 0; bmbIdx < numBmbs; bmbIdx++)
+	{
+		uint32_t numBricksNeedBalancing = 0;
+		Brick_S bricksToBalance[NUM_BRICKS_PER_BMB];
+		// Add all bricks that need balancing to array
+		for (int brickIdx = 0; brickIdx < NUM_BRICKS_PER_BMB; brickIdx++)
+		{
+			if (bmb[bmbIdx].balSwRequested[brickIdx])
+			{
+				// Brick needs to be balanced, add to array
+				bricksToBalance[numBricksNeedBalancing++] = (Brick_S) { .brickIdx = brickIdx, .brickV = bmb[bmbIdx].brickV[brickIdx] };
+			}
+		}
+		// Sort array of bricks that need balancing by their voltage
+		insertionSort(bricksToBalance, numBricksNeedBalancing);
+		// Clear all balance switches
+		memset(bmb[bmbIdx].balSwEnabled, 0, NUM_BRICKS_PER_BMB * sizeof(bool));
+
+		for (int i = numBricksNeedBalancing - 1; i >= 0; i--)
+		{
+			// For each brick that needs balancing ensure that the neighboring bricks aren't being bled
+			Brick_S brick = bricksToBalance[i];
+			int leftIdx = brick.brickIdx - 1;
+			int rightIdx = brick.brickIdx + 1;
+			bool leftNotBalancing = false;
+			bool rightNotBalancing = false;
+			if (leftIdx < 0)
+			{
+				leftNotBalancing = true;
+			}
+			else if (!bmb[bmbIdx].balSwEnabled[leftIdx])
+			{
+				leftNotBalancing = true;
+			}
+
+			if (rightIdx >= NUM_BRICKS_PER_BMB)
+			{
+				rightNotBalancing = true;
+			}
+			else if (!bmb[bmbIdx].balSwEnabled[rightIdx])
+			{
+				rightNotBalancing = true;
+			}
+
+			if (leftNotBalancing && rightNotBalancing)
+			{
+				bmb[bmbIdx].balSwEnabled[brick.brickIdx] = true;
+			}
+		}
+	}
+
+}
+

@@ -92,8 +92,11 @@ typedef struct
 
 	float aux1;
 	float aux2;
-	// add gpio mode
 
+	// Balancing Configuration
+	// TODO - update description
+	bool balSwRequested[NUM_BRICKS_PER_BMB];	// Set by BMS to determine which cells need to be balanced
+	bool balSwEnabled[NUM_BRICKS_PER_BMB];		// Set by BMB based on ability to balance in hardware
 } Bmb_S;
 
 
@@ -133,6 +136,9 @@ void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3);
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
 void aggregateBrickVoltages(Bmb_S* bmb,uint32_t numBmbs);
+
+// TODO update description
+void balanceCells(Bmb_S* bmb, uint32_t numBmbs);
 
 
 #endif /* INC_BMB_H_ */
