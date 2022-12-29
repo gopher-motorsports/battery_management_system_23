@@ -484,6 +484,19 @@ void balanceCells(Bmb_S* bmb, uint32_t numBmbs)
 				bmb[bmbIdx].balSwEnabled[brick.brickIdx] = true;
 			}
 		}
+
+		writeDevice(WATCHDOG, 0x1F00, bmbIdx);
+		uint16_t balanceSwEnabled = 0x0000;
+		uint16_t mask = 0x0001;
+		for (int i = 0; i < NUM_BRICKS_PER_BMB; i++)
+		{
+			if (bmb[bmbIdx].balSwEnabled[i])
+			{
+				balanceSwEnabled |= mask;
+			}
+			mask = mask << 1;
+		}
+		writeDevice(BALSWEN, balanceSwEnabled, bmbIdx);
 	}
 
 }

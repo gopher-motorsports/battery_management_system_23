@@ -16,7 +16,9 @@
 #define GPIO 		0x11
 #define MEASUREEN 	0x12
 #define SCANCTRL	0x13
+#define WATCHDOG	0x18
 #define ACQCFG		0x19
+#define BALSWEN		0x1A
 #define CELLn		0x20
 #define VBLOCK		0x2C
 #define AIN1		0x2D
