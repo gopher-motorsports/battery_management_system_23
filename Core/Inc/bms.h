@@ -32,6 +32,6 @@ typedef struct
 /* ==================================================================== */
 void initBatteryPack(uint32_t numBmbs);
 
-
+void tempBalance(uint32_t numBmbs);
 
 #endif /* INC_BMS_H_ */

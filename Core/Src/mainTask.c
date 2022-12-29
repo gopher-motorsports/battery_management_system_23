@@ -67,6 +67,8 @@ void runMain()
 			// Clear console
 			printf("\e[1;1H\e[2J");
 
+			tempBalance(numBmbs);
+
 			printCellVoltages();
 			printCellTemperatures();
 			printBoardTemperatures();
