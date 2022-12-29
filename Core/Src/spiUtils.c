@@ -465,16 +465,16 @@ bool writeAll(uint8_t address, uint16_t value, uint32_t numBmbs)
 	{
 		bool writeAllSuccess = true;
 
-		sendBuffer[0] = CMD_WR_LD_Q_L0;
-		sendBuffer[1] = 0x06;			// Data length
-		sendBuffer[2] = CMD_WRITE_ALL;
-		sendBuffer[3] = address;
+		sendBuffer[0] = CMD_WR_LD_Q_L0;	// Command for ASCI
+		sendBuffer[1] = 0x06;			// Data length for ASCI
+		sendBuffer[2] = CMD_WRITE_ALL;	// Command byte for BMBs
+		sendBuffer[3] = address;		// Register Address for BMBs
 		sendBuffer[4] = (uint8_t)(value & 0x00FF);	// LSB
 		sendBuffer[5] = (uint8_t)(value >> 8);		// MSB
 
 		const uint8_t crc = calcCrc(&sendBuffer[2], 4);	// Calculate CRC on data after CMD
-		sendBuffer[6] = crc;
-		sendBuffer[7] = 0x00;			// Alive counter seed value
+		sendBuffer[6] = crc;			// PEC byte
+		sendBuffer[7] = 0x00;			// Alive counter seed value for BMBs
 
 		// Send command to ASCI and verify data integrity
 		if(!loadAndVerifyTxQueue(sendBuffer, numDataBytes))
@@ -517,10 +517,82 @@ bool writeAll(uint8_t address, uint16_t value, uint32_t numBmbs)
 }
 
 /*!
+  @brief   Write data to register on single BMB
+  @param   address - BMB register address to write to
+  @param   value - Value to write to BMB register
+  @param   bmbIndex - The index of the target BMB to write to
+  @return  True if success, false otherwise
+*/
+bool writeDevice(uint8_t address, uint16_t value, uint32_t bmbIndex)
+{
+	uint32_t numDataBytes = 8;		// Number of bytes to be send for writeDevice command
+	uint8_t recvBuffer[numDataBytes];
+	memset(recvBuffer, 0, numDataBytes * sizeof(uint8_t));
+	uint8_t sendBuffer[numDataBytes];
+	memset(sendBuffer, 0, numDataBytes * sizeof(uint8_t));
+
+	uint8_t bmbAddress = (bmbIndex << 3) | 0b100;
+
+	for (int i = 0; i < NUM_DATA_CHECKS; i++)
+	{
+		bool writeDeviceSuccess = true;
+
+		sendBuffer[0] = CMD_WR_LD_Q_L0;	// Command for ASCI
+		sendBuffer[1] = 0x06;			// Data length for ASCI
+		sendBuffer[2] = bmbAddress;		// Command byte for BMBs
+		sendBuffer[3] = address;		// Register address for BMBs
+		sendBuffer[4] = (uint8_t)(value & 0x00FF);	// LSB
+		sendBuffer[5] = (uint8_t)(value >> 8);		// MSB
+
+		const uint8_t crc = calcCrc(&sendBuffer[2], 4);	// Calculate CRC on data after CMD
+		sendBuffer[6] = crc;			// PEC byte
+		sendBuffer[7] = 0x00;			// Alive counter seed value
+
+		// Send command to ASCI and verify data integrity
+		if(!loadAndVerifyTxQueue(sendBuffer, numDataBytes))
+		{
+			break;
+		}
+
+		writeRxIntStop(true);
+		clearRxIntFlags();
+
+		sendSPI(CMD_WR_NXT_LD_Q_L0);
+		if (!(xSemaphoreTake(binSemHandle, 10) == pdTRUE))
+		{
+			printf("Interrupt failed to occur during WRITEDEVICE\n");
+			break;
+		}
+
+		// Read next SPI message. We don't need the first two bytes (CMD_WR_LD_Q and data length)
+		readNextSpiMessage(recvBuffer, numDataBytes-2);
+
+		if (rxErrorsExist())
+		{
+			break;
+		}
+
+		// Verify that the command we sent out matches the command we received
+		// We don't need CMD_WR_LD_Q, data length and alive counter
+		writeDeviceSuccess &= !(bool)memcmp(&sendBuffer[2], &recvBuffer[1], numDataBytes - 3);
+
+		// Verify the alive counter incremented by target device
+		writeDeviceSuccess &= (bool)(recvBuffer[6] == 1);
+
+		if (writeDeviceSuccess)
+		{
+			return true;
+		}
+	}
+	printf("Failed to write Device\n");
+	return false;
+}
+
+/*!
   @brief   Read data from a register on all BMBs
   @param   address - BMB register address to read from
   @param   data_p - Array to read in the data to
-  @param   numBmbs - The number of BMBs we expect to write to
+  @param   numBmbs - The number of BMBs we expect to read from
   @return  True if success, false otherwise
 */
 bool readAll(uint8_t address, uint8_t *data_p, uint32_t numBmbs)
@@ -532,14 +604,14 @@ bool readAll(uint8_t address, uint8_t *data_p, uint32_t numBmbs)
 	for (int i = 0; i < NUM_DATA_CHECKS; i++)
 	{
 		bool readAllSuccess = true;
-		sendBuffer[0] = CMD_WR_LD_Q_L0;
-		sendBuffer[1] = 0x05 + 0x2 * numBmbs;	// Data length
-		sendBuffer[2] = CMD_READ_ALL;
-		sendBuffer[3] = address;
+		sendBuffer[0] = CMD_WR_LD_Q_L0;			// Command for ASCI
+		sendBuffer[1] = 0x05 + (numBmbs * 2);	// Data length for ASCI
+		sendBuffer[2] = CMD_READ_ALL;			// Command byte for BMBs
+		sendBuffer[3] = address;				// Register address for BMBs
 		sendBuffer[4] = 0x00;					// Data check byte
 
-		const uint8_t crc = calcCrc(&sendBuffer[2], 3);
-		sendBuffer[5] = crc;						// PEC byte
+		const uint8_t crc = calcCrc(&sendBuffer[2], 3); // Calculate CRC on data after CMD
+		sendBuffer[5] = crc;					// PEC byte
 		sendBuffer[6] = 0x00;					// Alive counter seed value
 
 		// Send command to ASCI and verify data integrity
@@ -558,7 +630,7 @@ bool readAll(uint8_t address, uint8_t *data_p, uint32_t numBmbs)
 			break;
 		}
 
-		uint32_t numBytesToRead = 5 + (2 * numBmbs);
+		uint32_t numBytesToRead = 5 + (2 * numBmbs); // 5 command bytes + 2 per BMB
 		readNextSpiMessage(data_p, numBytesToRead);
 
 		if (rxErrorsExist())
@@ -581,5 +653,76 @@ bool readAll(uint8_t address, uint8_t *data_p, uint32_t numBmbs)
 		}
 	}
 	printf("Failed to READALL\n");
+	return false;
+}
+
+/*!
+  @brief   Read data from register on single BMB
+  @param   address - BMB register address to read from
+  @param   data_p - Array to read in the data to
+  @param   bmbIndex - The index of the target BMB to read from
+  @return  True if success, false otherwise
+*/
+bool readDevice(uint8_t address, uint8_t *data_p, uint32_t bmbIndex)
+{
+	uint32_t numDataBytes = 7;
+	uint8_t sendBuffer[numDataBytes];
+	memset(sendBuffer, 0, numDataBytes * sizeof(uint8_t));
+
+	uint8_t bmbAddress = (bmbIndex << 3) | 0b101;
+
+	for (int i = 0; i < NUM_DATA_CHECKS; i++)
+	{
+		bool readDeviceSuccess = true;
+		sendBuffer[0] = CMD_WR_LD_Q_L0;	// Command for ASCI
+		sendBuffer[1] = 0x07;			// Data length for ASCI
+		sendBuffer[2] = bmbAddress;		// Command byte for BMBs
+		sendBuffer[3] = address;		// Register address for BMBs
+		sendBuffer[4] = 0x00;			// Data check byte
+
+		const uint8_t crc = calcCrc(&sendBuffer[2], 3); // Calculate CRC on data after CMD
+		sendBuffer[5] = crc;			// PEC byte
+		sendBuffer[6] = 0x00;			// Alive counter seed value
+
+		// Send command to ASCI and verify data integrity
+		if(!loadAndVerifyTxQueue(sendBuffer, 7))
+		{
+			break;
+		}
+
+		writeRxIntStop(true);
+		clearRxIntFlags();
+
+		sendSPI(CMD_WR_NXT_LD_Q_L0);
+		if (!(xSemaphoreTake(binSemHandle, 10) == pdTRUE))
+		{
+			printf("Interrupt failed to occur during READALL\n");
+			break;
+		}
+
+		uint32_t numBytesToRead = 7; // 5 command bytes + 2 data bytes
+		readNextSpiMessage(data_p, numBytesToRead);
+
+		if (rxErrorsExist())
+		{
+			break;
+		}
+
+		// Calculate CRC code based on received data
+		const uint8_t calculatedCrc = calcCrc(&data_p[1], 5);
+		uint8_t recvCrc = data_p[6];
+
+		// Verify data CRC
+		readDeviceSuccess &= (calculatedCrc == recvCrc);
+
+		// Verify Alive-counter byte
+		readDeviceSuccess &= (data_p[7] == 1);
+
+		if (readDeviceSuccess)
+		{
+			return true;
+		}
+	}
+	printf("Failed to READDEVICE\n");
 	return false;
 }

@@ -228,13 +228,31 @@ bool readNextSpiMessage(uint8_t *data_p, uint32_t numBytesToRead);
 bool writeAll(uint8_t address, uint16_t value, uint32_t numBmbs);
 
 /*!
+  @brief   Write data to a register on single a BMB
+  @param   address - BMB register address to write to
+  @param   value - Value to write to BMB register
+  @param   bmbIndex - The index of the target BMB to write to
+  @return  True if success, false otherwise
+*/
+bool writeDevice(uint8_t address, uint16_t value, uint32_t bmbIndex);
+
+/*!
   @brief   Read data from a register on all BMBs
   @param   address - BMB register address to read from
   @param   data_p - Array to read in the data to
-  @param   numBmbs - The number of BMBs we expect to write to
+  @param   numBmbs - The number of BMBs we expect to read from
   @return  True if success, false otherwise
 */
 bool readAll(uint8_t address, uint8_t *data_p, uint32_t numBmbs);
+
+/*!
+  @brief   Read data from a register on a single BMB
+  @param   address - BMB register address to read from
+  @param   data_p - Array to read in the data to
+  @param   bmbIndex - The index of the target BMB to read from
+  @return  True if success, false otherwise
+*/
+bool readDevice(uint8_t address, uint8_t *data_p, uint32_t bmbIndex);
 
 
 #endif /* INC_SPIUTILS_H_ */
