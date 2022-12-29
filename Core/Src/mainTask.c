@@ -100,7 +100,16 @@ void printCellVoltages()
 		printf("|    %02d   |", i + 1);
 		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
-			printf("  %5.3f  |", gBms.bmb[i].brickV[j]);
+			printf("  %5.3f", gBms.bmb[i].brickV[j]);
+			if(gBms.bmb[i].balSwEnabled[j])
+			{
+				printf("*");
+			}
+			else
+			{
+				printf(" ");
+			}
+			printf(" |");
 		}
 		printf("  %5.2f  |", gBms.bmb[i].stackV);
 		printf("\n");
