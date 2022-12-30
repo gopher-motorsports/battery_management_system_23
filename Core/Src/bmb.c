@@ -10,7 +10,7 @@
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
-#define DATA_REFRESH_DELAY_MS 50
+#define DATA_REFRESH_DELAY_MS 100
 
 
 /* ==================================================================== */
@@ -149,9 +149,9 @@ bool initASCI(uint32_t *numBmbs)
 //TODO make this return bool
 void initBmbs(uint32_t numBmbs)
 {
+	// TODO - do we want to read the register contents back and verify values?
 	// Enable alive counter byte
 	// numBmbs set to 0 since alive counter not yet enabled
-
 	writeAll(DEVCFG1, 0x1042, 0);
 
 	// Enable measurement channels
@@ -160,8 +160,18 @@ void initBmbs(uint32_t numBmbs)
 	// Manual set THRM HIGH and config settling time
 	writeAll(ACQCFG, 0xFFFF, numBmbs);
 
+	// Enable 5ms delay between balancing and aquisition
+	writeAll(AUTOBALSWDIS, 0x0033, numBmbs);
+
 	// Reset GPIO to 0 state
 	setGpio(numBmbs, 0, 0, 0, 0);
+
+
+	// Start initial acquisition
+	if(!writeAll(SCANCTRL, 0x0841, numBmbs))
+	{
+		printf("SHIT!\n");
+	}
 
 	// Set brickOV voltage alert threshold
 	// Set brickUV voltage alert threshold
@@ -175,10 +185,27 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		// Update lastUpdate
 		lastUpdate = HAL_GetTick();
 
-		// Start acquisition
-		if(!writeAll(SCANCTRL, 0x0001, numBmbs))
+		// Verify that Scan completed successfully
+		if (readAll(SCANCTRL, recvBuffer, numBmbs))
 		{
-			printf("SHIT!\n");
+			bool allBmbScanDone = true;
+			for (uint8_t j = 0; j < numBmbs; j++)
+			{
+				// Read brick voltage in [15:2]
+				uint16_t scanCtrlData = (recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j];
+				allBmbScanDone &= !!(scanCtrlData & 0xA000);
+			}
+			if (!allBmbScanDone)
+			{
+				printf("All BMB Scans failed to complete in time\n");
+				return;
+			}
+		}
+		else
+		{
+			// TODO - improve this. Handle failure correctly
+			printf("Failed to read SCANCTRL register\n");
+			return;
 		}
 
 		// Update cell data
@@ -268,6 +295,12 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 
 		// Cycle to next MUX configuration
 		setMux(numBmbs, (muxState + 1) % NUM_MUX_CHANNELS);
+
+		// Start acquisition for next function call with 32 oversamples and AUTOBALSWDIS
+		if(!writeAll(SCANCTRL, 0x0841, numBmbs))
+		{
+			printf("SHIT!\n");
+		}
 	}
 }
 

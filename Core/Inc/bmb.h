@@ -12,17 +12,18 @@
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
-#define DEVCFG1		0x10
-#define GPIO 		0x11
-#define MEASUREEN 	0x12
-#define SCANCTRL	0x13
-#define WATCHDOG	0x18
-#define ACQCFG		0x19
-#define BALSWEN		0x1A
-#define CELLn		0x20
-#define VBLOCK		0x2C
-#define AIN1		0x2D
-#define AIN2		0x2E
+#define AUTOBALSWDIS	0x0C
+#define DEVCFG1			0x10
+#define GPIO 			0x11
+#define MEASUREEN 		0x12
+#define SCANCTRL		0x13
+#define WATCHDOG		0x18
+#define ACQCFG			0x19
+#define BALSWEN			0x1A
+#define CELLn			0x20
+#define VBLOCK			0x2C
+#define AIN1			0x2D
+#define AIN2			0x2E
 
 #define NUM_BRICKS_PER_BMB		12
 #define NUM_BOARD_TEMP_PER_BMB 	4

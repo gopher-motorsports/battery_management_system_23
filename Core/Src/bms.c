@@ -19,35 +19,50 @@ void updatePackData(uint32_t numBmbs)
 	// TODO - call underlying bmb.c functions
 }
 
-void tempBalance(uint32_t numBmbs)
+void tempBalance(uint32_t numBmbs, bool balance)
 {
 	Bms_S* pBms = &gBms;
 
-	float targetVoltage = 5.0f;
-
-	for (int i = 0; i < numBmbs; i++)
+	if (balance)
 	{
-		if (pBms->bmb[i].minBrickV + 0.001f < targetVoltage)
-		{
-			targetVoltage = pBms->bmb[i].minBrickV + 0.001f;
-		}
-	}
+		float targetVoltage = 5.0f;
 
-	for (int i = 0; i < numBmbs; i++)
-	{
-		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
+		for (int i = 0; i < numBmbs; i++)
 		{
-			if (pBms->bmb[i].brickV[j] > targetVoltage)
+			if (pBms->bmb[i].minBrickV + 0.005f < targetVoltage)
 			{
-				pBms->bmb[i].balSwRequested[j] = true;
+				targetVoltage = pBms->bmb[i].minBrickV + 0.005f;
 			}
-			else
+		}
+
+		for (int i = 0; i < numBmbs; i++)
+		{
+			for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
+			{
+				if (pBms->bmb[i].brickV[j] > targetVoltage)
+				{
+					pBms->bmb[i].balSwRequested[j] = true;
+				}
+				else
+				{
+					pBms->bmb[i].balSwRequested[j] = false;
+				}
+			}
+		}
+		balanceCells(pBms->bmb, numBmbs);
+	}
+	else
+	{
+		for (int i = 0; i < numBmbs; i++)
+		{
+			for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
 			{
 				pBms->bmb[i].balSwRequested[j] = false;
 			}
 		}
+		balanceCells(pBms->bmb, numBmbs);
 	}
-	balanceCells(pBms->bmb, numBmbs);
+
 }
 
 
