@@ -29,9 +29,9 @@ void tempBalance(uint32_t numBmbs, bool balance)
 
 		for (int i = 0; i < numBmbs; i++)
 		{
-			if (pBms->bmb[i].minBrickV + 0.005f < targetVoltage)
+			if (pBms->bmb[i].minBrickV + BALANCE_THRESHOLD < targetVoltage)
 			{
-				targetVoltage = pBms->bmb[i].minBrickV + 0.005f;
+				targetVoltage = pBms->bmb[i].minBrickV + BALANCE_THRESHOLD;
 			}
 		}
 
@@ -49,7 +49,6 @@ void tempBalance(uint32_t numBmbs, bool balance)
 				}
 			}
 		}
-		balanceCells(pBms->bmb, numBmbs);
 	}
 	else
 	{
@@ -60,9 +59,8 @@ void tempBalance(uint32_t numBmbs, bool balance)
 				pBms->bmb[i].balSwRequested[j] = false;
 			}
 		}
-		balanceCells(pBms->bmb, numBmbs);
 	}
-
+	balanceCells(pBms->bmb, numBmbs);
 }
 
 

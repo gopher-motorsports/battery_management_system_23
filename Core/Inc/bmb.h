@@ -6,12 +6,23 @@
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
 #include <stdio.h>
+#include <stdint.h>
 #include <stdbool.h>
 
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
+#define VERSION			0x00
+#define ADDRESS			0x01
+#define STATUS			0x02
+#define FMEA1			0x03
+#define ALRTCELL		0x04
+#define ALRTOVCELL		0x05
+#define ALRTUVCELL		0x07
+#define ALRTBALSW		0x08
+#define MINMAXCELL		0x0A
+#define FMEA2			0x0B
 #define AUTOBALSWDIS	0x0C
 #define DEVCFG1			0x10
 #define GPIO 			0x11
