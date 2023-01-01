@@ -29,9 +29,9 @@ void tempBalance(uint32_t numBmbs, bool balance)
 
 		for (int i = 0; i < numBmbs; i++)
 		{
-			if (pBms->bmb[i].minBrickV + BALANCE_THRESHOLD < targetVoltage)
+			if (pBms->bmb[i].minBrickV + BALANCE_THRESHOLD_V < targetVoltage)
 			{
-				targetVoltage = pBms->bmb[i].minBrickV + BALANCE_THRESHOLD;
+				targetVoltage = pBms->bmb[i].minBrickV + BALANCE_THRESHOLD_V;
 			}
 		}
 

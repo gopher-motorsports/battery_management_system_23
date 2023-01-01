@@ -14,8 +14,10 @@
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
+// The number of BMBs per battery pack
 #define NUM_BMBS_PER_PACK		1
-#define BALANCE_THRESHOLD		0.002f
+// Max allowable voltage difference between bricks for balancing
+#define BALANCE_THRESHOLD_V		0.002f
 
 
 /* ==================================================================== */
