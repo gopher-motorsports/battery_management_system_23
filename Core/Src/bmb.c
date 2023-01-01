@@ -178,6 +178,12 @@ void initBmbs(uint32_t numBmbs)
 
 }
 
+/*!
+  @brief   Update BMB voltages and temperature data. Once new data gathered start new
+		   data acquisition scan
+  @param   bmb - BMB array data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
 void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 {
 	if((HAL_GetTick() - lastUpdate) >= DATA_REFRESH_DELAY_MS)
@@ -304,7 +310,12 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 	}
 }
 
-
+/*!
+  @brief   Only update voltage data on BMBs
+  @param   bmb - BMB array data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
+// This should probably be rewritten
 void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 {
 	// Start acquisition
@@ -361,6 +372,11 @@ void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 	// TODO Add check - Compare VBLOCK with sum of brick voltages
 }
 
+/*!
+  @brief   Read all temperature channels on BMB
+  @param   bmb - BMB array data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
 void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs)
 {
 	// Cycle through MUX channels
@@ -404,6 +420,11 @@ void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs)
 	}
 }
 
+/*!
+  @brief   Set a given mux configuration on all BMBs
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+  @param   muxSetting - What mux setting should be used
+*/
 void setMux(uint32_t numBmbs, uint8_t muxSetting)
 {
 	bool gpio[3];
@@ -414,6 +435,14 @@ void setMux(uint32_t numBmbs, uint8_t muxSetting)
 	setGpio(numBmbs, gpio[0], gpio[1], gpio[2], gpio3State); // Currently sets GPIO 4 to 0 when updating MUX
 }
 
+/*!
+  @brief   Set the GPIO pins on the BMBs
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+  @param   gpio0 - True if GPIO should be high, false otherwise
+  @param   gpio1 - True if GPIO should be high, false otherwise
+  @param   gpio2 - True if GPIO should be high, false otherwise
+  @param   gpio3 - True if GPIO should be high, false otherwise
+*/
 void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3)
 {
 	// First 4 bits set GPIO to output mode
@@ -430,6 +459,7 @@ void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3)
 
 /*!
   @brief   Update BMB data statistics. Min/Max/Avg
+  @param   bmb - The array containing BMB data
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
 void aggregateBrickVoltages(Bmb_S* bmb, uint32_t numBmbs)
@@ -464,10 +494,18 @@ void aggregateBrickVoltages(Bmb_S* bmb, uint32_t numBmbs)
 	}
 }
 
-// TODO - add description
-// Sort cells based on highest bleed difference
+/*!
+  @brief   Handles balancing the cells based on BMS control
+  @param   bmb - The array containing BMB data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
 void balanceCells(Bmb_S* bmb, uint32_t numBmbs)
 {
+	// To determine cell balancing priority add all cells that need to be balanced to an array
+	// Sort this array by cell voltage. We always want to balance the highest cell voltage. 
+	// Iterate through the array starting with the highest voltage and enable balancing switch
+	// if neighboring cells aren't being balanced. This is due to the circuit not allowing 
+	// neighboring cells to be balanced. 
 	for (int bmbIdx = 0; bmbIdx < numBmbs; bmbIdx++)
 	{
 		uint32_t numBricksNeedBalancing = 0;
@@ -517,8 +555,8 @@ void balanceCells(Bmb_S* bmb, uint32_t numBmbs)
 				bmb[bmbIdx].balSwEnabled[brick.brickIdx] = true;
 			}
 		}
-
-		writeDevice(WATCHDOG, 0x1F00, bmbIdx);
+		// Set cell balancing watchdog timeout to 5s
+		writeDevice(WATCHDOG, 0x1500, bmbIdx);
 		uint16_t balanceSwEnabled = 0x0000;
 		uint16_t mask = 0x0001;
 		for (int i = 0; i < NUM_BRICKS_PER_BMB; i++)
@@ -529,8 +567,8 @@ void balanceCells(Bmb_S* bmb, uint32_t numBmbs)
 			}
 			mask = mask << 1;
 		}
+		// Update the balance switches on the relevant BMB
 		writeDevice(BALSWEN, balanceSwEnabled, bmbIdx);
 	}
 
 }
-

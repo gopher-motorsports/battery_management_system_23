@@ -131,27 +131,57 @@ bool initASCI(uint32_t *numBmbs);
 */
 void initBmbs(uint32_t numBmbs);
 
-// TODO update description
+/*!
+  @brief   Update BMB voltages and temperature data. Once new data gathered start new
+		   data acquisition scan
+  @param   bmb - BMB array data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
 void updateBmbData(Bmb_S* bmb, uint32_t numBmbs);
 
-// TODO update description
+/*!
+  @brief   Only update voltage data on BMBs
+  @param   bmb - BMB array data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
 void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs);
 
-// TODO update description
+/*!
+  @brief   Read all temperature channels on BMB
+  @param   bmb - BMB array data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
 void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs);
 
+/*!
+  @brief   Set a given mux configuration on all BMBs
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+  @param   muxSetting - What mux setting should be used
+*/
 void setMux(uint32_t numBmbs, uint8_t muxSetting);
 
-// TODO update description
+/*!
+  @brief   Set the GPIO pins on the BMBs
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+  @param   gpio0 - True if GPIO should be high, false otherwise
+  @param   gpio1 - True if GPIO should be high, false otherwise
+  @param   gpio2 - True if GPIO should be high, false otherwise
+  @param   gpio3 - True if GPIO should be high, false otherwise
+*/
 void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3);
 
 /*!
   @brief   Update BMB data statistics. Min/Max/Avg
+  @param   bmb - The array containing BMB data
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
 void aggregateBrickVoltages(Bmb_S* bmb,uint32_t numBmbs);
 
-// TODO update description
+/*!
+  @brief   Handles balancing the cells based on BMS control
+  @param   bmb - The array containing BMB data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
 void balanceCells(Bmb_S* bmb, uint32_t numBmbs);
 
 
