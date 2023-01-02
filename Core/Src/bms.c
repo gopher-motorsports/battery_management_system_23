@@ -123,5 +123,3 @@ void aggregatePackData(uint32_t numBmbs)
 	pBms->minBrickTemp = minBrickTemp;
 	pBms->avgBrickTemp = avgBrickTempSum / NUM_BMBS_PER_PACK;
 }
-
-
