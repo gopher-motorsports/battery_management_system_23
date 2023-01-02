@@ -18,20 +18,28 @@ typedef struct
     const uint32_t length;
     const float* x;			// Pointer to x array
     const float* y;			// Pointer to y array
-} LookupTable;
+} LookupTable_S;
+
+typedef struct
+{
+	int brickIdx;
+	float brickV;
+} Brick_S;
 
 /* ==================================================================== */
 /* ======================= EXTERNAL VARIABLES ========================= */
 /* ==================================================================== */
-extern LookupTable ntcTable;
-extern LookupTable zenerTable;
+extern LookupTable_S ntcTable;
+extern LookupTable_S zenerTable;
 
 
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */
 /* ==================================================================== */
 // TODO - add description
-float lookup(float x, const LookupTable* table);
+float lookup(float x, const LookupTable_S* table);
+
+void insertionSort(Brick_S *arr, int numBricks);
 
 
 

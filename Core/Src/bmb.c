@@ -10,7 +10,7 @@
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
-#define DATA_REFRESH_DELAY_MS 50
+#define DATA_REFRESH_DELAY_MS 100
 
 
 /* ==================================================================== */
@@ -149,9 +149,9 @@ bool initASCI(uint32_t *numBmbs)
 //TODO make this return bool
 void initBmbs(uint32_t numBmbs)
 {
+	// TODO - do we want to read the register contents back and verify values?
 	// Enable alive counter byte
 	// numBmbs set to 0 since alive counter not yet enabled
-
 	writeAll(DEVCFG1, 0x1042, 0);
 
 	// Enable measurement channels
@@ -160,14 +160,30 @@ void initBmbs(uint32_t numBmbs)
 	// Manual set THRM HIGH and config settling time
 	writeAll(ACQCFG, 0xFFFF, numBmbs);
 
+	// Enable 5ms delay between balancing and aquisition
+	writeAll(AUTOBALSWDIS, 0x0033, numBmbs);
+
 	// Reset GPIO to 0 state
 	setGpio(numBmbs, 0, 0, 0, 0);
+
+
+	// Start initial acquisition with 32 oversamples
+	if(!writeAll(SCANCTRL, 0x0841, numBmbs))
+	{
+		printf("SHIT!\n");
+	}
 
 	// Set brickOV voltage alert threshold
 	// Set brickUV voltage alert threshold
 
 }
 
+/*!
+  @brief   Update BMB voltages and temperature data. Once new data gathered start new
+		   data acquisition scan
+  @param   bmb - BMB array data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
 void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 {
 	if((HAL_GetTick() - lastUpdate) >= DATA_REFRESH_DELAY_MS)
@@ -175,10 +191,27 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		// Update lastUpdate
 		lastUpdate = HAL_GetTick();
 
-		// Start acquisition
-		if(!writeAll(SCANCTRL, 0x0001, numBmbs))
+		// Verify that Scan completed successfully
+		if (readAll(SCANCTRL, recvBuffer, numBmbs))
 		{
-			printf("SHIT!\n");
+			bool allBmbScanDone = true;
+			for (uint8_t j = 0; j < numBmbs; j++)
+			{
+				// Read brick voltage in [15:2]
+				uint16_t scanCtrlData = (recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j];
+				allBmbScanDone &= ((scanCtrlData & 0xA000) == 0xA000);	// Verify SCANDONE and DATARDY bits
+			}
+			if (!allBmbScanDone)
+			{
+				printf("All BMB Scans failed to complete in time\n");
+				return;
+			}
+		}
+		else
+		{
+			// TODO - improve this. Handle failure correctly
+			printf("Failed to read SCANCTRL register\n");
+			return;
 		}
 
 		// Update cell data
@@ -229,8 +262,6 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			}
 		}
 
-		// TODO Add check - Compare VBLOCK with sum of brick voltages
-
 		// Read AUX/TEMP registers
 		for (int auxChannel = AIN1; auxChannel <= AIN2; auxChannel++)
 		{
@@ -268,10 +299,21 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 
 		// Cycle to next MUX configuration
 		setMux(numBmbs, (muxState + 1) % NUM_MUX_CHANNELS);
+
+		// Start acquisition for next function call with 32 oversamples and AUTOBALSWDIS
+		if(!writeAll(SCANCTRL, 0x0841, numBmbs))
+		{
+			printf("SHIT!\n");
+		}
 	}
 }
 
-
+/*!
+  @brief   Only update voltage data on BMBs
+  @param   bmb - BMB array data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
+// This should probably be rewritten
 void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 {
 	// Start acquisition
@@ -328,6 +370,11 @@ void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 	// TODO Add check - Compare VBLOCK with sum of brick voltages
 }
 
+/*!
+  @brief   Read all temperature channels on BMB
+  @param   bmb - BMB array data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
 void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs)
 {
 	// Cycle through MUX channels
@@ -371,6 +418,11 @@ void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs)
 	}
 }
 
+/*!
+  @brief   Set a given mux configuration on all BMBs
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+  @param   muxSetting - What mux setting should be used
+*/
 void setMux(uint32_t numBmbs, uint8_t muxSetting)
 {
 	bool gpio[3];
@@ -381,6 +433,14 @@ void setMux(uint32_t numBmbs, uint8_t muxSetting)
 	setGpio(numBmbs, gpio[0], gpio[1], gpio[2], gpio3State); // Currently sets GPIO 4 to 0 when updating MUX
 }
 
+/*!
+  @brief   Set the GPIO pins on the BMBs
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+  @param   gpio0 - True if GPIO should be high, false otherwise
+  @param   gpio1 - True if GPIO should be high, false otherwise
+  @param   gpio2 - True if GPIO should be high, false otherwise
+  @param   gpio3 - True if GPIO should be high, false otherwise
+*/
 void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3)
 {
 	// First 4 bits set GPIO to output mode
@@ -397,6 +457,7 @@ void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3)
 
 /*!
   @brief   Update BMB data statistics. Min/Max/Avg
+  @param   bmb - The array containing BMB data
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
 void aggregateBrickVoltages(Bmb_S* bmb, uint32_t numBmbs)
@@ -429,4 +490,83 @@ void aggregateBrickVoltages(Bmb_S* bmb, uint32_t numBmbs)
 		pBmb->stackV	= stackV;
 		pBmb->avgBrickV = stackV / NUM_BRICKS_PER_BMB;
 	}
+}
+
+/*!
+  @brief   Handles balancing the cells based on BMS control
+  @param   bmb - The array containing BMB data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
+void balanceCells(Bmb_S* bmb, uint32_t numBmbs)
+{
+	// To determine cell balancing priority add all cells that need to be balanced to an array
+	// Sort this array by cell voltage. We always want to balance the highest cell voltage. 
+	// Iterate through the array starting with the highest voltage and enable balancing switch
+	// if neighboring cells aren't being balanced. This is due to the circuit not allowing 
+	// neighboring cells to be balanced. 
+	for (int bmbIdx = 0; bmbIdx < numBmbs; bmbIdx++)
+	{
+		uint32_t numBricksNeedBalancing = 0;
+		Brick_S bricksToBalance[NUM_BRICKS_PER_BMB];
+		// Add all bricks that need balancing to array
+		for (int brickIdx = 0; brickIdx < NUM_BRICKS_PER_BMB; brickIdx++)
+		{
+			if (bmb[bmbIdx].balSwRequested[brickIdx])
+			{
+				// Brick needs to be balanced, add to array
+				bricksToBalance[numBricksNeedBalancing++] = (Brick_S) { .brickIdx = brickIdx, .brickV = bmb[bmbIdx].brickV[brickIdx] };
+			}
+		}
+		// Sort array of bricks that need balancing by their voltage
+		insertionSort(bricksToBalance, numBricksNeedBalancing);
+		// Clear all balance switches
+		memset(bmb[bmbIdx].balSwEnabled, 0, NUM_BRICKS_PER_BMB * sizeof(bool));
+
+		for (int i = numBricksNeedBalancing - 1; i >= 0; i--)
+		{
+			// For each brick that needs balancing ensure that the neighboring bricks aren't being bled
+			Brick_S brick = bricksToBalance[i];
+			int leftIdx = brick.brickIdx - 1;
+			int rightIdx = brick.brickIdx + 1;
+			bool leftNotBalancing = false;
+			bool rightNotBalancing = false;
+			if (leftIdx < 0)
+			{
+				leftNotBalancing = true;
+			}
+			else if (!bmb[bmbIdx].balSwEnabled[leftIdx])
+			{
+				leftNotBalancing = true;
+			}
+
+			if (rightIdx >= NUM_BRICKS_PER_BMB)
+			{
+				rightNotBalancing = true;
+			}
+			else if (!bmb[bmbIdx].balSwEnabled[rightIdx])
+			{
+				rightNotBalancing = true;
+			}
+
+			if (leftNotBalancing && rightNotBalancing)
+			{
+				bmb[bmbIdx].balSwEnabled[brick.brickIdx] = true;
+			}
+		}
+		// Set cell balancing watchdog timeout to 5s
+		writeDevice(WATCHDOG, 0x1500, bmbIdx);
+		uint16_t balanceSwEnabled = 0x0000;
+		uint16_t mask = 0x0001;
+		for (int i = 0; i < NUM_BRICKS_PER_BMB; i++)
+		{
+			if (bmb[bmbIdx].balSwEnabled[i])
+			{
+				balanceSwEnabled |= mask;
+			}
+			mask = mask << 1;
+		}
+		// Update the balance switches on the relevant BMB
+		writeDevice(BALSWEN, balanceSwEnabled, bmbIdx);
+	}
+
 }

@@ -25,6 +25,9 @@ static bool initialized = false;
 static uint32_t initRetries = 5;
 static uint32_t lastUpdateMain = 0;
 
+static bool balancingEnabled = false;
+static uint32_t lastBalancingUpdate = 0;
+
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
@@ -34,6 +37,26 @@ void printCellTemperatures();
 void printBoardTemperatures();
 
 
+
+
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if (GPIO_Pin == GPIO_PIN_8)
+	{
+		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+		xSemaphoreGiveFromISR(binSemHandle, &xHigherPriorityTaskWoken);
+		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+	}
+	if (GPIO_Pin == B1_Pin)
+	{
+		if (HAL_GetTick() - lastBalancingUpdate > 300)
+		{
+			lastBalancingUpdate = HAL_GetTick();
+			balancingEnabled = !balancingEnabled;
+		}
+	}
+}
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
 /* ==================================================================== */
@@ -66,6 +89,16 @@ void runMain()
 
 			// Clear console
 			printf("\e[1;1H\e[2J");
+
+			if(balancingEnabled)
+			{
+				printf("Balancing Enabled: TRUE\n");
+			}
+			else
+			{
+				printf("Balancing Enabled: FALSE\n");
+			}
+			balancePack(numBmbs, balancingEnabled);
 
 			printCellVoltages();
 			printCellTemperatures();
@@ -100,7 +133,16 @@ void printCellVoltages()
 		printf("|    %02d   |", i + 1);
 		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
-			printf("  %5.3f  |", gBms.bmb[i].brickV[j]);
+			printf("  %5.3f", gBms.bmb[i].brickV[j]);
+			if(gBms.bmb[i].balSwEnabled[j])
+			{
+				printf("*");
+			}
+			else
+			{
+				printf(" ");
+			}
+			printf(" |");
 		}
 		printf("  %5.2f  |", gBms.bmb[i].stackV);
 		printf("\n");

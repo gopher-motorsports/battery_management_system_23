@@ -71,15 +71,15 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
   @brief   Interrupt when ASCI INT Pin interrupt occurs
   @param   GPIO Pin causing interrupt
 */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-	if (GPIO_Pin == GPIO_PIN_8)
-	{
-		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xSemaphoreGiveFromISR(binSemHandle, &xHigherPriorityTaskWoken);
-		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-	}
-}
+//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+//{
+//	if (GPIO_Pin == GPIO_PIN_8)
+//	{
+//		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+//		xSemaphoreGiveFromISR(binSemHandle, &xHigherPriorityTaskWoken);
+//		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+//	}
+//}
 
 
 /* ==================================================================== */

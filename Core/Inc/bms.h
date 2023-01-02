@@ -14,7 +14,10 @@
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
+// The number of BMBs per battery pack
 #define NUM_BMBS_PER_PACK		1
+// Max allowable voltage difference between bricks for balancing
+#define BALANCE_THRESHOLD_V		0.002f
 
 
 /* ==================================================================== */
@@ -32,6 +35,6 @@ typedef struct
 /* ==================================================================== */
 void initBatteryPack(uint32_t numBmbs);
 
-
+void balancePack(uint32_t numBmbs, bool balanceRequested);
 
 #endif /* INC_BMS_H_ */

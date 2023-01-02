@@ -6,21 +6,35 @@
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
 #include <stdio.h>
+#include <stdint.h>
 #include <stdbool.h>
 
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
-#define DEVCFG1		0x10
-#define GPIO 		0x11
-#define MEASUREEN 	0x12
-#define SCANCTRL	0x13
-#define ACQCFG		0x19
-#define CELLn		0x20
-#define VBLOCK		0x2C
-#define AIN1		0x2D
-#define AIN2		0x2E
+#define VERSION			0x00
+#define ADDRESS			0x01
+#define STATUS			0x02
+#define FMEA1			0x03
+#define ALRTCELL		0x04
+#define ALRTOVCELL		0x05
+#define ALRTUVCELL		0x07
+#define ALRTBALSW		0x08
+#define MINMAXCELL		0x0A
+#define FMEA2			0x0B
+#define AUTOBALSWDIS	0x0C
+#define DEVCFG1			0x10
+#define GPIO 			0x11
+#define MEASUREEN 		0x12
+#define SCANCTRL		0x13
+#define WATCHDOG		0x18
+#define ACQCFG			0x19
+#define BALSWEN			0x1A
+#define CELLn			0x20
+#define VBLOCK			0x2C
+#define AIN1			0x2D
+#define AIN2			0x2E
 
 #define NUM_BRICKS_PER_BMB		12
 #define NUM_BOARD_TEMP_PER_BMB 	4
@@ -92,8 +106,10 @@ typedef struct
 
 	float aux1;
 	float aux2;
-	// add gpio mode
 
+	// Balancing Configuration
+	bool balSwRequested[NUM_BRICKS_PER_BMB];	// Set by BMS to determine which cells need to be balanced
+	bool balSwEnabled[NUM_BRICKS_PER_BMB];		// Set by BMB based on ability to balance in hardware
 } Bmb_S;
 
 
@@ -114,25 +130,60 @@ bool initASCI(uint32_t *numBmbs);
 */
 void initBmbs(uint32_t numBmbs);
 
-// TODO update description
+/*!
+  @brief   Update BMB voltages and temperature data. Once new data gathered start new
+		   data acquisition scan
+  @param   bmb - BMB array data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
 void updateBmbData(Bmb_S* bmb, uint32_t numBmbs);
 
-// TODO update description
+/*!
+  @brief   Only update voltage data on BMBs
+  @param   bmb - BMB array data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
+// TODO - see whether or not this can be deleted
 void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs);
 
-// TODO update description
+/*!
+  @brief   Read all temperature channels on BMB
+  @param   bmb - BMB array data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
+// TODO - see whether or not this can be deleted
 void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs);
 
+/*!
+  @brief   Set a given mux configuration on all BMBs
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+  @param   muxSetting - What mux setting should be used
+*/
 void setMux(uint32_t numBmbs, uint8_t muxSetting);
 
-// TODO update description
+/*!
+  @brief   Set the GPIO pins on the BMBs
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+  @param   gpio0 - True if GPIO should be high, false otherwise
+  @param   gpio1 - True if GPIO should be high, false otherwise
+  @param   gpio2 - True if GPIO should be high, false otherwise
+  @param   gpio3 - True if GPIO should be high, false otherwise
+*/
 void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3);
 
 /*!
   @brief   Update BMB data statistics. Min/Max/Avg
+  @param   bmb - The array containing BMB data
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
 void aggregateBrickVoltages(Bmb_S* bmb,uint32_t numBmbs);
+
+/*!
+  @brief   Handles balancing the cells based on BMS control
+  @param   bmb - The array containing BMB data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
+void balanceCells(Bmb_S* bmb, uint32_t numBmbs);
 
 
 #endif /* INC_BMB_H_ */
