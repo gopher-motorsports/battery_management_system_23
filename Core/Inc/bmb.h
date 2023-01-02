@@ -106,7 +106,6 @@ typedef struct
 
 	float maxBoardTemp;
 	float minBoardTemp;
-	float avgBoardTemp;
 
 	float aux1;
 	float aux2;
@@ -176,7 +175,7 @@ void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3);
   @param   bmb - The array containing BMB data
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
-void aggregateBrickVoltages(Bmb_S* bmb,uint32_t numBmbs);
+void aggregateBmbData(Bmb_S* bmb,uint32_t numBmbs);
 
 /*!
   @brief   Handles balancing the cells based on BMS control

@@ -76,7 +76,7 @@ void runMain()
 	{
 		updateBmbData(gBms.bmb, numBmbs);
 
-		aggregateBrickVoltages(gBms.bmb,numBmbs);
+		aggregatePackData(numBmbs);
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{

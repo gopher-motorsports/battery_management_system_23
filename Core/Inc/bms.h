@@ -30,15 +30,39 @@ typedef struct
 {
 	uint32_t numBmbs;
 	Bmb_S bmb[NUM_BMBS_PER_PACK];
+
+	float maxBrickV;
+	float minBrickV;
+	float avgBrickV;
+
+	float maxBrickTemp;
+	float minBrickTemp;
+	float avgBrickTemp;
 } Bms_S;
 
 
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */
 /* ==================================================================== */
-
+/*!
+  @brief   Initialization function for the battery pack
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
 void initBatteryPack(uint32_t numBmbs);
 
+/*!
+  @brief   Handles balancing the battery pack
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+  @param   balanceRequested - True if we want to balance, false otherwise
+*/
 void balancePack(uint32_t numBmbs, bool balanceRequested);
+
+
+/*!
+  @brief   Update BMS data statistics. Min/Max/Avg
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
+void aggregatePackData(uint32_t numBmbs);
+
 
 #endif /* INC_BMS_H_ */
