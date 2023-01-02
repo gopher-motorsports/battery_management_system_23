@@ -108,7 +108,6 @@ typedef struct
 	float aux2;
 
 	// Balancing Configuration
-	// TODO - update description
 	bool balSwRequested[NUM_BRICKS_PER_BMB];	// Set by BMS to determine which cells need to be balanced
 	bool balSwEnabled[NUM_BRICKS_PER_BMB];		// Set by BMB based on ability to balance in hardware
 } Bmb_S;
@@ -144,6 +143,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs);
   @param   bmb - BMB array data
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
+// TODO - see whether or not this can be deleted
 void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs);
 
 /*!
@@ -151,6 +151,7 @@ void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs);
   @param   bmb - BMB array data
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
+// TODO - see whether or not this can be deleted
 void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs);
 
 /*!

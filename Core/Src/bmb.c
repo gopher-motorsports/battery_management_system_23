@@ -167,7 +167,7 @@ void initBmbs(uint32_t numBmbs)
 	setGpio(numBmbs, 0, 0, 0, 0);
 
 
-	// Start initial acquisition
+	// Start initial acquisition with 32 oversamples
 	if(!writeAll(SCANCTRL, 0x0841, numBmbs))
 	{
 		printf("SHIT!\n");
@@ -199,7 +199,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			{
 				// Read brick voltage in [15:2]
 				uint16_t scanCtrlData = (recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j];
-				allBmbScanDone &= !!(scanCtrlData & 0xA000);
+				allBmbScanDone &= ((scanCtrlData & 0xA000) == 0xA000);	// Verify SCANDONE and DATARDY bits
 			}
 			if (!allBmbScanDone)
 			{
@@ -261,8 +261,6 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 				bmb[j].blockVStatus = MIA;
 			}
 		}
-
-		// TODO Add check - Compare VBLOCK with sum of brick voltages
 
 		// Read AUX/TEMP registers
 		for (int auxChannel = AIN1; auxChannel <= AIN2; auxChannel++)
