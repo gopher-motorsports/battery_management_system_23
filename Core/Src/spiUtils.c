@@ -123,7 +123,7 @@ void disableASCI()
 void resetASCI()
 {
 	disableASCI();
-	vTaskDelay(10);
+	vTaskDelay(10 / portTICK_PERIOD_MS);
 	enableASCI();
 }
 
