@@ -7,6 +7,7 @@
 #include "bmb.h"
 #include "bmbInterface.h"
 #include "bmbUtils.h"
+#include "packData.h"
 #include "debug.h"
 
 /* ==================================================================== */
@@ -320,9 +321,9 @@ void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs)
 void setMux(uint32_t numBmbs, uint8_t muxSetting)
 {
 	bool gpio[3];
-	for(int i = 0; i < 3; i++)
+	for (int i = 0; i < 3; i++)
 	{
-		gpio[i] = (muxSetting >> i) & 1;
+		gpio[i] = (muxSetting >> i) & 0x0001;
 	}
 	setGpio(numBmbs, gpio[0], gpio[1], gpio[2], gpio3State); // Currently sets GPIO 4 to 0 when updating MUX
 }
@@ -360,11 +361,11 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 	for (int i = 0; i < numBmbs; i++)
 	{
 		Bmb_S* pBmb = &bmb[i];
-		float maxBrickV = 0.0f;
-		float minBrickV = 5.0f;
+		float maxBrickV = MIN_VOLTAGE_SENSOR_VALUE_V;
+		float minBrickV = MAX_VOLTAGE_SENSOR_VALUE_V;
 		float stackV	= 0.0f;
-		float maxBrickTemp = -200.0f;
-		float minBrickTemp = 200.0f;
+		float maxBrickTemp = MIN_TEMP_SENSOR_VALUE_C;
+		float minBrickTemp = MAX_TEMP_SENSOR_VALUE_C;
 		float tempSum	   = 0.0f;
 		// TODO If SNA do not count
 		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)

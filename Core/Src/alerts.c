@@ -2,6 +2,8 @@
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
 #include "alerts.h"
+#include "cellData.h"
+#include "packData.h"
 
 
 AlertStatus_E alertStatus(Alert_S* alert)
@@ -60,14 +62,31 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
     }
 }
 
-bool overvoltagePresent(Bms_S *bms)
+bool overvoltagePresent(Bms_S* bms)
 {
     return (bms->maxBrickV > MAX_BRICK_VOLTAGE);
 }
 
-bool undervoltagePresent(Bms_S *bms)
+bool undervoltagePresent(Bms_S* bms)
 {
     return (bms->minBrickV < MIN_BRICK_VOLTAGE);
+}
+
+bool cellImbalancePresent(Bms_S* bms)
+{
+    float maxCellImbalanceV = bms->maxBrickV - bms->minBrickV;
+
+    return (maxCellImbalanceV > MAX_CELL_IMBALANCE_V);
+}
+
+bool overtemperatureWarningPresent(Bms_S* bms)
+{
+    return (bms->maxBrickTemp > MAX_BRICK_TEMP_WARNING_C);
+}
+
+bool overtemperatureFaultPresent(Bms_S* bms)
+{
+    return (bms->maxBrickTemp > MAX_BRICK_TEMP_FAULT_C);
 }
 
 Alert_S overvoltageAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERVOLTAGE_ALERT_SET_TIME_MS}, 
@@ -75,5 +94,17 @@ Alert_S overvoltageAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S
                             .alertConditionPresent = overvoltagePresent};
 
 Alert_S undervoltageAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, UNDERVOLTAGE_ALERT_SET_TIME_MS}, 
-                            .setTime_MS = UNDERVOLTAGE_ALERT_SET_TIME_MS, .clearTime_MS = UNDERVOLTAGE_ALERT_CLEAR_TIME_MS, 
-                            .alertConditionPresent = undervoltagePresent};
+                             .setTime_MS = UNDERVOLTAGE_ALERT_SET_TIME_MS, .clearTime_MS = UNDERVOLTAGE_ALERT_CLEAR_TIME_MS, 
+                             .alertConditionPresent = undervoltagePresent};
+
+Alert_S cellImbalanceAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, CELL_IMBALANCE_ALERT_SET_TIME_MS}, 
+                              .setTime_MS = CELL_IMBALANCE_ALERT_SET_TIME_MS, .clearTime_MS = CELL_IMBALANCE_ALERT_CLEAR_TIME_MS, 
+                              .alertConditionPresent = cellImbalancePresent};
+
+Alert_S overtemperatureWarningAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERTEMPERATURE_WARNING_ALERT_SET_TIME_MS}, 
+                                       .setTime_MS = OVERTEMPERATURE_WARNING_ALERT_SET_TIME_MS, .clearTime_MS = OVERTEMPERATURE_WARNING_ALERT_CLEAR_TIME_MS, 
+                                       .alertConditionPresent = overtemperatureWarningPresent};
+
+Alert_S overtemperatureFaultAlert   = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS}, 
+                                       .setTime_MS = OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = OVERTEMPERATURE_FAULT_ALERT_CLEAR_TIME_MS, 
+                                       .alertConditionPresent = overtemperatureFaultPresent};
