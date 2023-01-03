@@ -6,6 +6,7 @@
 #include "bmb.h"
 #include "spiUtils.h"
 #include "bmbUtils.h"
+#include "packData.h"
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
@@ -39,11 +40,8 @@ extern osSemaphoreId binSemHandle;
 */
 bool initASCI(uint32_t *numBmbs)
 {
-	disableASCI();
-	HAL_Delay(10);
-	//Test
-	enableASCI();
-	ssOff();
+	resetASCI();
+	csAsciOff();
 	bool successfulConfig = true;
 	// dummy transaction since this chip sucks
 	readRegister(R_CONFIG_3);
@@ -106,7 +104,7 @@ bool initASCI(uint32_t *numBmbs)
 	// Enable RX_Error, RX_Overflow and RX_Stop interrupts
 	successfulConfig &= writeAndVerifyRegister(R_RX_INTERRUPT_ENABLE, 0x8A);
 
-	sendSPI(CMD_WR_NXT_LD_Q_L0);
+	sendAsciSpi(CMD_WR_NXT_LD_Q_L0);
 
 
 	if (!(xSemaphoreTake(binSemHandle, 10) == pdTRUE))
@@ -426,9 +424,9 @@ void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs)
 void setMux(uint32_t numBmbs, uint8_t muxSetting)
 {
 	bool gpio[3];
-	for(int i = 0; i < 3; i++)
+	for (int i = 0; i < 3; i++)
 	{
-		gpio[i] = (muxSetting >> i) & 1;
+		gpio[i] = (muxSetting >> i) & 0x0001;
 	}
 	setGpio(numBmbs, gpio[0], gpio[1], gpio[2], gpio3State); // Currently sets GPIO 4 to 0 when updating MUX
 }
@@ -466,11 +464,11 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 	for (int i = 0; i < numBmbs; i++)
 	{
 		Bmb_S* pBmb = &bmb[i];
-		float maxBrickV = 0.0f;
-		float minBrickV = 5.0f;
+		float maxBrickV = MIN_VOLTAGE_SENSOR_VALUE_V;
+		float minBrickV = MAX_VOLTAGE_SENSOR_VALUE_V;
 		float stackV	= 0.0f;
-		float maxBrickTemp = -200.0f;
-		float minBrickTemp = 200.0f;
+		float maxBrickTemp = MIN_TEMP_SENSOR_VALUE_C;
+		float minBrickTemp = MAX_TEMP_SENSOR_VALUE_C;
 		float tempSum	   = 0.0f;
 		// TODO If SNA do not count
 		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)

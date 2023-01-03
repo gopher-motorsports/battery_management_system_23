@@ -17,6 +17,8 @@ void configureTimer(Timer_S* timer, uint32_t timerThreshold);
 
 void clearTimer(Timer_S* timer);
 
+void saturateTimer(Timer_S* timer);
+
 void updateTimer_10ms(Timer_S* timer);
 
 void updateTimer_100ms(Timer_S* timer);

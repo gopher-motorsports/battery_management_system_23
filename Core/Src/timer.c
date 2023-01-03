@@ -19,7 +19,6 @@ void updateTimer(Timer_S* timer, uint32_t timeStep_MS)
     }
 }
 
-
 void configureTimer(Timer_S* timer, uint32_t timerThreshold)
 {
     timer->timCount = 0;
@@ -29,6 +28,11 @@ void configureTimer(Timer_S* timer, uint32_t timerThreshold)
 void clearTimer(Timer_S* timer)
 {
     timer->timCount = 0;
+}
+
+void saturateTimer(Timer_S* timer)
+{
+    timer->timCount = timer->timThreshold;
 }
 
 void updateTimer_10ms(Timer_S* timer)
