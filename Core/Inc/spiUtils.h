@@ -38,8 +38,8 @@
 #define R_RX_NEXT_MESSAGE 0x9B - 1		// Non writable
 
 // COMMANDS
-#define CMD_WRITE_ALL 0x02
-#define CMD_READ_ALL 0x03
+#define CMD_WRITE_ALL 0x02          // Write to all BMB registers
+#define CMD_READ_ALL 0x03           // Read from all BMB registers
 #define CMD_CLR_RX_BUF 0xE0
 #define CMD_CLR_TX_BUF 0x20
 #define CMD_RD_MSG 0x91
@@ -74,12 +74,12 @@
 /*!
   @brief   Enable ASCI SPI
 */
-void ssOn();
+void csAsciOn();
 
 /*!
   @brief   Disable ASCI SPI
 */
-void ssOff();
+void csAsciOff();
 
 /*!
   @brief   Power on ASCI
@@ -100,7 +100,7 @@ void resetASCI();
   @brief   Send a byte on SPI
   @param   value - byte to send over SPI
 */
-void sendSPI(uint8_t value);
+void sendAsciSpi(uint8_t value);
 
 /*!
   @brief   Read a register on the ASCI
@@ -164,8 +164,9 @@ bool readRxBusyFlag();
 
 /*!
   @brief   Clear the RX busy flag
+  @return  True if cleared, false otherwise
 */
-void clearRxBusyFlag();
+bool clearRxBusyFlag();
 
 /*!
   @brief   Check the status of the RX stop flag
@@ -176,7 +177,7 @@ bool readRxStopFlag();
 /*!
   @brief   Clear the RX stop flag
 */
-void clearRxStopFlag();
+bool clearRxStopFlag();
 
 /*!
   @brief   Check whether or not RX error interupt flags were set
@@ -189,16 +190,6 @@ bool rxErrorsExist();
   @return  True if success, false otherwise
 */
 bool writeRxIntStop(bool bitSet);
-
-// TODO: Add multiple attempts
-/*!
-  @brief   Write to a specific bit in a register
-  @param   registerAddress - The address of the register to be modified
-  @param   bitNumber - 0-indexed bit to be modified starting with LSB
-  @param   bitSet - If true, bit set to 1, if false, bit set to 0
-  @return  True if success, false otherwise
-*/
-bool writeRegisterBit(uint8_t registerAddress, uint8_t bitNumber, bool bitSet);
 
 /*!
   @brief   Load the TX queue on the ASCI and verify that the content was
@@ -216,7 +207,7 @@ bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes);
   @param   numBytesToRead - Number of bytes to read from queue to array
   @return  True if success, false otherwise
 */
-bool readNextSpiMessage(uint8_t *data_p, uint32_t numBytesToRead);
+bool readNextSpiMessage(uint8_t **data_p, uint32_t numBytesToRead);
 
 /*!
   @brief   Write data to all registers on BMBs

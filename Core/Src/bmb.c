@@ -43,7 +43,7 @@ bool initASCI(uint32_t *numBmbs)
 	HAL_Delay(10);
 	//Test
 	enableASCI();
-	ssOff();
+	csAsciOff();
 	bool successfulConfig = true;
 	// dummy transaction since this chip sucks
 	readRegister(R_CONFIG_3);
@@ -106,7 +106,7 @@ bool initASCI(uint32_t *numBmbs)
 	// Enable RX_Error, RX_Overflow and RX_Stop interrupts
 	successfulConfig &= writeAndVerifyRegister(R_RX_INTERRUPT_ENABLE, 0x8A);
 
-	sendSPI(CMD_WR_NXT_LD_Q_L0);
+	sendAsciSpi(CMD_WR_NXT_LD_Q_L0);
 
 
 	if (!(xSemaphoreTake(binSemHandle, 10) == pdTRUE))
@@ -127,8 +127,9 @@ bool initASCI(uint32_t *numBmbs)
 	// Verify stop bit
 	successfulConfig &= !!(readRegister(R_RX_STATUS) & 0x02);
 
-
-	successfulConfig &= readNextSpiMessage((uint8_t *)&recvBuffer, 3);
+	// TODO - figure out why this is included
+	uint8_t* pRecvBuffer = recvBuffer;
+	successfulConfig &= readNextSpiMessage(&pRecvBuffer, 3);
 
 	if (rxErrorsExist() || !successfulConfig)
 	{
