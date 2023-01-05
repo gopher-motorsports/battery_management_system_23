@@ -10,6 +10,7 @@
 typedef struct
 {
     uint32_t timCount;
+    uint32_t lastUpdate;
     uint32_t timThreshold;
 } Timer_S;
 
@@ -19,9 +20,7 @@ void clearTimer(Timer_S* timer);
 
 void saturateTimer(Timer_S* timer);
 
-void updateTimer_10ms(Timer_S* timer);
-
-void updateTimer_100ms(Timer_S* timer);
+void updateTimer(Timer_S* timer);
 
 bool checkTimerExpired(Timer_S* timer);
 
