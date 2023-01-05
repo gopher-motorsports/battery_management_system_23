@@ -66,7 +66,9 @@ void runMain()
 	{
 		printf("Initializing ASCI connection...\n");
 		resetASCI();
-		initialized = initASCI(&numBmbs);
+		initASCI();
+		initialized = helloAll(&numBmbs);
+		// initialized = initASCI(&numBmbs);
 		if (numBmbs != NUM_BMBS_PER_PACK)
 		{
 			printf("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", numBmbs, NUM_BMBS_PER_PACK);

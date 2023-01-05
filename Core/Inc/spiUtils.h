@@ -1,5 +1,5 @@
-#ifndef INC_SPIUTILS_H_
-#define INC_SPIUTILS_H_
+#ifndef INC_BMBINTERFACE_H_
+#define INC_BMBINTERFACE_H_
 
 
 /* ==================================================================== */
@@ -72,16 +72,6 @@
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */
 /* ==================================================================== */
 /*!
-  @brief   Enable ASCI SPI
-*/
-void csAsciOn();
-
-/*!
-  @brief   Disable ASCI SPI
-*/
-void csAsciOff();
-
-/*!
   @brief   Power on ASCI
 */
 void enableASCI();
@@ -95,12 +85,6 @@ void disableASCI();
   @brief   Power cycle the ASCI
 */
 void resetASCI();
-
-/*!
-  @brief   Send a byte on SPI
-  @param   value - byte to send over SPI
-*/
-void sendAsciSpi(uint8_t value);
 
 /*!
   @brief   Read a register on the ASCI
@@ -245,5 +229,14 @@ bool readAll(uint8_t address, uint8_t *data_p, uint32_t numBmbs);
 */
 bool readDevice(uint8_t address, uint8_t *data_p, uint32_t bmbIndex);
 
+/*!
+  @brief   Initialize ASCI and BMB daisy chain. Enumerate BMBs
+  @param   numBmbs - Updated with number of enumerated BMBs from HELLOALL command
+  @return  True if successful initialization, false otherwise
+*/
+bool initASCI();
 
-#endif /* INC_SPIUTILS_H_ */
+bool helloAll(uint32_t* numBmbs);
+
+
+#endif /* INC_BMBINTERFACE_H_ */

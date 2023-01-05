@@ -32,6 +32,24 @@ extern SPI_HandleTypeDef hspi1;
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
 /* ==================================================================== */
+/*!
+  @brief   Enable ASCI SPI
+*/
+void csAsciOn();
+
+/*!
+  @brief   Disable ASCI SPI
+*/
+void csAsciOff();
+
+/*!
+  @brief   Send a byte on SPI
+  @param   value - byte to send over SPI
+*/
+void sendAsciSpi(uint8_t value);
+
+
+bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, const uint32_t numBytesToSend, const uint32_t numBytesToReceive);
 
 
 /* ==================================================================== */
@@ -80,6 +98,55 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 //		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 //	}
 //}
+
+bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, const uint32_t numBytesToSend, const uint32_t numBytesToReceive)
+{
+	// Send command to ASCI and verify data integrity
+	if (!loadAndVerifyTxQueue(sendBuffer, numBytesToSend))
+	{
+		return false;
+	}
+
+	// Enable RX_Error, RX_Overflow and RX_Stop interrupts
+	if(!writeAndVerifyRegister(R_RX_INTERRUPT_ENABLE, 0x8A))
+	{
+		return false;
+	}
+
+	if (!clearRxIntFlags())
+	{
+		return false;
+	}
+
+	sendAsciSpi(CMD_WR_NXT_LD_Q_L0);
+	// Wait for ASCI interrupt to occur
+	if (!(xSemaphoreTake(binSemHandle, 10) == pdTRUE))
+	{
+		printf("ASCI Interrupt failed to occur during WRITEALL\n");
+		return false;
+	}
+
+	// Verify that interrupt was caused by RX_Stop
+	if ((readRegister(R_RX_STATUS) & 0x02) != 0x02)
+	{
+		return false;
+	}
+
+
+	// Read next SPI message.
+	if (!readNextSpiMessage(recvBuffer, numBytesToReceive))
+	{
+		return false;
+	}
+
+	if (rxErrorsExist())
+	{
+		// TODO - do we want to have an error routine?
+		return false;
+	}
+	
+	return true;
+}
 
 
 /* ==================================================================== */
@@ -441,50 +508,9 @@ bool readNextSpiMessage(uint8_t** data_p, uint32_t numBytesToRead)
 	}
 	csAsciOff();
 	// Return data should not include the CMD_RD_NXT_MSG
-	*data_p = &((*data_p)[1]);
+	(*data_p)++;
 	return true;
 }
-
-bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, const uint32_t numBytesToSend, const uint32_t numBytesToReceive)
-{
-	// Send command to ASCI and verify data integrity
-	if (!loadAndVerifyTxQueue(sendBuffer, numBytesToSend))
-	{
-		return false;
-	}
-
-	if (!writeRxIntStop(true))
-	{
-		return false;
-	}
-	if (!clearRxIntFlags())
-	{
-		return false;
-	}
-
-	sendAsciSpi(CMD_WR_NXT_LD_Q_L0);
-	// Wait for ASCI interrupt to occur
-	if (!(xSemaphoreTake(binSemHandle, 10) == pdTRUE))
-	{
-		printf("ASCI Interrupt failed to occur during WRITEALL\n");
-		return false;
-	}
-
-	// Read next SPI message.
-	if (!readNextSpiMessage(recvBuffer, numBytesToReceive))
-	{
-		return false;
-	}
-
-	if (rxErrorsExist())
-	{
-		return false;
-	}
-	
-	return true;
-}
-
-
 
 /*!
   @brief   Write data to all registers on BMBs
@@ -533,7 +559,7 @@ bool writeAll(uint8_t address, uint16_t value, uint32_t numBmbs)
 		writeAllSuccess &= !(bool)memcmp(bmbCmdBuffer, pRecvBuffer, bmbCmdLength - 1);
 
 		// Verify the alive counter
-		writeAllSuccess &= (bool)(pRecvBuffer[bmbCmdLength - 1] == numBmbs);
+		writeAllSuccess &= (pRecvBuffer[bmbCmdLength - 1] == numBmbs);
 
 		if (writeAllSuccess)
 		{
@@ -592,7 +618,7 @@ bool writeDevice(uint8_t address, uint16_t value, uint32_t bmbIndex)
 		writeAllSuccess &= !(bool)memcmp(bmbCmdBuffer, pRecvBuffer, bmbCmdLength - 1);
 
 		// Verify the alive counter
-		writeAllSuccess &= (bool)(pRecvBuffer[bmbCmdLength - 1] == 1);
+		writeAllSuccess &= (pRecvBuffer[bmbCmdLength - 1] == 1);
 
 		if (writeAllSuccess)
 		{
@@ -669,64 +695,141 @@ bool readAll(uint8_t address, uint8_t *data_p, uint32_t numBmbs)
 */
 bool readDevice(uint8_t address, uint8_t *data_p, uint32_t bmbIndex)
 {
-	// uint32_t numDataBytes = 7;
-	// uint8_t sendBuffer[numDataBytes];
-	// memset(sendBuffer, 0, numDataBytes * sizeof(uint8_t));
+	const uint32_t bmbCmdLength = 0x05;					// CMD, address, DATA_CHECK, CRC, ALIVE_COUNTER
+	const uint32_t asciCmdLength = 0x02;				// CMD, DATA_LENGTH
+	const uint32_t numBytesToSend = bmbCmdLength + asciCmdLength;
+	const uint32_t numBytesToReceive = bmbCmdLength + BYTES_PER_BMB_REGISTER;
+	const uint8_t  bmbAddress = (bmbIndex << 3) | 0b101;
 
-	// uint8_t bmbAddress = (bmbIndex << 3) | 0b101;
+	uint8_t sendBuffer[numBytesToSend];
+	memset(sendBuffer, 0, numBytesToSend * sizeof(uint8_t));
 
-	// for (int i = 0; i < NUM_DATA_CHECKS; i++)
-	// {
-	// 	bool readDeviceSuccess = true;
-	// 	sendBuffer[0] = CMD_WR_LD_Q_L0;	// Command for ASCI
-	// 	sendBuffer[1] = 0x07;			// Data length for ASCI
-	// 	sendBuffer[2] = bmbAddress;		// Command byte for BMBs
-	// 	sendBuffer[3] = address;		// Register address for BMBs
-	// 	sendBuffer[4] = 0x00;			// Data check byte
+	uint8_t* asciCmdBuffer = sendBuffer;
+	uint8_t* bmbCmdBuffer  = &sendBuffer[asciCmdLength];
 
-	// 	const uint8_t crc = calcCrc(&sendBuffer[2], 3); // Calculate CRC on data after CMD
-	// 	sendBuffer[5] = crc;			// PEC byte
-	// 	sendBuffer[6] = 0x00;			// Alive counter seed value
+	// ASCI Command Data
+	asciCmdBuffer[0] = CMD_WR_LD_Q_L0;				// Command for ASCI
+	asciCmdBuffer[1] = numBytesToReceive;			// Data length for ASCI
 
-	// 	// Send command to ASCI and verify data integrity
-	// 	if(!loadAndVerifyTxQueue(sendBuffer, 7))
-	// 	{
-	// 		break;
-	// 	}
+	// BMB Command Data
+	bmbCmdBuffer[0] = bmbAddress;					// Command byte for BMBs
+	bmbCmdBuffer[1] = address;						// Register Address for BMBs
+	bmbCmdBuffer[2] = 0x00;							// Data check byte
+	const uint8_t crc = calcCrc(bmbCmdBuffer, bmbCmdLength - 2);	// Calculate CRC on CMD, ADDRESS, DATA_CHECK
+	bmbCmdBuffer[3] = crc;							// PEC byte
+	bmbCmdBuffer[4] = 0x00;							// Alive counter seed value for BMBs
 
-	// 	writeRxIntStop(true);
-	// 	clearRxIntFlags();
+	for (int i = 0; i < NUM_DATA_CHECKS; i++)
+	{
+		bool readAllSuccess = true;
 
-	// 	sendAsciSpi(CMD_WR_NXT_LD_Q_L0);
-	// 	if (!(xSemaphoreTake(binSemHandle, 10) == pdTRUE))
-	// 	{
-	// 		printf("Interrupt failed to occur during READALL\n");
-	// 		break;
-	// 	}
+		uint8_t* pRecvBuffer = data_p;
+		readAllSuccess &= sendReceiveMessageAsci(sendBuffer, &pRecvBuffer, numBytesToSend, numBytesToReceive);
 
-	// 	uint32_t numBytesToRead = 7; // 5 command bytes + 2 data bytes
-	// 	readNextSpiMessage(data_p, numBytesToRead);
+		// Calculate CRC code based on received data
+		const uint8_t calculatedCrc = calcCrc(pRecvBuffer, numBytesToReceive - 2); // Do not read PEC byte and alive counter byte
+		uint8_t recvCrc = pRecvBuffer[numBytesToReceive - 2];
 
-	// 	if (rxErrorsExist())
-	// 	{
-	// 		break;
-	// 	}
+		// Verify data CRC
+		readAllSuccess &= (calculatedCrc == recvCrc);
+		// Verify Alive-counter byte
+		readAllSuccess &= (pRecvBuffer[numBytesToReceive - 1] == 1);
 
-	// 	// Calculate CRC code based on received data
-	// 	const uint8_t calculatedCrc = calcCrc(&data_p[1], 5);
-	// 	uint8_t recvCrc = data_p[6];
-
-	// 	// Verify data CRC
-	// 	readDeviceSuccess &= (calculatedCrc == recvCrc);
-
-	// 	// Verify Alive-counter byte
-	// 	readDeviceSuccess &= (data_p[7] == 1);
-
-	// 	if (readDeviceSuccess)
-	// 	{
-	// 		return true;
-	// 	}
-	// }
-	// printf("Failed to READDEVICE\n");
+		if (readAllSuccess)
+		{
+			return true;
+		}
+	}
+	printf("Failed to READALL\n");
 	return false;
+}
+
+/*!
+  @brief   Initialize ASCI and BMB daisy chain. Enumerate BMBs
+  @param   numBmbs - Updated with number of enumerated BMBs from HELLOALL command
+  @return  True if successful initialization, false otherwise
+*/
+bool initASCI()
+{
+	resetASCI();
+	csAsciOff();
+	bool successfulConfig = true;
+	// dummy transaction since this chip sucks
+	readRegister(R_CONFIG_3);
+
+	// Set Keep_Alive to 0x05 = 160us
+	successfulConfig &= writeAndVerifyRegister(R_CONFIG_3, 0x05);
+
+	// Enable RX_Error, RX_Overflow and RX_Busy interrupts
+	successfulConfig &= writeAndVerifyRegister(R_RX_INTERRUPT_ENABLE, 0xA8);
+
+	clearRxBuffer();
+
+	// Enable TX_Preambles mode
+	successfulConfig &= writeAndVerifyRegister(R_CONFIG_2, 0x30);
+
+	if (!(xSemaphoreTake(binSemHandle, 10) == pdTRUE))
+	{
+		printf("Interrupt failed to occur while enabling TX_Preambles mode!\n");
+		return false;
+	}
+
+	// Verify interrupt was caused by RX_Busy
+	if (readRxBusyFlag())
+	{
+		clearRxBusyFlag();
+	}
+	else
+	{
+		return false;
+	}
+
+	// Verify RX_Busy_Status and RX_Empty_Status true
+	successfulConfig &= (readRegister(R_RX_STATUS) == 0x21);
+
+	// Enable TX_Queue mode
+	successfulConfig &= writeAndVerifyRegister(R_CONFIG_2, 0x10);
+
+	// Verify RX_Empty
+	successfulConfig &= ((readRegister(R_RX_STATUS) & 0x01) == 0x01);
+
+	clearTxBuffer();
+	clearRxBuffer();
+
+	return successfulConfig;
+}
+
+bool helloAll(uint32_t* numBmbs)
+{
+	const uint32_t bmbCmdLength = 0x03;					// CMD, REGISTER_ADDRESS, INITIALIZATION_ADDRESS
+	const uint32_t asciCmdLength = 0x02;				// CMD, DATA_LENGTH
+	const uint32_t numBytesToSend = asciCmdLength + bmbCmdLength;
+	const uint32_t numBytesToReceive = bmbCmdLength;
+
+	uint8_t sendBuffer[numBytesToSend];
+	memset(sendBuffer, 0, numBytesToSend * sizeof(uint8_t));
+	uint8_t recvBuffer[numBytesToReceive];
+	memset(recvBuffer, 0, numBytesToReceive * sizeof(uint8_t));
+
+	uint8_t* asciCmdBuffer = sendBuffer;
+	uint8_t* bmbCmdBuffer  = &sendBuffer[asciCmdLength];
+
+	// Send Hello_All command
+	// ASCI CMD Data
+	asciCmdBuffer[0] = CMD_WR_LD_Q_L0;
+	asciCmdBuffer[1] = 0x03;			// Data length
+
+	// BMB CMD Data
+	bmbCmdBuffer[0] = CMD_HELLO_ALL;	// HELLOALL command byte
+	bmbCmdBuffer[1] = 0x00;				// Register address
+	bmbCmdBuffer[2] = 0x00;				// Initialization address for HELLOALL
+
+	uint8_t* pRecvBuffer = recvBuffer;
+	if (!sendReceiveMessageAsci(sendBuffer, &pRecvBuffer, numBytesToSend, numBytesToSend))
+	{
+		return false;
+	}
+	
+	*numBmbs = pRecvBuffer[2];
+	return true;
 }

@@ -116,12 +116,7 @@ typedef struct
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */
 /* ==================================================================== */
-/*!
-  @brief   Initialize ASCI and BMB daisy chain. Enumerate BMBs
-  @param   numBmbs - Updated with number of enumerated BMBs from HELLOALL command
-  @return  True if successful initialization, false otherwise
-*/
-bool initASCI(uint32_t *numBmbs);
+
 
 /*!
   @brief   Initialize the BMBs by configuring registers
