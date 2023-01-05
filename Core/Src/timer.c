@@ -1,27 +1,29 @@
 /* ==================================================================== */
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
+#include "main.h"
 #include "timer.h"
 
 
-void updateTimer(Timer_S* timer, uint32_t timeStep_MS);
-
-void updateTimer(Timer_S* timer, uint32_t timeStep_MS)
+void updateTimer(Timer_S* timer)
 {
-    uint32_t timDifference = timer->timThreshold - timer->timCount;
-    if (timDifference < timeStep_MS)
+    uint32_t timeTilExpiration = timer->timThreshold - timer->timCount;
+    uint32_t timeSinceLastUpdate = HAL_GetTick() - timer->lastUpdate;
+    timer->lastUpdate = HAL_GetTick();
+    if (timeTilExpiration < timeSinceLastUpdate)
     {
-        timer->timCount += timDifference;
+        timer->timCount += timeTilExpiration;
     }
     else
     {
-        timer->timCount += timeStep_MS;
+        timer->timCount += timeSinceLastUpdate;
     }
 }
 
 void configureTimer(Timer_S* timer, uint32_t timerThreshold)
 {
     timer->timCount = 0;
+    timer->lastUpdate = HAL_GetTick();
     timer->timThreshold = timerThreshold;
 }
 
@@ -33,18 +35,6 @@ void clearTimer(Timer_S* timer)
 void saturateTimer(Timer_S* timer)
 {
     timer->timCount = timer->timThreshold;
-}
-
-void updateTimer_10ms(Timer_S* timer)
-{
-    uint32_t timeStep = 10;
-    updateTimer(timer, timeStep);
-}
-
-void updateTimer_100ms(Timer_S* timer)
-{
-    uint32_t timeStep = 100;
-    updateTimer(timer, timeStep);
 }
 
 bool checkTimerExpired(Timer_S* timer)

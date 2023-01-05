@@ -19,7 +19,7 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
         if (alert->alertConditionPresent(bms))
         {
             // Increment alert timer by 10ms
-            updateTimer_10ms(&alert->alertTimer);
+            updateTimer(&alert->alertTimer);
         }
         else
         {
@@ -43,7 +43,7 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
         if (!alert->alertConditionPresent(bms))
         {
             // Increment clear timer by 10ms
-            updateTimer_10ms(&alert->alertTimer);
+            updateTimer(&alert->alertTimer);
         }
         else
         {

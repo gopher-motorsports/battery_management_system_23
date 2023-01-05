@@ -41,7 +41,7 @@ extern osSemaphoreId binSemHandle;
 bool initASCI(uint32_t *numBmbs)
 {
 	resetASCI();
-	csAsciOff();
+	ssOff();
 	bool successfulConfig = true;
 	// dummy transaction since this chip sucks
 	readRegister(R_CONFIG_3);
@@ -104,7 +104,7 @@ bool initASCI(uint32_t *numBmbs)
 	// Enable RX_Error, RX_Overflow and RX_Stop interrupts
 	successfulConfig &= writeAndVerifyRegister(R_RX_INTERRUPT_ENABLE, 0x8A);
 
-	sendAsciSpi(CMD_WR_NXT_LD_Q_L0);
+	sendSPI(CMD_WR_NXT_LD_Q_L0);
 
 
 	if (!(xSemaphoreTake(binSemHandle, 10) == pdTRUE))
