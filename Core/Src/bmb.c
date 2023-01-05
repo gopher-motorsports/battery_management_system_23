@@ -87,7 +87,6 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			bool allBmbScanDone = true;
 			for (uint8_t j = 0; j < numBmbs; j++)
 			{
-				// Read brick voltage in [15:2]
 				uint16_t scanCtrlData = (recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j];
 				allBmbScanDone &= ((scanCtrlData & 0xA000) == 0xA000);	// Verify SCANDONE and DATARDY bits
 			}
