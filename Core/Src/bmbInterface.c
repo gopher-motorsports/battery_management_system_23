@@ -37,32 +37,32 @@ extern SPI_HandleTypeDef hspi1;
 /*!
   @brief   Enable ASCI SPI
 */
-void csAsciOn();
+static void csAsciOn();
 
 /*!
   @brief   Disable ASCI SPI
 */
-void csAsciOff();
+static void csAsciOff();
 
 /*!
   @brief   Send a byte on SPI
   @param   value - byte to send over SPI
 */
-void sendAsciSpi(uint8_t value);
+static void sendAsciSpi(uint8_t value);
 
 /*!
   @brief   Read a register on the ASCI
   @param   registerAddress - The register address to read from
   @return  The data contained in the register
 */
-uint8_t readRegister(uint8_t registerAddress);
+static uint8_t readRegister(uint8_t registerAddress);
 
 /*!
   @brief   Write to a register on the ASCI
   @param   registerAddress - The register address to write to
   @param   value - The value to write to the register
 */
-void writeRegister(uint8_t registerAddress, uint8_t value);
+static void writeRegister(uint8_t registerAddress, uint8_t value);
 
 /*!
   @brief   Write a value to a register and verify that the data was
@@ -71,7 +71,7 @@ void writeRegister(uint8_t registerAddress, uint8_t value);
   @param   value - The byte to write to the register
   @return  True if the value was written and verified, false otherwise
 */
-bool writeAndVerifyRegister(uint8_t registerAddress, uint8_t value);
+static bool writeAndVerifyRegister(uint8_t registerAddress, uint8_t value);
 
 /*!
   @brief   Calculate the CRC for a given set of bytes
@@ -79,64 +79,41 @@ bool writeAndVerifyRegister(uint8_t registerAddress, uint8_t value);
   @param   numBytes	The number of bytes on which to calculate the CRC
   @return  uint8_t 	calculated CRC
 */
-uint8_t calcCrc(uint8_t* byteArr, uint32_t numBytes);
+static uint8_t calcCrc(uint8_t* byteArr, uint32_t numBytes);
 
 /*!
   @brief   Clears the RX buffer on the ASCI
 */
-void clearRxBuffer();
+static void clearRxBuffer();
 
 /*!
   @brief   Clears the TX buffer on the ASCI
 */
-void clearTxBuffer();
+static void clearTxBuffer();
 
 /*!
   @brief   Clears RX interrupt flags
   @return  True if success, false otherwise
 */
-bool clearRxIntFlags();
-
-/*!
-  @brief   Clears TX interrupt flags
-  @return  True if success, false otherwise
-*/
-bool clearTxIntFlags();
+static bool clearRxIntFlags();
 
 /*!
   @brief   Determine whether or not the RX busy flag has been set
   @return  True if set, false otherwise
 */
-bool readRxBusyFlag();
+static bool readRxBusyFlag();
 
 /*!
   @brief   Clear the RX busy flag
   @return  True if cleared, false otherwise
 */
-bool clearRxBusyFlag();
-
-/*!
-  @brief   Check the status of the RX stop flag
-  @return  True if flag set, false otherwise
-*/
-bool readRxStopFlag();
-
-/*!
-  @brief   Clear the RX stop flag
-*/
-bool clearRxStopFlag();
+static bool clearRxBusyFlag();
 
 /*!
   @brief   Check whether or not RX error interupt flags were set
   @return  True if errors exist, false otherwise
 */
-bool rxErrorsExist();
-
-/*!
-  @brief   Enable RX Stop Interrupt on ASCI
-  @return  True if success, false otherwise
-*/
-bool writeRxIntStop(bool bitSet);
+static bool rxErrorsExist();
 
 /*!
   @brief   Load the TX queue on the ASCI and verify that the content was
@@ -146,7 +123,7 @@ bool writeRxIntStop(bool bitSet);
   	  	   	   	      to the queue
   @return  True if success, false otherwise
 */
-bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes);
+static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes);
 
 /*!
   @brief   Read the next SPI message in ASCI receive queue
@@ -154,7 +131,7 @@ bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes);
   @param   numBytesToRead - Number of bytes to read from queue to array
   @return  True if success, false otherwise
 */
-bool readNextSpiMessage(uint8_t **data_p, uint32_t numBytesToRead);
+static bool readNextSpiMessage(uint8_t **data_p, uint32_t numBytesToRead);
 
 /*!
   @brief   Load a command into the ASCI from a buffer. Verify the contents of the load queue
@@ -165,7 +142,7 @@ bool readNextSpiMessage(uint8_t **data_p, uint32_t numBytesToRead);
   @param   numBytesToReceive - Number of bytes to be read into recvBuffer
   @return  True if successful transaction, false otherwise
 */
-bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, const uint32_t numBytesToSend, const uint32_t numBytesToReceive);
+static bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, const uint32_t numBytesToSend, const uint32_t numBytesToReceive);
 
 
 /* ==================================================================== */
@@ -218,7 +195,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 /*!
   @brief   Enable ASCI SPI by pulling chip select low
 */
-void csAsciOn()
+static void csAsciOn()
 {
 	HAL_GPIO_WritePin(SS_GPIO_Port, SS_Pin, GPIO_PIN_RESET);
 }
@@ -226,7 +203,7 @@ void csAsciOn()
 /*!
   @brief   Disable ASCI SPI by pulling chip select high
 */
-void csAsciOff()
+static void csAsciOff()
 {
 	HAL_GPIO_WritePin(SS_GPIO_Port, SS_Pin, GPIO_PIN_SET);
 }
@@ -236,7 +213,7 @@ void csAsciOff()
   @param   value - byte to send over SPI
 
 */
-void sendAsciSpi(uint8_t value)
+static void sendAsciSpi(uint8_t value)
 {
 	csAsciOn();
 	HAL_SPI_Transmit_IT(&hspi1, (uint8_t *)&value, 1);
@@ -252,7 +229,7 @@ void sendAsciSpi(uint8_t value)
   @param   registerAddress - The register address to read from
   @return  The data contained in the register
 */
-uint8_t readRegister(uint8_t registerAddress)
+static uint8_t readRegister(uint8_t registerAddress)
 {
 	csAsciOn();
 	// Since reading add 1 to address
@@ -272,7 +249,7 @@ uint8_t readRegister(uint8_t registerAddress)
   @param   registerAddress - The register address to write to
   @param   value - The value to write to the register
 */
-void writeRegister(uint8_t registerAddress, uint8_t value)
+static void writeRegister(uint8_t registerAddress, uint8_t value)
 {
 	csAsciOn();
 	uint8_t sendBuffer[2] = {registerAddress, value};
@@ -291,7 +268,7 @@ void writeRegister(uint8_t registerAddress, uint8_t value)
   @param   value - The byte to write to the register
   @return  True if the value was written and verified, false otherwise
 */
-bool writeAndVerifyRegister(uint8_t registerAddress, uint8_t value)
+static bool writeAndVerifyRegister(uint8_t registerAddress, uint8_t value)
 {
 	for (int i = 0; i < NUM_DATA_CHECKS; i++)
 	{
@@ -312,7 +289,7 @@ bool writeAndVerifyRegister(uint8_t registerAddress, uint8_t value)
   @param   numBytes	The number of bytes on which to calculate the CRC
   @return  uint8_t 	calculated CRC
 */
-uint8_t calcCrc(uint8_t* byteArr, uint32_t numBytes)
+static uint8_t calcCrc(uint8_t* byteArr, uint32_t numBytes)
 {
 	uint8_t crc = 0x00;
 	const uint8_t poly = 0xB2;
@@ -337,7 +314,7 @@ uint8_t calcCrc(uint8_t* byteArr, uint32_t numBytes)
 /*!
   @brief   Clears the RX buffer on the ASCI
 */
-void clearRxBuffer()
+static void clearRxBuffer()
 {
 	sendAsciSpi(CMD_CLR_RX_BUF);
 }
@@ -345,7 +322,7 @@ void clearRxBuffer()
 /*!
   @brief   Clears the TX buffer on the ASCI
 */
-void clearTxBuffer()
+static void clearTxBuffer()
 {
 	sendAsciSpi(CMD_CLR_TX_BUF);
 }
@@ -354,7 +331,7 @@ void clearTxBuffer()
   @brief   Clears RX interrupt flags
   @return  True if success, false otherwise
 */
-bool clearRxIntFlags()
+static bool clearRxIntFlags()
 {
 	for (int i = 0; i < NUM_DATA_CHECKS; i++)
 	{
@@ -368,19 +345,10 @@ bool clearRxIntFlags()
 }
 
 /*!
-  @brief   Clears TX interrupt flags
-  @return  True if success, false otherwise
-*/
-bool clearTxIntFlags()
-{
-	return writeAndVerifyRegister(R_TX_INTERRUPT_FLAGS, 0x00);
-}
-
-/*!
   @brief   Determine whether or not the RX busy flag has been set
   @return  True if set, false otherwise
 */
-bool readRxBusyFlag()
+static bool readRxBusyFlag()
 {
 	uint8_t rxIntFlags = readRegister(R_RX_INTERRUPT_FLAGS);
 	if (rxIntFlags & 0x20)
@@ -394,7 +362,7 @@ bool readRxBusyFlag()
   @brief   Clear the RX busy flag
   @return  True if cleared, false otherwise
 */
-bool clearRxBusyFlag()
+static bool clearRxBusyFlag()
 {
 	for (int i = 0; i < NUM_DATA_CHECKS; i++)
 	{
@@ -407,40 +375,10 @@ bool clearRxBusyFlag()
 }
 
 /*!
-  @brief   Check the status of the RX stop flag
-  @return  True if flag set, false otherwise
-*/
-bool readRxStopFlag()
-{
-	uint8_t rxIntFlags = readRegister(R_RX_INTERRUPT_FLAGS);
-	if (rxIntFlags & 0x02)
-	{
-		return true;
-	}
-	return false;
-}
-
-/*!
-  @brief   Clear the RX stop flag
-  @return  True if cleared, false otherwise
-*/
-bool clearRxStopFlag()
-{
-	for (int i = 0; i < NUM_DATA_CHECKS; i++)
-	{
-		writeRegister(R_RX_INTERRUPT_FLAGS, ~(0x02));
-		uint8_t result = readRegister(R_RX_INTERRUPT_FLAGS);
-		if ((result & (0x02)) == 0x00) { return true; }
-	}
-	printf("Failed to clear the Rx Stop Flag!\n");
-	return false;
-}
-
-/*!
   @brief   Check whether or not RX error interupt flags were set
   @return  True if errors exist, false otherwise
 */
-bool rxErrorsExist()
+static bool rxErrorsExist()
 {
 	uint8_t rxIntFlags = readRegister(R_RX_INTERRUPT_FLAGS);
 	if (rxIntFlags & 0x88)
@@ -452,22 +390,6 @@ bool rxErrorsExist()
 }
 
 /*!
-  @brief   Enable RX Stop Interrupt on ASCI
-  @return  True if success, false otherwise
-*/
-bool writeRxIntStop(bool bitSet)
-{
-	for (int i = 0; i < NUM_DATA_CHECKS; i++)
-	{
-		writeRegister(R_RX_INTERRUPT_ENABLE, (0x02));
-		uint8_t result = readRegister(R_RX_INTERRUPT_ENABLE);
-		if ((result & (0x02)) == 0x02) { return true; }
-	}
-	printf("Failed to write RxIntStop!\n");
-	return false;
-}
-
-/*!
   @brief   Load the TX queue on the ASCI and verify that the content was
   	  	   successfully written
   @param   data_p - Array containing data to be written to the queue
@@ -475,7 +397,7 @@ bool writeRxIntStop(bool bitSet)
   	  	   	   	      to the queue
   @return  True if success, false otherwise
 */
-bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
+static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 {
 	uint8_t sendBuffer[numBytes];
 	memset(sendBuffer, 0, numBytes * sizeof(uint8_t));
@@ -528,7 +450,7 @@ bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
   @param   numBytesToRead - Number of bytes to read from queue to array
   @return  True if success, false otherwise
 */
-bool readNextSpiMessage(uint8_t** data_p, uint32_t numBytesToRead)
+static bool readNextSpiMessage(uint8_t** data_p, uint32_t numBytesToRead)
 {
 	int arraySize = numBytesToRead + 1;	// Array needs to have space for command
 	uint8_t sendBuffer[arraySize];
@@ -559,7 +481,7 @@ bool readNextSpiMessage(uint8_t** data_p, uint32_t numBytesToRead)
   @param   numBytesToReceive - Number of bytes to be read into recvBuffer
   @return  True if successful transaction, false otherwise
 */
-bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, const uint32_t numBytesToSend, const uint32_t numBytesToReceive)
+static bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, const uint32_t numBytesToSend, const uint32_t numBytesToReceive)
 {
 	// Send command to ASCI and verify data integrity
 	if (!loadAndVerifyTxQueue(sendBuffer, numBytesToSend))
