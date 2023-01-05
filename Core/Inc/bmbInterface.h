@@ -87,111 +87,18 @@ void disableASCI();
 void resetASCI();
 
 /*!
-  @brief   Read a register on the ASCI
-  @param   registerAddress - The register address to read from
-  @return  The data contained in the register
+  @brief   Initialize ASCI and BMB daisy chain. Enumerate BMBs
+  @param   numBmbs - Updated with number of enumerated BMBs from HELLOALL command
+  @return  True if successful initialization, false otherwise
 */
-uint8_t readRegister(uint8_t registerAddress);
+bool initASCI();
 
 /*!
-  @brief   Write to a register on the ASCI
-  @param   registerAddress - The register address to write to
-  @param   value - The value to write to the register
+  @brief   Initialize BMB Daisy Chain. Enumerate BMBs
+  @param   numBmbs - The number of BMBs detected in the daisy chain
+  @return  True if successful initialization, false otherwise
 */
-void writeRegister(uint8_t registerAddress, uint8_t value);
-
-/*!
-  @brief   Write a value to a register and verify that the data was
-  	  	   successfully written
-  @param   registerAddress - The register address to write to
-  @param   value - The byte to write to the register
-  @return  True if the value was written and verified, false otherwise
-*/
-bool writeAndVerifyRegister(uint8_t registerAddress, uint8_t value);
-
-
-/*!
-  @brief   Calculate the CRC for a given set of bytes
-  @param   byteArr	Pointer to array for which to calculate CRC
-  @param   numBytes	The number of bytes on which to calculate the CRC
-  @return  uint8_t 	calculated CRC
-*/
-uint8_t calcCrc(uint8_t* byteArr, uint32_t numBytes);
-
-/*!
-  @brief   Clears the RX buffer on the ASCI
-*/
-void clearRxBuffer();
-
-/*!
-  @brief   Clears the TX buffer on the ASCI
-*/
-void clearTxBuffer();
-
-/*!
-  @brief   Clears RX interrupt flags
-  @return  True if success, false otherwise
-*/
-bool clearRxIntFlags();
-
-/*!
-  @brief   Clears TX interrupt flags
-  @return  True if success, false otherwise
-*/
-bool clearTxIntFlags();
-
-/*!
-  @brief   Determine whether or not the RX busy flag has been set
-  @return  True if set, false otherwise
-*/
-bool readRxBusyFlag();
-
-/*!
-  @brief   Clear the RX busy flag
-  @return  True if cleared, false otherwise
-*/
-bool clearRxBusyFlag();
-
-/*!
-  @brief   Check the status of the RX stop flag
-  @return  True if flag set, false otherwise
-*/
-bool readRxStopFlag();
-
-/*!
-  @brief   Clear the RX stop flag
-*/
-bool clearRxStopFlag();
-
-/*!
-  @brief   Check whether or not RX error interupt flags were set
-  @return  True if errors exist, false otherwise
-*/
-bool rxErrorsExist();
-
-/*!
-  @brief   Enable RX Stop Interrupt on ASCI
-  @return  True if success, false otherwise
-*/
-bool writeRxIntStop(bool bitSet);
-
-/*!
-  @brief   Load the TX queue on the ASCI and verify that the content was
-  	  	   successfully written
-  @param   data_p - Array containing data to be written to the queue
-  @param   numBytes - Number of bytes to read from array to be written
-  	  	   	   	      to the queue
-  @return  True if success, false otherwise
-*/
-bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes);
-
-/*!
-  @brief   Read the next SPI message in ASCI receive queue
-  @param   data_p - Location where data should be written to
-  @param   numBytesToRead - Number of bytes to read from queue to array
-  @return  True if success, false otherwise
-*/
-bool readNextSpiMessage(uint8_t **data_p, uint32_t numBytesToRead);
+bool helloAll(uint32_t* numBmbs);
 
 /*!
   @brief   Write data to all registers on BMBs
@@ -228,15 +135,5 @@ bool readAll(uint8_t address, uint8_t *data_p, uint32_t numBmbs);
   @return  True if success, false otherwise
 */
 bool readDevice(uint8_t address, uint8_t *data_p, uint32_t bmbIndex);
-
-/*!
-  @brief   Initialize ASCI and BMB daisy chain. Enumerate BMBs
-  @param   numBmbs - Updated with number of enumerated BMBs from HELLOALL command
-  @return  True if successful initialization, false otherwise
-*/
-bool initASCI();
-
-bool helloAll(uint32_t* numBmbs);
-
 
 #endif /* INC_BMBINTERFACE_H_ */
