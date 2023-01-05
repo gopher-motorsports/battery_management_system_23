@@ -767,8 +767,7 @@ bool writeAll(uint8_t address, uint16_t value, uint32_t numBmbs)
 	bmbCmdBuffer[1] = address;						// Register Address for BMBs
 	bmbCmdBuffer[2] = (uint8_t)(value & 0x00FF);	// LSB
 	bmbCmdBuffer[3] = (uint8_t)(value >> 8);		// MSB
-	const uint8_t crc = calcCrc(bmbCmdBuffer, bmbCmdLength - 2);	// Calculate CRC on CMD, ADDRESS, LSB, MSB
-	bmbCmdBuffer[4] = crc;							// PEC byte
+	bmbCmdBuffer[4] = calcCrc(bmbCmdBuffer, bmbCmdLength - 2);	// Calculate CRC on CMD, ADDRESS, LSB, MSB
 	bmbCmdBuffer[5] = 0x00;							// Alive counter seed value for BMBs
 
 	for (int i = 0; i < NUM_DATA_CHECKS; i++)
@@ -826,8 +825,7 @@ bool writeDevice(uint8_t address, uint16_t value, uint32_t bmbIndex)
 	bmbCmdBuffer[1] = address;						// Register Address for BMBs
 	bmbCmdBuffer[2] = (uint8_t)(value & 0x00FF);	// LSB
 	bmbCmdBuffer[3] = (uint8_t)(value >> 8);		// MSB
-	const uint8_t crc = calcCrc(bmbCmdBuffer, bmbCmdLength - 2);	// Calculate CRC on CMD, ADDRESS, LSB, MSB
-	bmbCmdBuffer[4] = crc;							// PEC byte
+	bmbCmdBuffer[4] = calcCrc(bmbCmdBuffer, bmbCmdLength - 2);	// Calculate CRC on CMD, ADDRESS, LSB, MSB
 	bmbCmdBuffer[5] = 0x00;							// Alive counter seed value for BMBs
 
 	for (int i = 0; i < NUM_DATA_CHECKS; i++)
@@ -881,8 +879,7 @@ bool readAll(uint8_t address, uint8_t *data_p, uint32_t numBmbs)
 	bmbCmdBuffer[0] = CMD_READ_ALL;					// Command byte for BMBs
 	bmbCmdBuffer[1] = address;						// Register Address for BMBs
 	bmbCmdBuffer[2] = 0x00;							// Data check byte
-	const uint8_t crc = calcCrc(bmbCmdBuffer, bmbCmdLength - 2);	// Calculate CRC on CMD, ADDRESS, DATA_CHECK
-	bmbCmdBuffer[3] = crc;							// PEC byte
+	bmbCmdBuffer[3] = calcCrc(bmbCmdBuffer, bmbCmdLength - 2);	// Calculate CRC on CMD, ADDRESS, DATA_CHECK
 	bmbCmdBuffer[4] = 0x00;							// Alive counter seed value for BMBs
 
 	for (int i = 0; i < NUM_DATA_CHECKS; i++)
@@ -939,8 +936,7 @@ bool readDevice(uint8_t address, uint8_t *data_p, uint32_t bmbIndex)
 	bmbCmdBuffer[0] = bmbAddress;					// Command byte for BMBs
 	bmbCmdBuffer[1] = address;						// Register Address for BMBs
 	bmbCmdBuffer[2] = 0x00;							// Data check byte
-	const uint8_t crc = calcCrc(bmbCmdBuffer, bmbCmdLength - 2);	// Calculate CRC on CMD, ADDRESS, DATA_CHECK
-	bmbCmdBuffer[3] = crc;							// PEC byte
+	bmbCmdBuffer[3] = calcCrc(bmbCmdBuffer, bmbCmdLength - 2);	// Calculate CRC on CMD, ADDRESS, DATA_CHECK
 	bmbCmdBuffer[4] = 0x00;							// Alive counter seed value for BMBs
 
 	for (int i = 0; i < NUM_DATA_CHECKS; i++)
