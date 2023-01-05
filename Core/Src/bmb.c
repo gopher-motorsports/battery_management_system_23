@@ -4,7 +4,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "bmb.h"
-#include "spiUtils.h"
+#include "bmbInterface.h"
 #include "bmbUtils.h"
 
 /* ==================================================================== */

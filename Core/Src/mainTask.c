@@ -5,7 +5,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "mainTask.h"
-#include "spiUtils.h"
+#include "bmbInterface.h"
 #include "bmb.h"
 
 
