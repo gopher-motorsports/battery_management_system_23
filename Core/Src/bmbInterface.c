@@ -814,12 +814,12 @@ bool readAll(uint8_t address, uint8_t *data_p, uint32_t numBmbs)
 
 		// Calculate CRC code based on received data
 		const uint8_t calculatedCrc = calcCrc(pRecvBuffer, numBytesToReceive - 2); // Do not read PEC byte and alive counter byte
-		uint8_t recvCrc = pRecvBuffer[3 + (2 * numBmbs)];
+		uint8_t recvCrc = pRecvBuffer[3 + (BYTES_PER_BMB_REGISTER * numBmbs)];
 
 		// Verify data CRC
 		readAllSuccess &= (calculatedCrc == recvCrc);
 		// Verify Alive-counter byte
-		readAllSuccess &= (pRecvBuffer[4 + (2 * numBmbs)] == numBmbs);
+		readAllSuccess &= (pRecvBuffer[4 + (BYTES_PER_BMB_REGISTER * numBmbs)] == numBmbs);
 
 		if (readAllSuccess)
 		{
