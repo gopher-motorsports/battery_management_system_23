@@ -3,6 +3,16 @@
 
 Bms_S gBms;
 
+static void disableBmbBalancing(Bmb_S* bmb);
+
+static void disableBmbBalancing(Bmb_S* bmb)
+{
+	for (int i = 0; i < NUM_BRICKS_PER_BMB; i++)
+	{
+		bmb->balSwRequested[i] = false;
+	}
+}
+
 /*!
   @brief   Initialization function for the battery pack
   @param   numBmbs - The expected number of BMBs in the daisy chain
@@ -45,9 +55,22 @@ void balancePack(uint32_t numBmbs, bool balanceRequested)
 				bleedTargetVoltage = pBms->bmb[i].minBrickV + BALANCE_THRESHOLD_V;
 			}
 		}
+		// Ensure we don't overbleed the cells
+		if (bleedTargetVoltage < MIN_BLEED_TARGET_VOLTAGE_V)
+		{
+			bleedTargetVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
+		}
 		// Set bleed request on cells that have voltage higher than our bleedTargetVoltage
 		for (int i = 0; i < numBmbs; i++)
 		{
+			// Verify that board or cells not too hot to balance
+			if ((pBms->bmb[i].maxBoardTemp > MAX_BOARD_TEMP_BALANCING_ALLOWED_C) ||
+				(pBms->bmb[i].maxBrickTemp > MAX_CELL_TEMP_BLEEDING_ALLOWED_C))
+			{
+				disableBmbBalancing(&pBms->bmb[i]);
+			}
+
+			// Iterate through all bricks and determine whether they should be bled or not
 			for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
 			{
 				if (pBms->bmb[i].brickV[j] > bleedTargetVoltage)
@@ -66,10 +89,7 @@ void balancePack(uint32_t numBmbs, bool balanceRequested)
 		// If bleeding not requested ensure balancing switches are all off
 		for (int i = 0; i < numBmbs; i++)
 		{
-			for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
-			{
-				pBms->bmb[i].balSwRequested[j] = false;
-			}
+			disableBmbBalancing(&pBms->bmb[i]);
 		}
 	}
 	balanceCells(pBms->bmb, numBmbs);

@@ -17,9 +17,17 @@
 /* ==================================================================== */
 
 // The number of BMBs per battery pack
-#define NUM_BMBS_PER_PACK		1
+#define NUM_BMBS_PER_PACK			1
 // Max allowable voltage difference between bricks for balancing
-#define BALANCE_THRESHOLD_V		0.002f
+#define BALANCE_THRESHOLD_V			0.002f
+// The minimum voltage that we can bleed to
+#define MIN_BLEED_TARGET_VOLTAGE_V 	3.5f
+// The maximum allowed board temp where we enable balancing
+#define MAX_BOARD_TEMP_BALANCING_ALLOWED_C	90.0f
+// The maximum cell temperature where charging is allowed
+#define MAX_CELL_TEMP_CHARGING_ALLOWED_C	50.0f
+// The maximum cell temperature where bleeding is allowed
+#define MAX_CELL_TEMP_BLEEDING_ALLOWED_C	55.0f
 
 
 /* ==================================================================== */
