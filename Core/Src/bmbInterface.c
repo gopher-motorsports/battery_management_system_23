@@ -4,6 +4,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "bmbInterface.h"
+#include "debug.h"
 
 
 /* ==================================================================== */
@@ -219,7 +220,7 @@ static void sendAsciSpi(uint8_t value)
 	HAL_SPI_Transmit_IT(&hspi1, (uint8_t *)&value, 1);
 	if (xSemaphoreTake(asciSpiSemHandle, 10) != pdTRUE)
 	{
-		printf("Interrupt failed to occur during SPI transmit\n");
+		Debug("Interrupt failed to occur during SPI transmit\n");
 	}
 	csOff();
 }
@@ -238,7 +239,7 @@ static uint8_t readRegister(uint8_t registerAddress)
 	HAL_SPI_TransmitReceive_IT(&hspi1, (uint8_t *)&sendBuffer, (uint8_t *)&recvBuffer, 2);
 	if (xSemaphoreTake(asciSpiSemHandle, 10) != pdTRUE)
 	{
-		printf("Interrupt failed to occur during readRegister operation\n");
+		Debug("Interrupt failed to occur during readRegister operation\n");
 	}
 	csOff();
 	return recvBuffer[1];
@@ -256,7 +257,7 @@ static void writeRegister(uint8_t registerAddress, uint8_t value)
 	HAL_SPI_Transmit_IT(&hspi1, (uint8_t *)&sendBuffer, 2);
 	if (xSemaphoreTake(asciSpiSemHandle, 10) != pdTRUE)
 	{
-		printf("Interrupt failed to occur during writeRegister operation\n");
+		Debug("Interrupt failed to occur during writeRegister operation\n");
 	}
 	csOff();
 }
@@ -279,7 +280,7 @@ static bool writeAndVerifyRegister(uint8_t registerAddress, uint8_t value)
 			return true;
 		}
 	}
-	printf("Failed to write and verify register\n");
+	Debug("Failed to write and verify register\n");
 	return false;
 }
 
@@ -340,7 +341,7 @@ static bool clearRxIntFlags()
 		// TODO - double check why this is necessary?
 		if ((result & ~(0x40)) == 0x00) { return true; }
 	}
-	printf("Failed to clear Rx Interrupt Flags!\n");
+	Debug("Failed to clear Rx Interrupt Flags!\n");
 	return false;
 }
 
@@ -370,7 +371,7 @@ static bool clearRxBusyFlag()
 		uint8_t result = readRegister(R_RX_INTERRUPT_FLAGS);
 		if ((result & (0x20)) == 0x00) { return true; }
 	}
-	printf("Failed to clear Rx Busy Flag!\n");
+	Debug("Failed to clear Rx Busy Flag!\n");
 	return false;
 }
 
@@ -383,7 +384,7 @@ static bool rxErrorsExist()
 	uint8_t rxIntFlags = readRegister(R_RX_INTERRUPT_FLAGS);
 	if (rxIntFlags & 0x88)
 	{
-		printf("Detected errors during transmission!\n");
+		Debug("Detected errors during transmission!\n");
 		return true;
 	}
 	return false;
@@ -413,7 +414,7 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 		HAL_SPI_Transmit_IT(&hspi1, data_p, numBytes);
 		if (xSemaphoreTake(asciSpiSemHandle, 10) != pdTRUE)
 		{
-			printf("Interrupt failed to occur while loading queue in loadAndVerifyTxQueue\n");
+			Debug("Interrupt failed to occur while loading queue in loadAndVerifyTxQueue\n");
 			csOff();
 			continue;
 		}
@@ -425,7 +426,7 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 		HAL_SPI_TransmitReceive_IT(&hspi1, sendBuffer, recvBuffer, numBytes);
 		if (xSemaphoreTake(asciSpiSemHandle, 10) != pdTRUE)
 		{
-			printf("Interrupt failed to occur while reading queue contents in loadAndVerifyTxQueue\n");
+			Debug("Interrupt failed to occur while reading queue contents in loadAndVerifyTxQueue\n");
 			csOff();
 			continue;
 		}
@@ -439,7 +440,7 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 			return true;
 		}
 	}
-	printf("Failed to load and verify TX queue\n");
+	Debug("Failed to load and verify TX queue\n");
 	return false;
 }
 
@@ -462,7 +463,7 @@ static bool readNextSpiMessage(uint8_t** data_p, uint32_t numBytesToRead)
 	HAL_SPI_TransmitReceive_IT(	&hspi1, sendBuffer, *data_p, arraySize);
 	if (xSemaphoreTake(asciSpiSemHandle, 10) != pdTRUE)
 	{
-		printf("Interrupt failed to occur while reading next SPI message\n");
+		Debug("Interrupt failed to occur while reading next SPI message\n");
 		csOff();
 		return false;
 	}
@@ -504,7 +505,7 @@ static bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, co
 	// Wait for ASCI interrupt to occur
 	if (xSemaphoreTake(asciSemHandle, 10) != pdTRUE)
 	{
-		printf("ASCI Interrupt failed to occur during message transaction\n");
+		Debug("ASCI Interrupt failed to occur during message transaction\n");
 		return false;
 	}
 
@@ -584,7 +585,7 @@ bool initASCI()
 
 	if (xSemaphoreTake(asciSemHandle, 10) != pdTRUE)
 	{
-		printf("Interrupt failed to occur while enabling TX_Preambles mode!\n");
+		Debug("Interrupt failed to occur while enabling TX_Preambles mode!\n");
 		return false;
 	}
 
@@ -649,7 +650,7 @@ bool helloAll(uint32_t* numBmbs)
 	uint8_t* pRecvBuffer = recvBuffer;
 	if (!sendReceiveMessageAsci(sendBuffer, &pRecvBuffer, numBytesToSend, numBytesToReceive))
 	{
-		printf("Error in HelloAll!\n");
+		Debug("Error in HelloAll!\n");
 		return false;
 	}
 	
@@ -712,7 +713,7 @@ bool writeAll(uint8_t address, uint16_t value, uint32_t numBmbs)
 			return true;
 		}
 	}
-	printf("Failed to write all\n");
+	Debug("Failed to write all\n");
 	return false;
 }
 
@@ -770,7 +771,7 @@ bool writeDevice(uint8_t address, uint16_t value, uint32_t bmbIndex)
 			return true;
 		}
 	}
-	printf("Failed to write Device\n");
+	Debug("Failed to write device\n");
 	return false;
 }
 
@@ -826,7 +827,7 @@ bool readAll(uint8_t address, uint8_t *data_p, uint32_t numBmbs)
 			return true;
 		}
 	}
-	printf("Failed to READALL\n");
+	Debug("Failed to read all\n");
 	return false;
 }
 
@@ -883,6 +884,6 @@ bool readDevice(uint8_t address, uint8_t *data_p, uint32_t bmbIndex)
 			return true;
 		}
 	}
-	printf("Failed to READALL\n");
+	Debug("Failed to read device\n");
 	return false;
 }
