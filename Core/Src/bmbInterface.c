@@ -1,6 +1,7 @@
 /* ==================================================================== */
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
+
 #include "main.h"
 #include "cmsis_os.h"
 #include "bmbInterface.h"
@@ -10,6 +11,7 @@
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
+
 #define BYTES_PER_BMB_REGISTER 2
 #define READ_CMD_LENGTH 	   1
 
@@ -17,6 +19,7 @@
 /* ==================================================================== */
 /* ======================= EXTERNAL VARIABLES ========================= */
 /* ==================================================================== */
+
 extern osSemaphoreId asciSpiSemHandle;
 extern osSemaphoreId asciSemHandle;
 extern SPI_HandleTypeDef hspi1;
@@ -27,14 +30,17 @@ extern SPI_HandleTypeDef hspi1;
 /* ==================================================================== */
 
 
+
 /* ==================================================================== */
 /* ======================== GLOBAL VARIABLES ========================== */
 /* ==================================================================== */
 
 
+
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
 /* ==================================================================== */
+
 /*!
   @brief   Enable ASCI SPI
 */
@@ -149,35 +155,6 @@ static bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, co
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DEFINITIONS ===================== */
 /* ==================================================================== */
-/*!
-  @brief   Interrupt when SPI TX finishes. Unblock task by releasing
-  	  	   semaphore
-  @param   SPI Handle
-*/
-void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
-{
-	if (hspi == &hspi1)
-	{
-		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xSemaphoreGiveFromISR(asciSpiSemHandle, &xHigherPriorityTaskWoken);
-		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-	}
-}
-
-/*!
-  @brief   Interrupt when SPI TX/RX finishes. Unblock task by releasing
-  	  	   semaphore
-  @param   SPI Handle
-*/
-void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
-{
-	if (hspi == &hspi1)
-	{
-		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xSemaphoreGiveFromISR(asciSpiSemHandle, &xHigherPriorityTaskWoken);
-		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-	}
-}
 
 /*!
   @brief   Interrupt when ASCI INT Pin interrupt occurs
@@ -198,7 +175,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 */
 static void csOn()
 {
-	HAL_GPIO_WritePin(SS_GPIO_Port, SS_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(CS_ASCI_GPIO_Port, CS_ASCI_Pin, GPIO_PIN_RESET);
 }
 
 /*!
@@ -206,7 +183,7 @@ static void csOn()
 */
 static void csOff()
 {
-	HAL_GPIO_WritePin(SS_GPIO_Port, SS_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(CS_ASCI_GPIO_Port, CS_ASCI_Pin, GPIO_PIN_SET);
 }
 
 /*!
@@ -218,9 +195,9 @@ static void sendAsciSpi(uint8_t value)
 {
 	csOn();
 	HAL_SPI_Transmit_IT(&hspi1, (uint8_t *)&value, 1);
-	if (xSemaphoreTake(asciSpiSemHandle, 10) != pdTRUE)
+	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 	{
-		Debug("Interrupt failed to occur during SPI transmit\n");
+		Debug("Interrupt failed to occur during ASCI SPI transmit\n");
 	}
 	csOff();
 }
@@ -237,7 +214,7 @@ static uint8_t readRegister(uint8_t registerAddress)
 	const uint8_t sendBuffer[2] = {registerAddress + 1};
 	uint8_t recvBuffer[2] = {0};
 	HAL_SPI_TransmitReceive_IT(&hspi1, (uint8_t *)&sendBuffer, (uint8_t *)&recvBuffer, 2);
-	if (xSemaphoreTake(asciSpiSemHandle, 10) != pdTRUE)
+	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 	{
 		Debug("Interrupt failed to occur during readRegister operation\n");
 	}
@@ -255,7 +232,7 @@ static void writeRegister(uint8_t registerAddress, uint8_t value)
 	csOn();
 	uint8_t sendBuffer[2] = {registerAddress, value};
 	HAL_SPI_Transmit_IT(&hspi1, (uint8_t *)&sendBuffer, 2);
-	if (xSemaphoreTake(asciSpiSemHandle, 10) != pdTRUE)
+	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 	{
 		Debug("Interrupt failed to occur during writeRegister operation\n");
 	}
@@ -412,7 +389,7 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 		// Write queue
 		csOn();
 		HAL_SPI_Transmit_IT(&hspi1, data_p, numBytes);
-		if (xSemaphoreTake(asciSpiSemHandle, 10) != pdTRUE)
+		if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 		{
 			Debug("Interrupt failed to occur while loading queue in loadAndVerifyTxQueue\n");
 			csOff();
@@ -424,7 +401,7 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 		sendBuffer[0] = data_p[0] + 1;	// Read address is one greater than the write address
 		csOn();
 		HAL_SPI_TransmitReceive_IT(&hspi1, sendBuffer, recvBuffer, numBytes);
-		if (xSemaphoreTake(asciSpiSemHandle, 10) != pdTRUE)
+		if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 		{
 			Debug("Interrupt failed to occur while reading queue contents in loadAndVerifyTxQueue\n");
 			csOff();
@@ -461,7 +438,7 @@ static bool readNextSpiMessage(uint8_t** data_p, uint32_t numBytesToRead)
 	sendBuffer[0] = CMD_RD_NXT_MSG;
 	csOn();
 	HAL_SPI_TransmitReceive_IT(	&hspi1, sendBuffer, *data_p, arraySize);
-	if (xSemaphoreTake(asciSpiSemHandle, 10) != pdTRUE)
+	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 	{
 		Debug("Interrupt failed to occur while reading next SPI message\n");
 		csOff();
@@ -503,7 +480,7 @@ static bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, co
 
 	sendAsciSpi(CMD_WR_NXT_LD_Q_L0);
 	// Wait for ASCI interrupt to occur
-	if (xSemaphoreTake(asciSemHandle, 10) != pdTRUE)
+	if (xSemaphoreTake(asciSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 	{
 		Debug("ASCI Interrupt failed to occur during message transaction\n");
 		return false;
@@ -534,6 +511,7 @@ static bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, co
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
 /* ==================================================================== */
+
 /*!
   @brief   Power on ASCI
 */
@@ -583,7 +561,7 @@ bool initASCI()
 	// Enable TX_Preambles mode
 	successfulConfig &= writeAndVerifyRegister(R_CONFIG_2, 0x30);
 
-	if (xSemaphoreTake(asciSemHandle, 10) != pdTRUE)
+	if (xSemaphoreTake(asciSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 	{
 		Debug("Interrupt failed to occur while enabling TX_Preambles mode!\n");
 		return false;
