@@ -66,6 +66,15 @@ void Error_Handler(void);
 #define USART_RX_GPIO_Port GPIOA
 #define SHDN_Pin GPIO_PIN_10
 #define SHDN_GPIO_Port GPIOB
+#define CS_EPD_Pin GPIO_PIN_12
+#define CS_EPD_GPIO_Port GPIOB
+#define DC_Pin GPIO_PIN_14
+#define DC_GPIO_Port GPIOB
+#define BUSY_Pin GPIO_PIN_6
+#define BUSY_GPIO_Port GPIOC
+#define BUSY_EXTI_IRQn EXTI9_5_IRQn
+#define RST_Pin GPIO_PIN_8
+#define RST_GPIO_Port GPIOC
 #define INT_Pin GPIO_PIN_8
 #define INT_GPIO_Port GPIOA
 #define INT_EXTI_IRQn EXTI9_5_IRQn
@@ -73,8 +82,8 @@ void Error_Handler(void);
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
-#define SS_Pin GPIO_PIN_6
-#define SS_GPIO_Port GPIOB
+#define CS_ASCI_Pin GPIO_PIN_6
+#define CS_ASCI_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

@@ -20,8 +20,7 @@
 static Mux_State_E muxState = 0x00;
 static bool gpio3State = 0;
 static uint32_t lastUpdate = 0;
-uint8_t recvBuffer[SPI_BUFF_SIZE];
-uint8_t sendBuffer[SPI_BUFF_SIZE];
+static uint8_t recvBuffer[SPI_BUFF_SIZE];
 
 
 /* ==================================================================== */

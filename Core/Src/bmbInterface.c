@@ -150,36 +150,6 @@ static bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, co
 /* =================== LOCAL FUNCTION DEFINITIONS ===================== */
 /* ==================================================================== */
 /*!
-  @brief   Interrupt when SPI TX finishes. Unblock task by releasing
-  	  	   semaphore
-  @param   SPI Handle
-*/
-void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
-{
-	if (hspi == &hspi1)
-	{
-		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xSemaphoreGiveFromISR(asciSpiSemHandle, &xHigherPriorityTaskWoken);
-		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-	}
-}
-
-/*!
-  @brief   Interrupt when SPI TX/RX finishes. Unblock task by releasing
-  	  	   semaphore
-  @param   SPI Handle
-*/
-void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
-{
-	if (hspi == &hspi1)
-	{
-		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xSemaphoreGiveFromISR(asciSpiSemHandle, &xHigherPriorityTaskWoken);
-		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-	}
-}
-
-/*!
   @brief   Interrupt when ASCI INT Pin interrupt occurs
   @param   GPIO Pin causing interrupt
 */
@@ -198,7 +168,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 */
 static void csOn()
 {
-	HAL_GPIO_WritePin(SS_GPIO_Port, SS_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(CS_ASCI_GPIO_Port, CS_ASCI_Pin, GPIO_PIN_RESET);
 }
 
 /*!
@@ -206,7 +176,7 @@ static void csOn()
 */
 static void csOff()
 {
-	HAL_GPIO_WritePin(SS_GPIO_Port, SS_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(CS_ASCI_GPIO_Port, CS_ASCI_Pin, GPIO_PIN_SET);
 }
 
 /*!
@@ -220,7 +190,7 @@ static void sendAsciSpi(uint8_t value)
 	HAL_SPI_Transmit_IT(&hspi1, (uint8_t *)&value, 1);
 	if (xSemaphoreTake(asciSpiSemHandle, 10) != pdTRUE)
 	{
-		Debug("Interrupt failed to occur during SPI transmit\n");
+		Debug("Interrupt failed to occur during ASCI SPI transmit\n");
 	}
 	csOff();
 }

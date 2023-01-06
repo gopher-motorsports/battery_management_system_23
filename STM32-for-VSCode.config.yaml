@@ -86,6 +86,7 @@ includeDirectories:
   - Src/**
   - Core/Src/**
   - Core/Lib/**
+  - Core/Epaper/**
 
 
 # Files that should be included in the compilation.
@@ -130,6 +131,7 @@ sourceFiles:
   - Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/port.c
   - Src/**
   - Core/Src/**
+  - Core/Epaper/**
   - Core/Lib/**
 
 

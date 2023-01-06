@@ -7,6 +7,9 @@
 #include "mainTask.h"
 #include "bmbInterface.h"
 #include "bmb.h"
+#include "epaper.h"
+#include "epaperUtils.h"
+#include <stdlib.h>
 
 
 /* ==================================================================== */
@@ -14,7 +17,10 @@
 /* ==================================================================== */
 extern osSemaphoreId 		asciSpiSemHandle;
 extern osSemaphoreId 		asciSemHandle;
+extern osSemaphoreId 		epdSemHandle;
+extern osSemaphoreId		epdBusySemHandle;
 extern SPI_HandleTypeDef 	hspi1;
+extern SPI_HandleTypeDef 	hspi2;
 extern Bms_S 				gBms;
 
 
@@ -26,9 +32,8 @@ static bool initialized = false;
 static uint32_t initRetries = 5;
 static uint32_t lastUpdateMain = 0;
 
-static bool balancingEnabled = false;
-static uint32_t lastBalancingUpdate = 0;
-
+bool balancingEnabled = false;
+uint32_t lastBalancingUpdate = 0;
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
@@ -37,23 +42,7 @@ void printCellVoltages();
 void printCellTemperatures();
 void printBoardTemperatures();
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-	if (GPIO_Pin == GPIO_PIN_8)
-	{
-		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xSemaphoreGiveFromISR(asciSemHandle, &xHigherPriorityTaskWoken);
-		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-	}
-	if (GPIO_Pin == B1_Pin)
-	{
-		if (HAL_GetTick() - lastBalancingUpdate > 300)
-		{
-			lastBalancingUpdate = HAL_GetTick();
-			balancingEnabled = !balancingEnabled;
-		}
-	}
-}
+
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
 /* ==================================================================== */
