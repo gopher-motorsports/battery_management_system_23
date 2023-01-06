@@ -107,9 +107,6 @@ typedef struct
 	float maxBoardTemp;
 	float minBoardTemp;
 
-	float aux1;
-	float aux2;
-
 	// Balancing Configuration
 	bool balSwRequested[NUM_BRICKS_PER_BMB];	// Set by BMS to determine which cells need to be balanced
 	bool balSwEnabled[NUM_BRICKS_PER_BMB];		// Set by BMB based on ability to balance in hardware
@@ -119,8 +116,6 @@ typedef struct
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */
 /* ==================================================================== */
-
-
 
 /*!
   @brief   Initialize the BMBs by configuring registers
@@ -159,16 +154,6 @@ void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs);
   @param   muxSetting - What mux setting should be used
 */
 void setMux(uint32_t numBmbs, uint8_t muxSetting);
-
-/*!
-  @brief   Set the GPIO pins on the BMBs
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-  @param   gpio0 - True if GPIO should be high, false otherwise
-  @param   gpio1 - True if GPIO should be high, false otherwise
-  @param   gpio2 - True if GPIO should be high, false otherwise
-  @param   gpio3 - True if GPIO should be high, false otherwise
-*/
-void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3);
 
 /*!
   @brief   Update BMB data statistics. Min/Max/Avg

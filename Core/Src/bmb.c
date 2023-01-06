@@ -20,9 +20,7 @@
 /* ==================================================================== */
 /* ========================= LOCAL VARIABLES ========================== */
 /* ==================================================================== */
-
-static Mux_State_E muxState = 0x00;
-static bool gpio3State = 0;
+static Mux_State_E muxState = MUX1;
 static uint32_t lastUpdate = 0;
 static uint8_t recvBuffer[SPI_BUFF_SIZE];
 
@@ -59,9 +57,8 @@ void initBmbs(uint32_t numBmbs)
 	// Enable 5ms delay between balancing and aquisition
 	writeAll(AUTOBALSWDIS, 0x0033, numBmbs);
 
-	// Reset GPIO to 0 state
-	setGpio(numBmbs, 0, 0, 0, 0);
-
+	// Reset MUX configuration to Channel 1 - 000
+	setMux(numBmbs, MUX1);
 
 	// Start initial acquisition with 32 oversamples
 	if(!writeAll(SCANCTRL, 0x0841, numBmbs))
@@ -320,34 +317,9 @@ void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs)
 */
 void setMux(uint32_t numBmbs, uint8_t muxSetting)
 {
-	bool gpio[3];
-	for (int i = 0; i < 3; i++)
-	{
-		gpio[i] = (muxSetting >> i) & 0x0001;
-	}
-	setGpio(numBmbs, gpio[0], gpio[1], gpio[2], gpio3State); // Currently sets GPIO 4 to 0 when updating MUX
-}
-
-/*!
-  @brief   Set the GPIO pins on the BMBs
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-  @param   gpio0 - True if GPIO should be high, false otherwise
-  @param   gpio1 - True if GPIO should be high, false otherwise
-  @param   gpio2 - True if GPIO should be high, false otherwise
-  @param   gpio3 - True if GPIO should be high, false otherwise
-*/
-void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3)
-{
-	// First 4 bits set GPIO to output mode
-	// Last 4 bits set GPIO logic state for channels 3, 2, 1, 0 respectively
-	uint16_t data = 0xF000 | (gpio3 << 3) | (gpio2 << 2) | (gpio1 << 1) | (gpio0);
-	writeAll(GPIO, data, numBmbs);
-
-	// Update Mux state depending on only GPIO settings 0, 1, 2
-	muxState = data & 0x0007;
-
-	// Update gpio4 state
-	gpio3State = gpio3;
+	// Last 3 bits set GPIO logic state for channels 2, 1, 0 respectively
+	uint16_t gpioData = 0xF000 | (muxSetting & 0x07);
+	writeAll(GPIO, gpioData, numBmbs);
 }
 
 /*!
