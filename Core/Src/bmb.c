@@ -6,6 +6,7 @@
 #include "bmb.h"
 #include "bmbInterface.h"
 #include "bmbUtils.h"
+#include "debug.h"
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
@@ -60,7 +61,7 @@ void initBmbs(uint32_t numBmbs)
 	// Start initial acquisition with 32 oversamples
 	if(!writeAll(SCANCTRL, 0x0841, numBmbs))
 	{
-		printf("SHIT!\n");
+		Debug("Failed to start initial scan!\n");
 	}
 
 	// Set brickOV voltage alert threshold
@@ -92,14 +93,14 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			}
 			if (!allBmbScanDone)
 			{
-				printf("All BMB Scans failed to complete in time\n");
+				Debug("All BMB Scans failed to complete in time\n");
 				return;
 			}
 		}
 		else
 		{
 			// TODO - improve this. Handle failure correctly
-			printf("Failed to read SCANCTRL register\n");
+			Debug("Failed to read SCANCTRL register\n");
 			return;
 		}
 
@@ -119,7 +120,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			}
 			else
 			{
-				printf("Error during cellReg readAll!\n");
+				Debug("Error during cellReg readAll!\n");
 
 				// Failed to acquire data. Set status to MIA
 				for (int j = 0; j < numBmbs; j++)
@@ -142,7 +143,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		}
 		else
 		{
-			printf("Error during VBLOCK readAll!\n");
+			Debug("Error during VBLOCK readAll!\n");
 
 			// Failed to acquire data. Set status to MIA
 			for (int j = 0; j < numBmbs; j++)
@@ -177,7 +178,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			}
 			else
 			{
-				printf("Error during TEMP readAll!\n");
+				Debug("Error during TEMP readAll!\n");
 				// Failed to acquire data. Set status to MIA
 				for (int j = 0; j < numBmbs; j++)
 				{
@@ -192,7 +193,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		// Start acquisition for next function call with 32 oversamples and AUTOBALSWDIS
 		if(!writeAll(SCANCTRL, 0x0841, numBmbs))
 		{
-			printf("SHIT!\n");
+			Debug("SHIT!\n");
 		}
 	}
 }
@@ -224,7 +225,7 @@ void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 		}
 		else
 		{
-			printf("Error during cellReg readAll!\n");
+			Debug("Error during cellReg readAll!\n");
 
 			// Failed to acquire data. Set status to MIA
 			for (int j = 0; j < numBmbs; j++)
@@ -247,7 +248,7 @@ void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 	}
 	else
 	{
-		printf("Error during VBLOCK readAll!\n");
+		Debug("Error during VBLOCK readAll!\n");
 
 		// Failed to acquire data. Set status to MIA
 		for (int j = 0; j < numBmbs; j++)
