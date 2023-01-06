@@ -1,7 +1,7 @@
 #ifndef __EPAPER_UTILS_H
 #define __EPAPER_UTILS_H
 
-#include "../Fonts/fonts.h"
+#include "fonts.h"
 
 /**
  * Image attributes
@@ -45,7 +45,6 @@ typedef enum {
 **/
 #define WHITE          0xFF
 #define BLACK          0x00
-#define RED            BLACK
 
 #define IMAGE_BACKGROUND    WHITE
 #define FONT_FOREGROUND     BLACK
@@ -133,7 +132,6 @@ void Paint_DrawCircle(uint16_t X_Center, uint16_t Y_Center, uint16_t Radius, uin
 //Display string
 void Paint_DrawChar(uint16_t Xstart, uint16_t Ystart, const char Acsii_Char, sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background);
 void Paint_DrawString_EN(uint16_t Xstart, uint16_t Ystart, const char * pString, sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background);
-void Paint_DrawString_CN(uint16_t Xstart, uint16_t Ystart, const char * pString, cFONT* font, uint16_t Color_Foreground, uint16_t Color_Background);
 void Paint_DrawNum(uint16_t Xpoint, uint16_t Ypoint, int32_t Nummber, sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background);
 void Paint_DrawNumDecimals(uint16_t Xpoint, uint16_t Ypoint, double Nummber, sFONT* Font, uint16_t Digit, uint16_t Color_Foreground, uint16_t Color_Background); // Able to display decimals
 void Paint_DrawTime(uint16_t Xstart, uint16_t Ystart, PAINT_TIME *pTime, sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background);

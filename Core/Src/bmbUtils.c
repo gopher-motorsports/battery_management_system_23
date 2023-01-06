@@ -1,12 +1,14 @@
 /* ==================================================================== */
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
+
 #include <string.h>
 #include "bmbUtils.h"
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
+
 #define EPSILON 1e-4f
 #define MAX_DEPTH 20
 #define TABLE_SIZE 33
@@ -14,6 +16,7 @@
 /* ==================================================================== */
 /* ========================= LOCAL VARIABLES ========================== */
 /* ==================================================================== */
+
 const uint8_t tableLength = 33;
 const float ntcVoltageArray[33] =
 			{0.6994342978, 0.7598430424, 0.8258348331, 0.8977261194, 0.9757846124, 1.060206506,
@@ -37,6 +40,7 @@ const float temperatureArray[33] =
 /* ==================================================================== */
 /* ======================== GLOBAL VARIABLES ========================== */
 /* ==================================================================== */
+
 LookupTable_S ntcTable = {tableLength, ntcVoltageArray, temperatureArray};
 LookupTable_S zenerTable= {tableLength, zenerVoltageArray, temperatureArray};
 
@@ -44,6 +48,7 @@ LookupTable_S zenerTable= {tableLength, zenerVoltageArray, temperatureArray};
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
 /* ==================================================================== */
+
 bool equals(float f1, float f2);
 uint32_t binarySearch(const float *arr, const float target, int low, int high, int depth);
 float interpolate(float x, float x1, float x2, float y1, float y2);
@@ -52,6 +57,7 @@ float interpolate(float x, float x1, float x2, float y1, float y2);
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DEFINITIONS ===================== */
 /* ==================================================================== */
+
 bool equals(float f1, float f2)
 {
     if (fabs(f1 - f2) < EPSILON)
@@ -129,6 +135,7 @@ float interpolate(float x, float x1, float x2, float y1, float y2)
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
 /* ==================================================================== */
+
 float lookup(float x, const LookupTable_S* table)
 {
     //Clamp input to bounds of lookup table

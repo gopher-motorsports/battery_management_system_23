@@ -1,3 +1,4 @@
+#include "main.h"
 #include "epaperTask.h"
 #include "EPD_Test.h"
 #include <stdbool.h>
@@ -8,7 +9,11 @@ void runEpaper()
 {
     if(init)
     {
-        EPD_test();
+        epdClear();
         init = false;
+    }
+    else
+    {
+
     }
 }
