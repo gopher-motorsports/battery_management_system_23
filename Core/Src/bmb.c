@@ -190,7 +190,8 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		}
 
 		// Cycle to next MUX configuration
-		setMux(numBmbs, (muxState + 1) % NUM_MUX_CHANNELS);
+		muxState = (muxState + 1) % NUM_MUX_CHANNELS;
+		setMux(numBmbs, muxState);
 
 		// Start acquisition for next function call with 32 oversamples and AUTOBALSWDIS
 		if(!writeAll(SCANCTRL, 0x0841, numBmbs))
