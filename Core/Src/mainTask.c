@@ -5,14 +5,15 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "mainTask.h"
-#include "spiUtils.h"
+#include "bmbInterface.h"
 #include "bmb.h"
 
 
 /* ==================================================================== */
 /* ======================= EXTERNAL VARIABLES ========================= */
 /* ==================================================================== */
-extern osSemaphoreId 		binSemHandle;
+extern osSemaphoreId 		asciSpiSemHandle;
+extern osSemaphoreId 		asciSemHandle;
 extern SPI_HandleTypeDef 	hspi1;
 extern Bms_S 				gBms;
 
@@ -36,16 +37,12 @@ void printCellVoltages();
 void printCellTemperatures();
 void printBoardTemperatures();
 
-
-
-
-
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if (GPIO_Pin == GPIO_PIN_8)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xSemaphoreGiveFromISR(binSemHandle, &xHigherPriorityTaskWoken);
+		xSemaphoreGiveFromISR(asciSemHandle, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 	if (GPIO_Pin == B1_Pin)
@@ -64,9 +61,12 @@ void runMain()
 {
 	if (!initialized && initRetries > 0)
 	{
+		initialized = true;
 		printf("Initializing ASCI connection...\n");
 		resetASCI();
-		initialized = initASCI(&numBmbs);
+		initialized &= initASCI();
+		initialized &= helloAll(&numBmbs);
+		// initialized = initASCI(&numBmbs);
 		if (numBmbs != NUM_BMBS_PER_PACK)
 		{
 			printf("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", numBmbs, NUM_BMBS_PER_PACK);

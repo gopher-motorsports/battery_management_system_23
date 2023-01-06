@@ -4,7 +4,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "bmb.h"
-#include "spiUtils.h"
+#include "bmbInterface.h"
 #include "bmbUtils.h"
 
 /* ==================================================================== */
@@ -26,121 +26,11 @@ uint8_t sendBuffer[SPI_BUFF_SIZE];
 /* ==================================================================== */
 /* ======================= EXTERNAL VARIABLES ========================= */
 /* ==================================================================== */
-extern osSemaphoreId binSemHandle;
 
 
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
 /* ==================================================================== */
-/*!
-  @brief   Initialize ASCI and BMB daisy chain. Enumerate BMBs
-  @param   numBmbs - Updated with number of enumerated BMBs from HELLOALL command
-  @return  True if successful initialization, false otherwise
-*/
-bool initASCI(uint32_t *numBmbs)
-{
-	disableASCI();
-	HAL_Delay(10);
-	//Test
-	enableASCI();
-	ssOff();
-	bool successfulConfig = true;
-	// dummy transaction since this chip sucks
-	readRegister(R_CONFIG_3);
-
-	// Set Keep_Alive to 0x05 = 160us
-	successfulConfig &= writeAndVerifyRegister(R_CONFIG_3, 0x05);
-
-	// Enable RX_Error, RX_Overflow and RX_Busy interrupts
-	successfulConfig &= writeAndVerifyRegister(R_RX_INTERRUPT_ENABLE, 0xA8);
-
-	clearRxBuffer();
-
-	// Enable TX_Preambles mode
-	successfulConfig &= writeAndVerifyRegister(R_CONFIG_2, 0x30);
-
-	if (!(xSemaphoreTake(binSemHandle, 10) == pdTRUE))
-	{
-		printf("Interrupt failed to occur during initialization!\n");
-		return false;
-	}
-
-	// Verify interrupt was caused by RX_Busy
-	if (readRxBusyFlag())
-	{
-		clearRxBusyFlag();
-	}
-	else
-	{
-		successfulConfig = false;
-	}
-
-	// Verify RX_Busy_Status and RX_Empty_Status true
-	successfulConfig &= (readRegister(R_RX_STATUS) == 0x21);
-
-	// Enable RX_Stop INT
-	successfulConfig &= writeAndVerifyRegister(R_RX_INTERRUPT_ENABLE, 0x8A);
-
-	// Enable TX_Queue mode
-	successfulConfig &= writeAndVerifyRegister(R_CONFIG_2, 0x10);
-
-	// Verify RX_Empty
-	successfulConfig &= !!(readRegister(R_RX_STATUS) & 0x01);
-
-	clearTxBuffer();
-	clearRxBuffer();
-
-	// Send Hello_All command
-	sendBuffer[0] = CMD_WR_LD_Q_L0;
-	sendBuffer[1] = 0x03;			// Data length
-	sendBuffer[2] = CMD_HELLO_ALL;	// HELLOALL command byte
-	sendBuffer[3] = 0x00;			// Register address
-	sendBuffer[4] = 0x00;			// Initialization address for HELLOALL
-
-	if (!loadAndVerifyTxQueue((uint8_t *)&sendBuffer, 5))
-	{
-		printf("Failed to load all!\n");
-		return false;
-	}
-
-	// Enable RX_Error, RX_Overflow and RX_Stop interrupts
-	successfulConfig &= writeAndVerifyRegister(R_RX_INTERRUPT_ENABLE, 0x8A);
-
-	sendSPI(CMD_WR_NXT_LD_Q_L0);
-
-
-	if (!(xSemaphoreTake(binSemHandle, 10) == pdTRUE))
-	{
-		printf("Interrupt failed to occur during initialization!\n");
-		return false;
-	}
-
-	if (readRxStopFlag())
-	{
-		clearRxStopFlag();
-	}
-	else
-	{
-		successfulConfig = false;
-	}
-
-	// Verify stop bit
-	successfulConfig &= !!(readRegister(R_RX_STATUS) & 0x02);
-
-
-	successfulConfig &= readNextSpiMessage((uint8_t *)&recvBuffer, 3);
-
-	if (rxErrorsExist() || !successfulConfig)
-	{
-		printf("Detected errors during initialization...\n");
-		return false;
-	}
-
-	(*numBmbs) = recvBuffer[3];
-
-	return true;
-}
-
 /*!
   @brief   Initialize the BMBs by configuring registers
   @param   numBmbs - The expected number of BMBs in the daisy chain
@@ -197,7 +87,6 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			bool allBmbScanDone = true;
 			for (uint8_t j = 0; j < numBmbs; j++)
 			{
-				// Read brick voltage in [15:2]
 				uint16_t scanCtrlData = (recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j];
 				allBmbScanDone &= ((scanCtrlData & 0xA000) == 0xA000);	// Verify SCANDONE and DATARDY bits
 			}

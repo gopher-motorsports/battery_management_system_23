@@ -47,7 +47,8 @@ UART_HandleTypeDef huart2;
 
 osThreadId defaultTaskHandle;
 osThreadId mainTaaskHandle;
-osSemaphoreId binSemHandle;
+osSemaphoreId asciSpiSemHandle;
+osSemaphoreId asciSemHandle;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -118,13 +119,19 @@ int main(void)
   /* USER CODE END RTOS_MUTEX */
 
   /* Create the semaphores(s) */
-  /* definition and creation of binSem */
-  osSemaphoreDef(binSem);
-  binSemHandle = osSemaphoreCreate(osSemaphore(binSem), 1);
+  /* definition and creation of asciSpiSem */
+  osSemaphoreDef(asciSpiSem);
+  asciSpiSemHandle = osSemaphoreCreate(osSemaphore(asciSpiSem), 1);
+
+  /* definition and creation of asciSem */
+  osSemaphoreDef(asciSem);
+  asciSemHandle = osSemaphoreCreate(osSemaphore(asciSem), 1);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   // Set semaphore count to 0 for proper ISR function
-  xSemaphoreTake(binSemHandle, 1);
+  xSemaphoreTake(asciSpiSemHandle, 1);
+  xSemaphoreTake(asciSemHandle, 1);
+
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
