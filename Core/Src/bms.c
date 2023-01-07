@@ -68,6 +68,7 @@ void balancePack(uint32_t numBmbs, bool balanceRequested)
 				(pBms->bmb[i].maxBrickTemp > MAX_CELL_TEMP_BLEEDING_ALLOWED_C))
 			{
 				disableBmbBalancing(&pBms->bmb[i]);
+				continue;
 			}
 
 			// Iterate through all bricks and determine whether they should be bled or not
