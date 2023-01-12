@@ -13,6 +13,7 @@
 /* ========================= LOCAL VARIABLES ========================== */
 /* ==================================================================== */
 
+uint8_t clearScreenData[UPDATE_BYTES] = {[0 ... UPDATE_BYTES-1] = 0xFF};
 Epaper_Configuration_E epdConfig = UNINITIALIZED;
 uint8_t sendBuffer[8] = { 0 };
 uint8_t WF_PARTIAL_LUT[LUT_SIZE] =
@@ -397,8 +398,8 @@ void epdClear()
 	}
 
 	// Create white image
-	uint8_t clearScreenData[UPDATE_BYTES];
-	memset(clearScreenData, 0xFF, UPDATE_BYTES * sizeof(uint8_t));
+	// uint8_t clearScreenData[UPDATE_BYTES];
+	// memset(clearScreenData, 0xFF, UPDATE_BYTES * sizeof(uint8_t));
 	
 	// Write white image to Black and White RAM
 	sendMessage(CMD_WRITE_RAM_BLACK_WHITE, clearScreenData, UPDATE_BYTES);
