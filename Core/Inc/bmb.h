@@ -48,6 +48,13 @@
 // 60V range & 14 bit ADC 	   - 60/(2^14)  = 3.6621 mV/bit
 #define CONVERT_14BIT_TO_60V	0.0036621f
 
+// The minimum voltage that we can bleed to
+#define MIN_BLEED_TARGET_VOLTAGE_V 	3.5f
+// The maximum allowed board temp where bleeding is allowed
+#define MAX_BOARD_TEMP_BALANCING_ALLOWED_C	90.0f
+// The maximum cell temperature where bleeding is allowed
+#define MAX_CELL_TEMP_BLEEDING_ALLOWED_C	55.0f
+
 
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
@@ -82,6 +89,7 @@ typedef enum
 // TODO add description
 typedef struct
 {
+	const uint32_t bmbIdx;
 	uint32_t numBricks;
 	// TODO - set initial status value to SNA
 	Bmb_Sensor_Status_E brickVStatus[NUM_BRICKS_PER_BMB];

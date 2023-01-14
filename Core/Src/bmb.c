@@ -30,6 +30,38 @@ static uint8_t recvBuffer[SPI_BUFF_SIZE];
 /* ==================================================================== */
 
 
+/* ==================================================================== */
+/* =================== LOCAL FUNCTION DECLARATIONS ==================== */
+/* ==================================================================== */
+
+void updateBmbBalanceSwitches(Bmb_S* bmb);
+
+
+/* ==================================================================== */
+/* =================== LOCAL FUNCTION DEFINITIONS ===================== */
+/* ==================================================================== */
+/*!
+  @brief   Enable the hardware bleed switches if balSwEnabled set in BMB struct
+  @param   bmb - pointer to bmb that needs to be updated
+*/
+void updateBmbBalanceSwitches(Bmb_S* bmb)
+{
+	// Set cell balancing watchdog timeout to 5s
+	writeDevice(WATCHDOG, 0x1500, bmb->bmbIdx);
+	uint16_t balanceSwEnabled = 0x0000;
+	uint16_t mask = 0x0001;
+	for (int i = 0; i < NUM_BRICKS_PER_BMB; i++)
+	{
+		if (bmb->balSwEnabled[i])
+		{
+			balanceSwEnabled |= mask;
+		}
+		mask = mask << 1;
+	}
+	// Update the balance switches on the relevant BMB
+	writeDevice(BALSWEN, balanceSwEnabled, bmb->bmbIdx);
+}
+
 
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
@@ -96,7 +128,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			if (!allBmbScanDone)
 			{
 				Debug("All BMB Scans failed to complete in time\n");
-				return;
+				return;	
 			}
 		}
 		else
@@ -418,13 +450,20 @@ void balanceCells(Bmb_S* bmb, uint32_t numBmbs)
 	{
 		uint32_t numBricksNeedBalancing = 0;
 		Brick_S bricksToBalance[NUM_BRICKS_PER_BMB];
-		// Add all bricks that need balancing to array
-		for (int brickIdx = 0; brickIdx < NUM_BRICKS_PER_BMB; brickIdx++)
+		// Add all bricks that need balancing to array if board temp allows for it
+		if (bmb[bmbIdx].maxBoardTemp < MAX_BOARD_TEMP_BALANCING_ALLOWED_C)
 		{
-			if (bmb[bmbIdx].balSwRequested[brickIdx])
+			for (int brickIdx = 0; brickIdx < NUM_BRICKS_PER_BMB; brickIdx++)
 			{
-				// Brick needs to be balanced, add to array
-				bricksToBalance[numBricksNeedBalancing++] = (Brick_S) { .brickIdx = brickIdx, .brickV = bmb[bmbIdx].brickV[brickIdx] };
+				// Add brick to list of bricks that need balancing if balancing requested, brick
+				// isn't too hot, and the brick voltage is above the bleed threshold
+				if (bmb[bmbIdx].balSwRequested[brickIdx] &&
+					bmb[bmbIdx].brickTemp[brickIdx] < MAX_CELL_TEMP_BLEEDING_ALLOWED_C &&
+					bmb[bmbIdx].brickV[brickIdx] > MIN_BLEED_TARGET_VOLTAGE_V)
+				{
+					// Brick needs to be balanced, add to array
+					bricksToBalance[numBricksNeedBalancing++] = (Brick_S) { .brickIdx = brickIdx, .brickV = bmb[bmbIdx].brickV[brickIdx] };
+				}
 			}
 		}
 		// Sort array of bricks that need balancing by their voltage
@@ -463,20 +502,7 @@ void balanceCells(Bmb_S* bmb, uint32_t numBmbs)
 				bmb[bmbIdx].balSwEnabled[brick.brickIdx] = true;
 			}
 		}
-		// Set cell balancing watchdog timeout to 5s
-		writeDevice(WATCHDOG, 0x1500, bmbIdx);
-		uint16_t balanceSwEnabled = 0x0000;
-		uint16_t mask = 0x0001;
-		for (int i = 0; i < NUM_BRICKS_PER_BMB; i++)
-		{
-			if (bmb[bmbIdx].balSwEnabled[i])
-			{
-				balanceSwEnabled |= mask;
-			}
-			mask = mask << 1;
-		}
-		// Update the balance switches on the relevant BMB
-		writeDevice(BALSWEN, balanceSwEnabled, bmbIdx);
+		// Update the BMB balance switches in hardware
+		updateBmbBalanceSwitches(&bmb[bmbIdx]);
 	}
-
 }

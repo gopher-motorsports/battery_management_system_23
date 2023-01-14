@@ -1,8 +1,16 @@
 #include "bms.h"
 #include "bmb.h"
 
-Bms_S gBms;
 
+#define INIT_BMS_BMB_ARRAY \
+{ \
+    [0 ... NUM_BMBS_PER_PACK-1] = {.bmbIdx = __COUNTER__} \
+}
+
+Bms_S gBms = {
+    .numBmbs = NUM_BMBS_PER_PACK,
+    .bmb = INIT_BMS_BMB_ARRAY
+};
 static void disableBmbBalancing(Bmb_S* bmb);
 
 static void disableBmbBalancing(Bmb_S* bmb)
@@ -63,14 +71,6 @@ void balancePack(uint32_t numBmbs, bool balanceRequested)
 		// Set bleed request on cells that have voltage higher than our bleedTargetVoltage
 		for (int i = 0; i < numBmbs; i++)
 		{
-			// Verify that board or cells not too hot to balance
-			if ((pBms->bmb[i].maxBoardTemp > MAX_BOARD_TEMP_BALANCING_ALLOWED_C) ||
-				(pBms->bmb[i].maxBrickTemp > MAX_CELL_TEMP_BLEEDING_ALLOWED_C))
-			{
-				disableBmbBalancing(&pBms->bmb[i]);
-				continue;
-			}
-
 			// Iterate through all bricks and determine whether they should be bled or not
 			for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
 			{
@@ -143,4 +143,34 @@ void aggregatePackData(uint32_t numBmbs)
 	pBms->maxBrickTemp = maxBrickTemp;
 	pBms->minBrickTemp = minBrickTemp;
 	pBms->avgBrickTemp = avgBrickTempSum / NUM_BMBS_PER_PACK;
+}
+
+void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
+{
+	Bms_S* pBms = &gBms;
+
+	// Clamp target brick voltage if too low
+	if (targetBrickVoltage < MIN_BLEED_TARGET_VOLTAGE_V)
+	{
+		targetBrickVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
+	}
+
+
+	for (int i = 0; i < numBmbs; i++)
+	{
+		// Iterate through all bricks and determine whether they should be bled or not
+		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
+		{
+			if (pBms->bmb[i].brickV[j] > targetBrickVoltage + BALANCE_THRESHOLD_V)
+			{
+				pBms->bmb[i].balSwRequested[j] = true;
+			}
+			else
+			{
+				pBms->bmb[i].balSwRequested[j] = false;
+			}
+		}
+	}
+	
+	balanceCells(pBms->bmb, numBmbs);
 }
