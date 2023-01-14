@@ -100,7 +100,6 @@ void initBmbs(uint32_t numBmbs)
 
 	// Set brickOV voltage alert threshold
 	// Set brickUV voltage alert threshold
-
 }
 
 /*!
@@ -127,6 +126,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			}
 			if (!allBmbScanDone)
 			{
+				// Do we want to try to restart the scans here?
 				Debug("All BMB Scans failed to complete in time\n");
 				return;	
 			}

@@ -92,7 +92,8 @@ void runMain()
 			{
 				printf("Balancing Enabled: FALSE\n");
 			}
-			balancePack(numBmbs, balancingEnabled);
+			//balancePack(numBmbs, balancingEnabled);
+			balancePackToVoltage(numBmbs, 3.9f);
 
 			printCellVoltages();
 			printCellTemperatures();

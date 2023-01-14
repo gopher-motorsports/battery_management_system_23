@@ -461,6 +461,9 @@ static bool readNextSpiMessage(uint8_t** data_p, uint32_t numBytesToRead)
 */
 static bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, const uint32_t numBytesToSend, const uint32_t numBytesToReceive)
 {
+	// TODO - see if there is a better way to do this
+	clearRxBuffer();
+	clearTxBuffer();
 	// Send command to ASCI and verify data integrity
 	if (!loadAndVerifyTxQueue(sendBuffer, numBytesToSend))
 	{
