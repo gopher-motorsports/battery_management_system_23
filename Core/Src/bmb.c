@@ -7,6 +7,7 @@
 #include "bmb.h"
 #include "bmbInterface.h"
 #include "bmbUtils.h"
+#include "packData.h"
 #include "debug.h"
 
 /* ==================================================================== */
@@ -320,9 +321,9 @@ void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs)
 void setMux(uint32_t numBmbs, uint8_t muxSetting)
 {
 	bool gpio[3];
-	for(int i = 0; i < 3; i++)
+	for (int i = 0; i < 3; i++)
 	{
-		gpio[i] = (muxSetting >> i) & 1;
+		gpio[i] = (muxSetting >> i) & 0x0001;
 	}
 	setGpio(numBmbs, gpio[0], gpio[1], gpio[2], gpio3State); // Currently sets GPIO 4 to 0 when updating MUX
 }
@@ -354,35 +355,77 @@ void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3)
   @param   bmb - The array containing BMB data
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
-void aggregateBrickVoltages(Bmb_S* bmb, uint32_t numBmbs)
+void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 {
+	// Iterate through brick voltages
 	for (int i = 0; i < numBmbs; i++)
 	{
 		Bmb_S* pBmb = &bmb[i];
-		float maxBrickV = 0.0f;
-		float minBrickV = 5.0f;
+		float maxBrickV = MIN_VOLTAGE_SENSOR_VALUE_V;
+		float minBrickV = MAX_VOLTAGE_SENSOR_VALUE_V;
 		float stackV	= 0.0f;
+		float maxBrickTemp = MIN_TEMP_SENSOR_VALUE_C;
+		float minBrickTemp = MAX_TEMP_SENSOR_VALUE_C;
+		float tempSum	   = 0.0f;
 		// TODO If SNA do not count
 		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
 			float brickV = pBmb->brickV[j];
+			float brickTemp = pBmb->brickTemp[j];
 
 			if (brickV > maxBrickV)
 			{
 				maxBrickV = brickV;
 			}
-
 			if (brickV < minBrickV)
 			{
 				minBrickV = brickV;
 			}
 
+			if (brickTemp > maxBrickTemp)
+			{
+				maxBrickTemp = brickTemp;
+			}
+			if (brickTemp < minBrickTemp)
+			{
+				minBrickTemp = brickTemp;
+			}
+
 			stackV += brickV;
+			tempSum += brickTemp;
 		}
 		pBmb->maxBrickV = maxBrickV;
 		pBmb->minBrickV = minBrickV;
 		pBmb->stackV	= stackV;
 		pBmb->avgBrickV = stackV / NUM_BRICKS_PER_BMB;
+		pBmb->maxBrickTemp = maxBrickTemp;
+		pBmb->minBrickTemp = minBrickTemp;
+		pBmb->avgBrickTemp = tempSum / NUM_BRICKS_PER_BMB;
+	}
+
+	// Iterate through board temperatures
+	for (int i = 0; i < numBmbs; i++)
+	{
+		Bmb_S* pBmb = &bmb[i];
+		float maxBoardTemp = -200.0f;
+		float minBoardTemp = 200.0f;
+		// TODO If SNA do not count
+		for (int j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
+		{
+			float boardTemp = pBmb->boardTemp[j];
+
+			if (boardTemp > maxBoardTemp)
+			{
+				maxBoardTemp = boardTemp;
+			}
+
+			if (boardTemp < minBoardTemp)
+			{
+				minBoardTemp = boardTemp;
+			}
+		}
+		pBmb->maxBoardTemp = maxBoardTemp;
+		pBmb->minBoardTemp = minBoardTemp;
 	}
 }
 
