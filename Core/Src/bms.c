@@ -7,7 +7,8 @@
     [0 ... NUM_BMBS_PER_PACK-1] = {.bmbIdx = __COUNTER__} \
 }
 
-Bms_S gBms = {
+Bms_S gBms = 
+{
     .numBmbs = NUM_BMBS_PER_PACK,
     .bmb = INIT_BMS_BMB_ARRAY
 };

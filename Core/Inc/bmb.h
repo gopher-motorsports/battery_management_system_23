@@ -114,6 +114,7 @@ typedef struct
 
 	float maxBoardTemp;
 	float minBoardTemp;
+	float avgBoardTemp;
 
 	// Balancing Configuration
 	bool balSwRequested[NUM_BRICKS_PER_BMB];	// Set by BMS to determine which cells need to be balanced

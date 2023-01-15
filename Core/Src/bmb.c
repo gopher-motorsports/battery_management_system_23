@@ -371,7 +371,10 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		float stackV	= 0.0f;
 		float maxBrickTemp = MIN_TEMP_SENSOR_VALUE_C;
 		float minBrickTemp = MAX_TEMP_SENSOR_VALUE_C;
-		float tempSum	   = 0.0f;
+		float brickTempSum = 0.0f;
+		float maxBoardTemp = MIN_TEMP_SENSOR_VALUE_C;
+		float minBoardTemp = MAX_TEMP_SENSOR_VALUE_C;
+		float boardTempSum = 0.0f;
 		// TODO If SNA do not count
 		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
@@ -397,15 +400,35 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			}
 
 			stackV += brickV;
-			tempSum += brickTemp;
+			brickTempSum += brickTemp;
 		}
+
+		for (int j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
+		{
+			float boardTemp = pBmb->boardTemp[j];
+
+			if (boardTemp > maxBoardTemp)
+			{
+				maxBoardTemp = boardTemp;
+			}
+			if (boardTemp < minBoardTemp)
+			{
+				minBoardTemp = boardTemp;
+			}
+
+			boardTempSum += boardTemp;
+		}
+
 		pBmb->maxBrickV = maxBrickV;
 		pBmb->minBrickV = minBrickV;
 		pBmb->stackV	= stackV;
 		pBmb->avgBrickV = stackV / NUM_BRICKS_PER_BMB;
 		pBmb->maxBrickTemp = maxBrickTemp;
 		pBmb->minBrickTemp = minBrickTemp;
-		pBmb->avgBrickTemp = tempSum / NUM_BRICKS_PER_BMB;
+		pBmb->avgBrickTemp = brickTempSum / NUM_BRICKS_PER_BMB;
+		pBmb->maxBoardTemp = maxBoardTemp;
+		pBmb->minBoardTemp = minBoardTemp;
+		pBmb->avgBoardTemp = boardTempSum / NUM_BOARD_TEMP_PER_BMB;
 	}
 
 	// Iterate through board temperatures
