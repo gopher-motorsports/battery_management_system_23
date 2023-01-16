@@ -50,7 +50,7 @@ LookupTable_S zenerTable= {tableLength, zenerVoltageArray, temperatureArray};
 /* ==================================================================== */
 
 bool equals(float f1, float f2);
-uint32_t binarySearch(const float *arr, const float target, int low, int high, int depth);
+uint32_t binarySearch(const float *arr, const float target, int low, int high);
 float interpolate(float x, float x1, float x2, float y1, float y2);
 
 
@@ -67,7 +67,7 @@ bool equals(float f1, float f2)
     return false;
 }
 
-uint32_t binarySearch(const float *arr, const float target, int low, int high, int depth)
+uint32_t binarySearch(const float *arr, const float target, int low, int high)
 {
     //check for invalid bounds
     if(low > high)
@@ -85,12 +85,8 @@ uint32_t binarySearch(const float *arr, const float target, int low, int high, i
         return high;
     }
 
-    // Check for unacceptable recursion depth
-    if(++depth > MAX_DEPTH)
-    {
-        return -1;
-    }
-    else
+    uint8_t depth = 0;
+    while((low <= high) && (depth < MAX_DEPTH))
     {
         //update middle value
         int mid = (high - low) / 2 + low;
@@ -106,14 +102,15 @@ uint32_t binarySearch(const float *arr, const float target, int low, int high, i
             //target is less than index m, update bounds
             else
             {
-                return binarySearch(arr, target, low, mid, depth);
+                high = mid;
             }
         }
         //target is greater than index m, update bounds
         else
         {
-            return binarySearch(arr, target, mid, high, depth);
+            low = mid + 1;
         }
+        depth++;
     }
 }
 
@@ -149,7 +146,7 @@ float lookup(float x, const LookupTable_S* table)
     }
 
     //Search for index of lookup table voltage that is closest to and less than input voltage
-    uint32_t i = binarySearch(table->x, x, 0, table->length-1, 0);
+    uint32_t i = binarySearch(table->x, x, 0, table->length-1);
 
     //Return 0 if binary search error
     if(i == -1)
