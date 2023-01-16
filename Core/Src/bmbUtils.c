@@ -72,7 +72,7 @@ uint32_t binarySearch(const float *arr, const float target, int low, int high)
     //check for invalid bounds
     if(low > high)
     {
-        return -1;
+        return 0;
     }
 
     //clamp target to bounds
@@ -112,6 +112,7 @@ uint32_t binarySearch(const float *arr, const float target, int low, int high)
         }
         depth++;
     }
+    return 0;
 }
 
 float interpolate(float x, float x1, float x2, float y1, float y2)
