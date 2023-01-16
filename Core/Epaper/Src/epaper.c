@@ -435,16 +435,8 @@ void epdDisplay(uint8_t *Image)
 */
 void epdDisplayPartial(uint8_t *Image)
 {
-    if(epdConfig != PARTIAL_REFRESH)
-	{
-		if(epdConfig != FULL_REFRESH)
-		{
-			// Reset initial settings
-			setFullRefreshSettings();
-		}
-		// Set partial configuration
-		setPartialRefreshSettings();
-	}
+	// Configure epaper for partial refresh
+	setPartialRefreshSettings();
 
 	// Write Black and White image to RAM
 	sendMessage(CMD_WRITE_RAM_BLACK_WHITE, Image, UPDATE_BYTES);
