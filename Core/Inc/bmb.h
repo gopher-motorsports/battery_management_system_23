@@ -48,6 +48,13 @@
 // 60V range & 14 bit ADC 	   - 60/(2^14)  = 3.6621 mV/bit
 #define CONVERT_14BIT_TO_60V	0.0036621f
 
+// The minimum voltage that we can bleed to
+#define MIN_BLEED_TARGET_VOLTAGE_V 	3.5f
+// The maximum allowed board temp where bleeding is allowed
+#define MAX_BOARD_TEMP_BALANCING_ALLOWED_C	75.0f
+// The maximum cell temperature where bleeding is allowed
+#define MAX_CELL_TEMP_BLEEDING_ALLOWED_C	55.0f
+
 
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
@@ -82,6 +89,7 @@ typedef enum
 // TODO add description
 typedef struct
 {
+	const uint32_t bmbIdx;
 	uint32_t numBricks;
 	// TODO - set initial status value to SNA
 	Bmb_Sensor_Status_E brickVStatus[NUM_BRICKS_PER_BMB];
@@ -106,9 +114,7 @@ typedef struct
 
 	float maxBoardTemp;
 	float minBoardTemp;
-
-	float aux1;
-	float aux2;
+	float avgBoardTemp;
 
 	// Balancing Configuration
 	bool balSwRequested[NUM_BRICKS_PER_BMB];	// Set by BMS to determine which cells need to be balanced
@@ -119,8 +125,6 @@ typedef struct
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */
 /* ==================================================================== */
-
-
 
 /*!
   @brief   Initialize the BMBs by configuring registers
@@ -159,16 +163,6 @@ void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs);
   @param   muxSetting - What mux setting should be used
 */
 void setMux(uint32_t numBmbs, uint8_t muxSetting);
-
-/*!
-  @brief   Set the GPIO pins on the BMBs
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-  @param   gpio0 - True if GPIO should be high, false otherwise
-  @param   gpio1 - True if GPIO should be high, false otherwise
-  @param   gpio2 - True if GPIO should be high, false otherwise
-  @param   gpio3 - True if GPIO should be high, false otherwise
-*/
-void setGpio(uint32_t numBmbs, bool gpio0, bool gpio1, bool gpio2, bool gpio3);
 
 /*!
   @brief   Update BMB data statistics. Min/Max/Avg

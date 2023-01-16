@@ -17,9 +17,12 @@
 /* ==================================================================== */
 
 // The number of BMBs per battery pack
-#define NUM_BMBS_PER_PACK		1
+#define NUM_BMBS_PER_PACK			1
 // Max allowable voltage difference between bricks for balancing
-#define BALANCE_THRESHOLD_V		0.002f
+#define BALANCE_THRESHOLD_V			0.002f
+// The maximum cell temperature where charging is allowed
+#define MAX_CELL_TEMP_CHARGING_ALLOWED_C	50.0f
+
 
 
 /* ==================================================================== */
@@ -63,6 +66,8 @@ void balancePack(uint32_t numBmbs, bool balanceRequested);
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
 void aggregatePackData(uint32_t numBmbs);
+
+void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage);
 
 
 #endif /* INC_BMS_H_ */

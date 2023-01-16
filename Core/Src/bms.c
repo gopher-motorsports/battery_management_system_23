@@ -1,7 +1,26 @@
 #include "bms.h"
 #include "bmb.h"
 
-Bms_S gBms;
+
+#define INIT_BMS_BMB_ARRAY \
+{ \
+    [0 ... NUM_BMBS_PER_PACK-1] = {.bmbIdx = __COUNTER__} \
+}
+
+Bms_S gBms = 
+{
+    .numBmbs = NUM_BMBS_PER_PACK,
+    .bmb = INIT_BMS_BMB_ARRAY
+};
+static void disableBmbBalancing(Bmb_S* bmb);
+
+static void disableBmbBalancing(Bmb_S* bmb)
+{
+	for (int i = 0; i < NUM_BRICKS_PER_BMB; i++)
+	{
+		bmb->balSwRequested[i] = false;
+	}
+}
 
 /*!
   @brief   Initialization function for the battery pack
@@ -45,9 +64,15 @@ void balancePack(uint32_t numBmbs, bool balanceRequested)
 				bleedTargetVoltage = pBms->bmb[i].minBrickV + BALANCE_THRESHOLD_V;
 			}
 		}
+		// Ensure we don't overbleed the cells
+		if (bleedTargetVoltage < MIN_BLEED_TARGET_VOLTAGE_V)
+		{
+			bleedTargetVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
+		}
 		// Set bleed request on cells that have voltage higher than our bleedTargetVoltage
 		for (int i = 0; i < numBmbs; i++)
 		{
+			// Iterate through all bricks and determine whether they should be bled or not
 			for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
 			{
 				if (pBms->bmb[i].brickV[j] > bleedTargetVoltage)
@@ -66,10 +91,7 @@ void balancePack(uint32_t numBmbs, bool balanceRequested)
 		// If bleeding not requested ensure balancing switches are all off
 		for (int i = 0; i < numBmbs; i++)
 		{
-			for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
-			{
-				pBms->bmb[i].balSwRequested[j] = false;
-			}
+			disableBmbBalancing(&pBms->bmb[i]);
 		}
 	}
 	balanceCells(pBms->bmb, numBmbs);
@@ -122,4 +144,34 @@ void aggregatePackData(uint32_t numBmbs)
 	pBms->maxBrickTemp = maxBrickTemp;
 	pBms->minBrickTemp = minBrickTemp;
 	pBms->avgBrickTemp = avgBrickTempSum / NUM_BMBS_PER_PACK;
+}
+
+void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
+{
+	Bms_S* pBms = &gBms;
+
+	// Clamp target brick voltage if too low
+	if (targetBrickVoltage < MIN_BLEED_TARGET_VOLTAGE_V)
+	{
+		targetBrickVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
+	}
+
+
+	for (int i = 0; i < numBmbs; i++)
+	{
+		// Iterate through all bricks and determine whether they should be bled or not
+		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
+		{
+			if (pBms->bmb[i].brickV[j] > targetBrickVoltage + BALANCE_THRESHOLD_V)
+			{
+				pBms->bmb[i].balSwRequested[j] = true;
+			}
+			else
+			{
+				pBms->bmb[i].balSwRequested[j] = false;
+			}
+		}
+	}
+	
+	balanceCells(pBms->bmb, numBmbs);
 }
