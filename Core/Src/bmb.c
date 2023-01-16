@@ -15,6 +15,20 @@
 /* ==================================================================== */
 
 #define DATA_REFRESH_DELAY_MS 100
+#define WATCHDOG_1S_STEP_SIZE 0x1000
+#define WATCHDOG_TIMER_LOAD_5 0x0500
+#define DEVCFG1_ENABLE_ALIVE_COUNTER	0x0040
+#define DEVCFG1_DEFAULT_CONFIG			0x1002
+#define MEASUREEN_ENABLE_BRICK_CHANNELS 0x0FFF
+#define MEASUREEN_ENABLE_VBLOCK_CHANNEL 0xC000
+#define MEASUREEN_ENABLE_AIN1_CHANNEL	0x1000
+#define MEASUREEN_ENABLE_AIN2_CHANNEL	0x2000
+#define ACQCFG_THRM_ON					0x0300
+#define ACQCFG_MAX_SETTLING_TIME		0x003F
+#define AUTOBALSWDIS_5MS_RECOVERY_TIME	0x0034
+#define SCANCTRL_START_SCAN				0x0001
+#define SCANCTRL_32_OVERSAMPLES			0x0040
+#define SCANCTRL_ENABLE_AUTOBALSWDIS	0x0800
 
 
 /* ==================================================================== */
@@ -40,14 +54,17 @@ void updateBmbBalanceSwitches(Bmb_S* bmb);
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DEFINITIONS ===================== */
 /* ==================================================================== */
+
 /*!
   @brief   Enable the hardware bleed switches if balSwEnabled set in BMB struct
   @param   bmb - pointer to bmb that needs to be updated
 */
 void updateBmbBalanceSwitches(Bmb_S* bmb)
 {
+	// TODO - should the watchdog be set in this function? For example if we want to ensure that all
+	// bleeding is ended we would call this update function but there would be no need to update the watchdog
 	// Set cell balancing watchdog timeout to 5s
-	writeDevice(WATCHDOG, 0x1500, bmb->bmbIdx);
+	writeDevice(WATCHDOG, (WATCHDOG_1S_STEP_SIZE | WATCHDOG_TIMER_LOAD_5), bmb->bmbIdx);
 	uint16_t balanceSwEnabled = 0x0000;
 	uint16_t mask = 0x0001;
 	for (int i = 0; i < NUM_BRICKS_PER_BMB; i++)
@@ -78,22 +95,22 @@ void initBmbs(uint32_t numBmbs)
 	// TODO - do we want to read the register contents back and verify values?
 	// Enable alive counter byte
 	// numBmbs set to 0 since alive counter not yet enabled
-	writeAll(DEVCFG1, 0x1042, 0);
+	writeAll(DEVCFG1, (DEVCFG1_DEFAULT_CONFIG | DEVCFG1_ENABLE_ALIVE_COUNTER), 0);
 
 	// Enable measurement channels
-	writeAll(MEASUREEN, 0xFFFF, numBmbs);
+	writeAll(MEASUREEN, (MEASUREEN_ENABLE_BRICK_CHANNELS | MEASUREEN_ENABLE_VBLOCK_CHANNEL | MEASUREEN_ENABLE_AIN1_CHANNEL | MEASUREEN_ENABLE_AIN2_CHANNEL), numBmbs);
 
 	// Manual set THRM HIGH and config settling time
-	writeAll(ACQCFG, 0xFFFF, numBmbs);
+	writeAll(ACQCFG, (ACQCFG_THRM_ON | ACQCFG_MAX_SETTLING_TIME), numBmbs);
 
 	// Enable 5ms delay between balancing and aquisition
-	writeAll(AUTOBALSWDIS, 0x0033, numBmbs);
+	writeAll(AUTOBALSWDIS, AUTOBALSWDIS_5MS_RECOVERY_TIME, numBmbs);
 
 	// Reset MUX configuration to Channel 1 - 000
 	setMux(numBmbs, MUX1);
 
 	// Start initial acquisition with 32 oversamples
-	if(!writeAll(SCANCTRL, 0x0841, numBmbs))
+	if(!writeAll(SCANCTRL, (SCANCTRL_START_SCAN | SCANCTRL_32_OVERSAMPLES | SCANCTRL_ENABLE_AUTOBALSWDIS), numBmbs))
 	{
 		Debug("Failed to start initial scan!\n");
 	}
@@ -376,6 +393,7 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		float minBoardTemp = MAX_TEMP_SENSOR_VALUE_C;
 		float boardTempSum = 0.0f;
 		// TODO If SNA do not count
+		// Aggregate brick voltage and temperature data
 		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
 			float brickV = pBmb->brickV[j];
@@ -403,6 +421,7 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			brickTempSum += brickTemp;
 		}
 
+		// Aggregate board temp data
 		for (int j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
 		{
 			float boardTemp = pBmb->boardTemp[j];
@@ -419,6 +438,7 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			boardTempSum += boardTemp;
 		}
 
+		// Update BMB statistics
 		pBmb->maxBrickV = maxBrickV;
 		pBmb->minBrickV = minBrickV;
 		pBmb->stackV	= stackV;
@@ -430,35 +450,10 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		pBmb->minBoardTemp = minBoardTemp;
 		pBmb->avgBoardTemp = boardTempSum / NUM_BOARD_TEMP_PER_BMB;
 	}
-
-	// Iterate through board temperatures
-	for (int i = 0; i < numBmbs; i++)
-	{
-		Bmb_S* pBmb = &bmb[i];
-		float maxBoardTemp = -200.0f;
-		float minBoardTemp = 200.0f;
-		// TODO If SNA do not count
-		for (int j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
-		{
-			float boardTemp = pBmb->boardTemp[j];
-
-			if (boardTemp > maxBoardTemp)
-			{
-				maxBoardTemp = boardTemp;
-			}
-
-			if (boardTemp < minBoardTemp)
-			{
-				minBoardTemp = boardTemp;
-			}
-		}
-		pBmb->maxBoardTemp = maxBoardTemp;
-		pBmb->minBoardTemp = minBoardTemp;
-	}
 }
 
 /*!
-  @brief   Handles balancing the cells based on BMS control
+  @brief   Determine which bricks need to be balanced
   @param   bmb - The array containing BMB data
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
