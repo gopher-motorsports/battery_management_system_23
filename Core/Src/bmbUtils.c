@@ -60,6 +60,15 @@ LeakyBucket_S asciCommsLeakyBucket =
 bool equals(float f1, float f2);
 uint32_t binarySearch(const float *arr, const float target, int low, int high);
 float interpolate(float x, float x1, float x2, float y1, float y2);
+
+/*!
+  @brief   Search a sorted array of Brick_S structs using binary search
+  @param   arr - Pointer to the Brick_S array to be searched
+  @param   l - Index of the left element of the array 
+  @param   r - Index of the right element of the array
+  @param   v - The target voltage to be compared to the Brick_S struct voltage
+  @return  Index at which voltage is to be inserted
+*/
 int brickBinarySearch(Brick_S *arr, int l, int r, float v);
 
 
@@ -138,7 +147,14 @@ float interpolate(float x, float x1, float x2, float y1, float y2)
     }
 }
 
-// Binary search function for inserting element in sorted array
+/*!
+  @brief   Search a sorted array of Brick_S structs using binary search
+  @param   arr - Pointer to the Brick_S array to be searched
+  @param   l - Index of the left element of the array 
+  @param   r - Index of the right element of the array
+  @param   v - The target voltage to be compared to the Brick_S struct voltage
+  @return  Index at which voltage is to be inserted
+*/
 int brickBinarySearch(Brick_S *arr, int l, int r, float v)
 {
   while (l <= r)
