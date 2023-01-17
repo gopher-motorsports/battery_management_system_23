@@ -51,18 +51,30 @@ typedef struct
 // TODO - add description
 float lookup(float x, const LookupTable_S* table);
 
+/*!
+  @brief   Sorts an array of Brick_S structs by their voltage from lowest to highest
+  @param   arr - Pointer to the Brick_S array to be sorted
+  @param   numBricks - The length of the array to be sorted
+*/
 void insertionSort(Brick_S *arr, int numBricks);
 
-// Called when a failed message transaction occurs. Fills leaky bucket slightly
+/*!
+  @brief   Called on a failed trransaction. Partially fills the leaky bucket
+  @param   bucket - The leaky bucket struct to update
+*/
 void updateLeakyBucketFail(LeakyBucket_S* bucket);
 
-// Called when a successful message transaction occurs. Drains bucket slightly
+/*!
+  @brief   Called on a successful transactiion. Partially drains the leaky bucket 
+  @param   bucket - The leaky bucket struct to update
+*/
 void updateLeakyBucketSuccess(LeakyBucket_S* bucket);
 
-// Get the status of the leaky bucket - whether ot not it is considered filled
+/*!
+  @brief   Return the status of the leaky bucket
+  @param   bucket - The leaky bucket struct to update
+  @return  True if the bucket is filled, false otherwise
+*/
 bool leakyBucketFilled(LeakyBucket_S* bucket);
-
-
-
 
 #endif /* INC_BMBUTILS_H_ */

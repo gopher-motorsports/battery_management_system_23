@@ -44,9 +44,14 @@ const float temperatureArray[33] =
 LookupTable_S ntcTable =  { .length = tableLength, .x = ntcVoltageArray, .y = temperatureArray};
 LookupTable_S zenerTable= { .length = tableLength, .x = zenerVoltageArray, .y = temperatureArray};
 
+// Leaky bucket used to detect ASCI comms failures. Fills when a failed BMB message transaction occurs.
+// Decrements on a successful message transaction. When fill level reaches fill threshold bucket filled
+// be set to true. When fill level below clear threshold bucketFilled will be set to false.
+// This leaky bucket allows for a 1:10 failure to success rate in transactions
 LeakyBucket_S asciCommsLeakyBucket = 
               { .bucketFilled = false, .fillLevel = 0, .fillThreshold = 200,
                 .clearThreshold = 100, .successDrainCount = 1, .failureFillCount = 10 };
+
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
@@ -55,6 +60,7 @@ LeakyBucket_S asciCommsLeakyBucket =
 bool equals(float f1, float f2);
 uint32_t binarySearch(const float *arr, const float target, int low, int high);
 float interpolate(float x, float x1, float x2, float y1, float y2);
+int brickBinarySearch(Brick_S *arr, int l, int r, float v);
 
 
 /* ==================================================================== */
@@ -132,6 +138,28 @@ float interpolate(float x, float x1, float x2, float y1, float y2)
     }
 }
 
+// Binary search function for inserting element in sorted array
+int brickBinarySearch(Brick_S *arr, int l, int r, float v)
+{
+  while (l <= r)
+  {
+    int m = l + (r - l) / 2;
+    if (equals(arr[m].brickV, v))
+    {
+    	return m;
+    }
+    if (arr[m].brickV < v)
+    {
+    	l = m + 1;
+    }
+    else
+    {
+    	r = m - 1;
+    }
+  }
+  return l;
+}
+
 
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
@@ -162,29 +190,11 @@ float lookup(float x, const LookupTable_S* table)
     return interpolate(x, table->x[i], table->x[i+1], table->y[i], table->y[i+1]);
 }
 
-// Binary search function for inserting element in sorted array
-int brickBinarySearch(Brick_S *arr, int l, int r, float v)
-{
-  while (l <= r)
-  {
-    int m = l + (r - l) / 2;
-    if (equals(arr[m].brickV, v))
-    {
-    	return m;
-    }
-    if (arr[m].brickV < v)
-    {
-    	l = m + 1;
-    }
-    else
-    {
-    	r = m - 1;
-    }
-  }
-  return l;
-}
-
-// Insertion sort function for sorting array of structs by float value
+/*!
+  @brief   Sorts an array of Brick_S structs by their voltage from lowest to highest
+  @param   arr - Pointer to the Brick_S array to be sorted
+  @param   numBricks - The length of the array to be sorted
+*/
 void insertionSort(Brick_S *arr, int numBricks)
 {
   for (int unsortedIdx = 1; unsortedIdx < numBricks; unsortedIdx++)
@@ -201,7 +211,10 @@ void insertionSort(Brick_S *arr, int numBricks)
   }
 }
 
-
+/*!
+  @brief   Called on a failed trransaction. Partially fills the leaky bucket
+  @param   bucket - The leaky bucket struct to update
+*/
 void updateLeakyBucketFail(LeakyBucket_S* bucket)
 {
     int32_t bucketFillRemaining = bucket->fillThreshold - bucket->fillLevel;
@@ -216,7 +229,10 @@ void updateLeakyBucketFail(LeakyBucket_S* bucket)
     }
 }
 
-// Called when a successful message transaction occurs. Drains bucket slightly
+/*!
+  @brief   Called on a successful transactiion. Partially drains the leaky bucket 
+  @param   bucket - The leaky bucket struct to update
+*/
 void updateLeakyBucketSuccess(LeakyBucket_S* bucket)
 {
     // Drain the smaller of - bucket fill level or successDrainCount
@@ -228,7 +244,11 @@ void updateLeakyBucketSuccess(LeakyBucket_S* bucket)
     }
 }
 
-// Get the status of the leaky bucket - whether ot not it is considered filled
+/*!
+  @brief   Return the status of the leaky bucket
+  @param   bucket - The leaky bucket struct to update
+  @return  True if the bucket is filled, false otherwise
+*/
 bool leakyBucketFilled(LeakyBucket_S* bucket)
 {
     return bucket->bucketFilled;
