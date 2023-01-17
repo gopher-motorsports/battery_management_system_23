@@ -6,6 +6,7 @@
 #include "cmsis_os.h"
 #include "bmbInterface.h"
 #include "debug.h"
+#include "bmbUtils.h"
 
 
 /* ==================================================================== */
@@ -24,11 +25,12 @@ extern osSemaphoreId asciSpiSemHandle;
 extern osSemaphoreId asciSemHandle;
 extern SPI_HandleTypeDef hspi1;
 
+extern LeakyBucket_S asciCommsLeakyBucket;
+
 
 /* ==================================================================== */
 /* ========================= LOCAL VARIABLES ========================== */
 /* ==================================================================== */
-
 
 
 /* ==================================================================== */
@@ -632,11 +634,13 @@ bool helloAll(uint32_t* numBmbs)
 	if (!sendReceiveMessageAsci(sendBuffer, &pRecvBuffer, numBytesToSend, numBytesToReceive))
 	{
 		Debug("Error in HelloAll!\n");
+		updateLeakyBucketFail(&asciCommsLeakyBucket);
 		return false;
 	}
 	
 	// Number of BMBs is last byte in the received message
 	*numBmbs = pRecvBuffer[bmbCmdLength - 1];
+	updateLeakyBucketSuccess(&asciCommsLeakyBucket);
 	return true;
 }
 
@@ -691,10 +695,12 @@ bool writeAll(uint8_t address, uint16_t value, uint32_t numBmbs)
 
 		if (writeAllSuccess)
 		{
+			updateLeakyBucketSuccess(&asciCommsLeakyBucket);
 			return true;
 		}
 	}
 	Debug("Failed to write all\n");
+	updateLeakyBucketFail(&asciCommsLeakyBucket);
 	return false;
 }
 
@@ -749,10 +755,12 @@ bool writeDevice(uint8_t address, uint16_t value, uint32_t bmbIndex)
 
 		if (writeAllSuccess)
 		{
+			updateLeakyBucketSuccess(&asciCommsLeakyBucket);
 			return true;
 		}
 	}
 	Debug("Failed to write device\n");
+	updateLeakyBucketFail(&asciCommsLeakyBucket);
 	return false;
 }
 
@@ -805,10 +813,12 @@ bool readAll(uint8_t address, uint8_t *data_p, uint32_t numBmbs)
 
 		if (readAllSuccess)
 		{
+			updateLeakyBucketSuccess(&asciCommsLeakyBucket);
 			return true;
 		}
 	}
 	Debug("Failed to read all\n");
+	updateLeakyBucketFail(&asciCommsLeakyBucket);
 	return false;
 }
 
@@ -862,9 +872,11 @@ bool readDevice(uint8_t address, uint8_t *data_p, uint32_t bmbIndex)
 
 		if (readAllSuccess)
 		{
+			updateLeakyBucketSuccess(&asciCommsLeakyBucket);
 			return true;
 		}
 	}
 	Debug("Failed to read device\n");
+	updateLeakyBucketFail(&asciCommsLeakyBucket);
 	return false;
 }

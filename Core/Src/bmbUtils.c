@@ -41,9 +41,12 @@ const float temperatureArray[33] =
 /* ======================== GLOBAL VARIABLES ========================== */
 /* ==================================================================== */
 
-LookupTable_S ntcTable = {tableLength, ntcVoltageArray, temperatureArray};
-LookupTable_S zenerTable= {tableLength, zenerVoltageArray, temperatureArray};
+LookupTable_S ntcTable =  { .length = tableLength, .x = ntcVoltageArray, .y = temperatureArray};
+LookupTable_S zenerTable= { .length = tableLength, .x = zenerVoltageArray, .y = temperatureArray};
 
+LeakyBucket_S asciCommsLeakyBucket = 
+              { .bucketFilled = false, .fillLevel = 0, .fillThreshold = 200,
+                .clearThreshold = 100, .successDrainCount = 1, .failureFillCount = 10 };
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
@@ -196,4 +199,37 @@ void insertionSort(Brick_S *arr, int numBricks)
     }
     arr[sortedIdx + 1] = temp;
   }
+}
+
+
+void updateLeakyBucketFail(LeakyBucket_S* bucket)
+{
+    int32_t bucketFillRemaining = bucket->fillThreshold - bucket->fillLevel;
+    if (bucketFillRemaining <= bucket->failureFillCount)
+    {
+        bucket->fillLevel += bucketFillRemaining;
+        bucket->bucketFilled = true;
+    }
+    else
+    {
+        bucket->fillLevel += bucket->failureFillCount;
+    }
+}
+
+// Called when a successful message transaction occurs. Drains bucket slightly
+void updateLeakyBucketSuccess(LeakyBucket_S* bucket)
+{
+    // Drain the smaller of - bucket fill level or successDrainCount
+    int32_t drainAmount = (bucket->successDrainCount > bucket->fillLevel) ? bucket->fillLevel : bucket->successDrainCount;
+    bucket->fillLevel -= drainAmount;
+    if (bucket->fillLevel < bucket->clearThreshold)
+    {
+        bucket->bucketFilled = false;
+    }
+}
+
+// Get the status of the leaky bucket - whether ot not it is considered filled
+bool leakyBucketFilled(LeakyBucket_S* bucket)
+{
+    return bucket->bucketFilled;
 }

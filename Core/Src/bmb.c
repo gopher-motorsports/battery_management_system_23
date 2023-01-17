@@ -43,6 +43,8 @@ static uint8_t recvBuffer[SPI_BUFF_SIZE];
 /* ======================= EXTERNAL VARIABLES ========================= */
 /* ==================================================================== */
 
+extern LookupTable_S ntcTable;
+extern LookupTable_S zenerTable;
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */

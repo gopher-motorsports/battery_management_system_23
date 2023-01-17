@@ -7,6 +7,7 @@
 #include "cmsis_os.h"
 #include "mainTask.h"
 #include "bmbInterface.h"
+#include "bmbUtils.h"
 #include "bmb.h"
 #include "epaper.h"
 #include "epaperUtils.h"
@@ -24,6 +25,9 @@ extern osSemaphoreId		epdBusySemHandle;
 extern SPI_HandleTypeDef 	hspi1;
 extern SPI_HandleTypeDef 	hspi2;
 extern Bms_S 				gBms;
+
+extern LeakyBucket_S asciCommsLeakyBucket;
+
 
 
 /* ==================================================================== */
@@ -80,7 +84,14 @@ void runMain()
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{
-
+			if (leakyBucketFilled(&asciCommsLeakyBucket))
+			{
+				// Try to reset the asci to re-establish comms
+				resetASCI();
+				initASCI();
+				helloAll(&numBmbs);
+				initBatteryPack(numBmbs);
+			}
 			// Clear console
 			printf("\e[1;1H\e[2J");
 
@@ -98,6 +109,7 @@ void runMain()
 			printCellVoltages();
 			printCellTemperatures();
 			printBoardTemperatures();
+			printf("Leaky bucket filled: %d\n", leakyBucketFilled(&asciCommsLeakyBucket));
 
 			// Update lastUpdate
 			lastUpdateMain = HAL_GetTick();
