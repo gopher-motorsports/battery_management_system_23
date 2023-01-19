@@ -233,7 +233,9 @@ void insertionSort(Brick_S *arr, int numBricks)
 */
 void updateLeakyBucketFail(LeakyBucket_S* bucket)
 {
+    // Determine how far bucket is from full
     int32_t bucketFillRemaining = bucket->fillThreshold - bucket->fillLevel;
+    // Fill bucket with the smaller of - the remaining amount till full or the failureFillCount
     if (bucketFillRemaining <= bucket->failureFillCount)
     {
         bucket->fillLevel += bucketFillRemaining;
