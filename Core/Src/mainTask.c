@@ -135,10 +135,10 @@ void printCellVoltages()
 {
 	printf("Cell Voltage:\n");
 	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    | StackV  |\n");
-	for (int i = 0; i < numBmbs; i++)
+	for (int32_t i = 0; i < numBmbs; i++)
 	{
-		printf("|    %02d   |", i + 1);
-		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
+		printf("|    %02ld   |", i + 1);
+		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
 			printf("  %5.3f", gBms.bmb[i].brickV[j]);
 			if(gBms.bmb[i].balSwEnabled[j])
@@ -161,10 +161,10 @@ void printCellTemperatures()
 {
 	printf("Cell Temp:\n");
 	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    |\n");
-	for (int i = 0; i < numBmbs; i++)
+	for (int32_t i = 0; i < numBmbs; i++)
 	{
-		printf("|    %02d   |", i + 1);
-		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
+		printf("|    %02ld   |", i + 1);
+		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
 			printf(" %5.1fC  |", gBms.bmb[i].brickTemp[j]);
 		}
@@ -177,10 +177,10 @@ void printBoardTemperatures()
 {
 	printf("Board Temp:\n");
 	printf("|   BMB   |    1    |    2    |    3    |    4    |\n");
-	for (int i = 0; i < numBmbs; i++)
+	for (int32_t i = 0; i < numBmbs; i++)
 	{
-		printf("|    %02d   |", i + 1);
-		for (int j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
+		printf("|    %02ld   |", i + 1);
+		for (int32_t j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
 		{
 			printf(" %5.1fC  |", gBms.bmb[i].boardTemp[j]);
 		}

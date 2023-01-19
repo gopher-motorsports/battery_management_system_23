@@ -5,6 +5,7 @@
 #include <string.h>
 #include "bmbUtils.h"
 
+
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
@@ -12,6 +13,7 @@
 #define EPSILON 1e-4f
 #define MAX_DEPTH 20
 #define TABLE_SIZE 33
+
 
 /* ==================================================================== */
 /* ========================= LOCAL VARIABLES ========================== */
@@ -69,7 +71,7 @@ float interpolate(float x, float x1, float x2, float y1, float y2);
   @param   v - The target voltage to be compared to the Brick_S struct voltage
   @return  Index at which voltage is to be inserted
 */
-int brickBinarySearch(Brick_S *arr, int l, int r, float v);
+int32_t brickBinarySearch(Brick_S *arr, int l, int r, float v);
 
 
 /* ==================================================================== */
@@ -155,11 +157,11 @@ float interpolate(float x, float x1, float x2, float y1, float y2)
   @param   v - The target voltage to be compared to the Brick_S struct voltage
   @return  Index at which voltage is to be inserted
 */
-int brickBinarySearch(Brick_S *arr, int l, int r, float v)
+int32_t brickBinarySearch(Brick_S *arr, int l, int r, float v)
 {
   while (l <= r)
   {
-    int m = l + (r - l) / 2;
+    int32_t m = l + (r - l) / 2;
     if (equals(arr[m].brickV, v))
     {
     	return m;
@@ -213,11 +215,11 @@ float lookup(float x, const LookupTable_S* table)
 */
 void insertionSort(Brick_S *arr, int numBricks)
 {
-  for (int unsortedIdx = 1; unsortedIdx < numBricks; unsortedIdx++)
+  for (int32_t unsortedIdx = 1; unsortedIdx < numBricks; unsortedIdx++)
   {
     Brick_S temp = arr[unsortedIdx];
-    int sortedIdx = unsortedIdx - 1;
-    int pos = brickBinarySearch(arr, 0, sortedIdx, temp.brickV);
+    int32_t sortedIdx = unsortedIdx - 1;
+    int32_t pos = brickBinarySearch(arr, 0, sortedIdx, temp.brickV);
     while (sortedIdx >= pos)
     {
       arr[sortedIdx + 1] = arr[sortedIdx];
