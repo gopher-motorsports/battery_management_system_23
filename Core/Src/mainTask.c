@@ -74,9 +74,10 @@ void runMain()
 	}
 	else if(initialized)
 	{
-		updateBmbData(gBms.bmb, numBmbs);
+		// updateBmbData(gBms.bmb, numBmbs);
+		updatePackData(numBmbs);
 
-		aggregatePackData(numBmbs);
+		// aggregatePackData(numBmbs);
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{

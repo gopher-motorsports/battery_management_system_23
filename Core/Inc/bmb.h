@@ -37,6 +37,8 @@
 #define VBLOCK			0x2C
 #define AIN1			0x2D
 #define AIN2			0x2E
+#define DIAG			0x50
+#define DIAGCFG 		0x51
 
 #define NUM_BRICKS_PER_BMB		12
 #define NUM_BOARD_TEMP_PER_BMB 	4
@@ -47,6 +49,13 @@
 #define CONVERT_14BIT_TO_5V		0.000305176f
 // 60V range & 14 bit ADC 	   - 60/(2^14)  = 3.6621 mV/bit
 #define CONVERT_14BIT_TO_60V	0.0036621f
+// 2.307V range & 14 bit reading - 2.307/(2^14) = 140.808 uV/bit
+#define CONVERT_14BIT_TO_VREF	0.000140808f;
+
+// Die temp linear conversion gain = 3.07mv/°C
+#define CONVERT_DIE_TEMP_GAIN	3.07f
+// Die temp linear conversion offset = -273°C
+#define CONVERT_DIE_TEMP_OFFSET	-273
 
 // The minimum voltage that we can bleed to
 #define MIN_BLEED_TARGET_VOLTAGE_V 	3.5f
@@ -54,6 +63,16 @@
 #define MAX_BOARD_TEMP_BALANCING_ALLOWED_C	75.0f
 // The maximum cell temperature where bleeding is allowed
 #define MAX_CELL_TEMP_BLEEDING_ALLOWED_C	55.0f
+
+// Diagnostic bounds
+#define ALTREF_MIN				0x3EF8
+#define ALTREF_MAX				0x4034
+#define VAA_MIN					3.27f
+#define VAA_MAX					3.31f
+#define LSAMP_MAX_OFFSET		0.2f
+#define ZERO_SCALE_ADC_SUCCESS	0x0000
+#define FULL_SCALE_ADC_SUCCESS	0xFFF0
+#define DIE_TEMP_MAX			120
 
 
 /* ==================================================================== */
@@ -80,6 +99,28 @@ typedef enum
 	MUX8,
 	NUM_MUX_CHANNELS
 } Mux_State_E;
+
+typedef enum
+{
+	BMB_NO_FAULT = 0,
+	BMB_REFERENCE_VOLTAGE_F,
+	BMB_VAA_F,
+	BMB_LSAMP_OFFSET_F,
+	BMB_ADC_BIT_STUCK_HIGH_F,
+	BMB_ADC_BIT_STUCK_LOW_F,
+	BMB_DIE_TEMP_F,
+	BMB_BAL_SW_SHORT_F,
+	BMB_BAL_SW_OPEN_F,
+	BMB_ODD_SENSE_OPEN_F,
+	BMB_EVEN_SENSE_OPEN_F,
+	NUM_BMB_FAULTS
+} Bmb_Fault_State_E;
+
+typedef enum{
+	SCAN_INCOMPLETE = 0,
+	SCAN_ROUTINE_COMPLETE,
+	SCAN_DIAGNOSTIC_COMPLETE
+} Scan_Status_E;
 
 
 /* ==================================================================== */
@@ -119,6 +160,10 @@ typedef struct
 	// Balancing Configuration
 	bool balSwRequested[NUM_BRICKS_PER_BMB];	// Set by BMS to determine which cells need to be balanced
 	bool balSwEnabled[NUM_BRICKS_PER_BMB];		// Set by BMB based on ability to balance in hardware
+
+	// Diagnostic Fault
+	Bmb_Fault_State_E fault; //TODO SET INIT VALUE
+	float dieTemp;
 } Bmb_S;
 
 
@@ -133,29 +178,21 @@ typedef struct
 */
 void initBmbs(uint32_t numBmbs);
 
-/*!
-  @brief   Update BMB voltages and temperature data. Once new data gathered start new
-		   data acquisition scan
-  @param   bmb - BMB array data
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-*/
-void updateBmbData(Bmb_S* bmb, uint32_t numBmbs);
+// /*!
+//   @brief   Update BMB voltages and temperature data. Once new data gathered start new
+// 		   data acquisition scan
+//   @param   bmb - BMB array data
+//   @param   numBmbs - The expected number of BMBs in the daisy chain
+// */
+// bool smartUpdateBmbData(Bmb_S* bmb, uint32_t numBmbs, bool requestDiagnostic);
 
-/*!
-  @brief   Only update voltage data on BMBs
-  @param   bmb - BMB array data
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-*/
-// TODO - see whether or not this can be deleted
-void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs);
-
-/*!
-  @brief   Read all temperature channels on BMB
-  @param   bmb - BMB array data
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-*/
-// TODO - see whether or not this can be deleted
-void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs);
+Scan_Status_E scanComplete(uint32_t numBmbs);
+void performAcquisition(uint32_t numBmbs);
+bool performDiagnostic(uint32_t numBmbs, Bmb_Fault_State_E requestedDiagnostic)
+void updateCellData(Bmb_S* bmb, uint32_t numBmbs);
+void updateTempData(Bmb_S* bmb, uint32_t numBmbs);
+void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs);
+void cycleDiagnosticMode();
 
 /*!
   @brief   Set a given mux configuration on all BMBs
