@@ -14,20 +14,31 @@
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
 
-#define WATCHDOG_1S_STEP_SIZE 0x1000
-#define WATCHDOG_TIMER_LOAD_5 0x0500
-#define DEVCFG1_ENABLE_ALIVE_COUNTER	0x0040
-#define DEVCFG1_DEFAULT_CONFIG			0x1002
-#define MEASUREEN_ENABLE_BRICK_CHANNELS 0x0FFF
-#define MEASUREEN_ENABLE_VBLOCK_CHANNEL 0xC000
-#define MEASUREEN_ENABLE_AIN1_CHANNEL	0x1000
-#define MEASUREEN_ENABLE_AIN2_CHANNEL	0x2000
-#define ACQCFG_THRM_ON					0x0300
-#define ACQCFG_MAX_SETTLING_TIME		0x003F
-#define AUTOBALSWDIS_5MS_RECOVERY_TIME	0x0034
-#define SCANCTRL_START_SCAN				0x0001
-#define SCANCTRL_32_OVERSAMPLES			0x0040
-#define SCANCTRL_ENABLE_AUTOBALSWDIS	0x0800
+#define WATCHDOG_1S_STEP_SIZE 							0x1000
+#define WATCHDOG_TIMER_LOAD_5 							0x0500
+#define DEVCFG1_ENABLE_ALIVE_COUNTER					0x0040
+#define DEVCFG1_DEFAULT_CONFIG							0x1002
+#define MEASUREEN_ENABLE_BRICK_CHANNELS 				0x0FFF
+#define MEASUREEN_ENABLE_VBLOCK_CHANNEL 				0xC000
+#define MEASUREEN_ENABLE_AIN1_CHANNEL					0x1000
+#define MEASUREEN_ENABLE_AIN2_CHANNEL					0x2000
+#define ACQCFG_THRM_ON									0x0300
+#define ACQCFG_MAX_SETTLING_TIME						0x003F
+#define AUTOBALSWDIS_5MS_RECOVERY_TIME					0x0034
+#define SCANCTRL_START_SCAN								0x0001
+#define SCANCTRL_32_OVERSAMPLES							0x0040
+#define SCANCTRL_ENABLE_AUTOBALSWDIS					0x0800
+#define DIAGCFG_REF_VOLT_DIAGNOSTIC						0x0001
+#define DIAGCFG_VAA_DIAGNOSTIC							0x0002
+#define DIAGCFG_LSAMP_DIAGNOSTIC						0x0003
+#define DIAGCFG_ZERO_ADC_DIAGNOSTIC						0x0004
+#define DIAGCFG_FULL_ADC_DIAGNOSTIC						0x0005
+#define DIAGCFG_DIE_TEMP_DIAGNOSTIC						0x0006
+#define SCANCTRL_BALSW_SHORT_DIAGNOSTIC					0x0002
+#define SCANCTRL_BALSW_OPEN_DIAGNOSTIC					0x0004
+#define SCANCTRL_CELL_SENSE_OPEN_ODDS_DIAGNOSTIC		0x000A
+#define SCANCTRL_CELL_SENSE_OPEN_EVENS_DIAGNOSTIC		0x000C
+
 
 
 /* ==================================================================== */
@@ -35,6 +46,10 @@
 /* ==================================================================== */
 static Mux_State_E muxState = MUX1;
 static uint8_t recvBuffer[SPI_BUFF_SIZE];
+static Bmb_Scan_State scanState = SCAN_SELECT;
+static Bmb_Fault_State_E diagnosticState = 0;
+static uint32_t lastDiagnostic = 0;
+static uint32_t lastScan = 0;
 
 
 /* ==================================================================== */
@@ -46,7 +61,17 @@ static uint8_t recvBuffer[SPI_BUFF_SIZE];
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
 /* ==================================================================== */
 
+static bool scanComplete(uint32_t numBmbs);
+static void performAcquisition(uint32_t numBmbs);
+static void performBalSwDiagnostic(uint32_t numBmbs);
 
+static void updateCellData(Bmb_S* bmb, uint32_t numBmbs);
+static void updateTempData(Bmb_S* bmb, uint32_t numBmbs);
+static void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs);
+
+static void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs);
+
+static void setMux(uint32_t numBmbs, uint8_t muxSetting);
 
 void updateBmbBalanceSwitches(Bmb_S* bmb);
 
@@ -55,104 +80,94 @@ void updateBmbBalanceSwitches(Bmb_S* bmb);
 /* =================== LOCAL FUNCTION DEFINITIONS ===================== */
 /* ==================================================================== */
 
-Scan_Status_E scanComplete(uint32_t numBmbs)
+static bool scanComplete(uint32_t numBmbs)
 {
 	// Verify that Scan completed successfully
 	if (readAll(SCANCTRL, recvBuffer, numBmbs))
 	{
 		bool allBmbScanDone = true;
-		bool routineScan = true;
 		for (uint8_t j = 0; j < numBmbs; j++)
 		{
 			uint16_t scanCtrlData = (recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j];
 			allBmbScanDone &= ((scanCtrlData & 0xA000) == 0xA000);	// Verify SCANDONE and DATARDY bits
-			routineScan &= ((scanCtrlData & 0x0800) == 0x0800);	// Check if AUTOBALSWDIS bit is set high
 		}
-		if(allBmbScanDone)
-		{
-			if(routineScan)
-			{
-				return SCAN_ROUTINE_COMPLETE;
-			}
-			else
-			{
-				return SCAN_DIAGNOSTIC_COMPLETE;
-			}
-		}
-		else
+		if(!allBmbScanDone)
 		{
 			Debug("All BMB Scans failed to complete in time\n");
-			return SCAN_INCOMPLETE;
 		}
+		return allBmbScanDone;
 	}
 	else
 	{
 		// TODO - improve this. Handle failure correctly
 		Debug("Failed to read SCANCTRL register\n");
-		return SCAN_INCOMPLETE;
+		return false;
 	}
 }
 
-void performAcquisition(uint32_t numBmbs)
+static void performAcquisition(uint32_t numBmbs)
 {
-	if(!writeAll(DIAGCFG, 0x00, numBmbs))
+	uint16_t diagCfg = 0;
+	uint16_t scanCtrl = (SCANCTRL_START_SCAN | SCANCTRL_32_OVERSAMPLES | SCANCTRL_ENABLE_AUTOBALSWDIS);
+	switch(diagnosticState)
 	{
-		Debug("Failed to force disable diagnostics!\n");
-		return;
+		case BMB_REFERENCE_VOLTAGE_F:
+			diagCfg &= DIAGCFG_REF_VOLT_DIAGNOSTIC;
+			break;
+		case BMB_VAA_F:
+			diagCfg &= DIAGCFG_VAA_DIAGNOSTIC;
+			break;
+		case BMB_LSAMP_OFFSET_F:
+			diagCfg &= DIAGCFG_LSAMP_DIAGNOSTIC;
+			break;
+		case BMB_ADC_BIT_STUCK_HIGH_F:
+			diagCfg &= DIAGCFG_ZERO_ADC_DIAGNOSTIC;
+			break;
+		case BMB_ADC_BIT_STUCK_LOW_F:
+			diagCfg &= DIAGCFG_FULL_ADC_DIAGNOSTIC;
+			break;
+		case BMB_DIE_TEMP_F:
+			diagCfg &= DIAGCFG_DIE_TEMP_DIAGNOSTIC;
+			break;
+		default:
+			break;
 	}
-	if(!writeAll(SCANCTRL, (SCANCTRL_START_SCAN | SCANCTRL_32_OVERSAMPLES | SCANCTRL_ENABLE_AUTOBALSWDIS), numBmbs))
+	// Disable all diagnostics and perform an acquisition with 32 oversamples and auto balance switch disable mode
+	if(!writeAll(DIAGCFG, diagCfg, numBmbs) || !writeAll(SCANCTRL, scanCtrl, numBmbs))
 	{
 		Debug("Failed to start scan!\n");
 	}
 }
-bool performDiagnostic(uint32_t numBmbs, Bmb_Fault_State_E requestedDiagnostic)
+
+static void performBalSwDiagnostic(uint32_t numBmbs)
 {
-	if(requestedDiagnostic == BMB_NO_FAULT)
-	{
-		return false;
-	}
-	
 	uint16_t diagCfg = 0;
 	uint16_t scanCtrl = SCANCTRL_START_SCAN;
-	switch(requestedDiagnostic)
+	switch (diagnosticState)
 	{
-		case BMB_REFERENCE_VOLTAGE_F:
-			diagCfg &= 0x0001;
-			break;	
-		case BMB_VAA_F:
-			scanCtrl &= 0x0030;
-			break;
-		case VAA_ADC2_DIAGNOSTIC:
-			scanCtrl &= 0x0030;
-			devCfg1 &= 0x4000;
-			break;
-		case LSAMP_OFFSET_DIAGNOSTIC:
-			scanCtrl &= 0x0030;
-			break;
-		case ZERO_SCALE_ADC_DIAGNOSTIC:
-			break;
-		case FULL_SCALE_ADC_DIAGNOSTIC:
-			break;
-		case DIE_TEMP_DIAGNOSTIC:
-		default:
-			break;
+	case BMB_BAL_SW_SHORT_F:
+		scanCtrl &= SCANCTRL_BALSW_SHORT_DIAGNOSTIC;
+		break;
+	case BMB_BAL_SW_OPEN_F:
+		scanCtrl &= SCANCTRL_BALSW_OPEN_DIAGNOSTIC;
+		break;
+	case BMB_ODD_SENSE_OPEN_F:
+		scanCtrl &= SCANCTRL_CELL_SENSE_OPEN_ODDS_DIAGNOSTIC;
+		break;
+	case BMB_EVEN_SENSE_OPEN_F:
+		scanCtrl &= SCANCTRL_CELL_SENSE_OPEN_EVENS_DIAGNOSTIC;
+		break;
+	default:
+		break;
 	}
 
-
-	if(!writeAll(DIAGCFG, diagCfg, numBmbs))
-	{
-		Debug("Failed to configure diagnostic!\n");
-		return false;
-	}
-	if(!writeAll(SCANCTRL, SCANCTRL_START_SCAN, numBmbs))
+	if (!writeAll(DIAGCFG, diagCfg, numBmbs) || !writeAll(SCANCTRL, scanCtrl, numBmbs))
 	{
 		Debug("Failed to start diagnostic!\n");
-		return false;
 	}
-	return true;
 }
 
-void updateCellData(Bmb_S* bmb, uint32_t numBmbs)
+static void updateCellData(Bmb_S* bmb, uint32_t numBmbs)
 {
 	for (uint8_t i = 0; i < 12; i++)
 	{
@@ -202,7 +217,7 @@ void updateCellData(Bmb_S* bmb, uint32_t numBmbs)
 	}
 }
 
-void updateTempData(Bmb_S* bmb, uint32_t numBmbs)
+static void updateTempData(Bmb_S* bmb, uint32_t numBmbs)
 {
 	// Read AUX/TEMP registers
 	for (int auxChannel = AIN1; auxChannel <= AIN2; auxChannel++)
@@ -238,15 +253,11 @@ void updateTempData(Bmb_S* bmb, uint32_t numBmbs)
 			}
 		}
 	}
-
-	// Cycle to next MUX configuration
-	muxState = (muxState + 1) % NUM_MUX_CHANNELS;
-	setMux(numBmbs, muxState);
 }
 
-void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs, Bmb_Fault_State_E diagnostic)
+static void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs)
 {
-	switch (diagnostic)
+	switch (diagnosticState)
 	{
 	case BMB_REFERENCE_VOLTAGE_F:
 		if (readAll(DIAG, recvBuffer, numBmbs))
@@ -254,10 +265,7 @@ void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs, Bmb_Fault_State_E diagno
 			for(uint32_t j = 0; j < numBmbs; j++)
 			{
 				uint16_t diagRaw = (recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j];
-				if((diagRaw < ALTREF_MIN) || (diagRaw > ALTREF_MAX))
-				{
-					bmb[j].fault = BMB_REFERENCE_VOLTAGE_F;
-				}
+				bmb[j].fault[BMB_REFERENCE_VOLTAGE_F] = ((diagRaw < ALTREF_MIN) || (diagRaw > ALTREF_MAX));
 			}
 		}
 		else
@@ -272,10 +280,7 @@ void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs, Bmb_Fault_State_E diagno
 			{
 				uint16_t diagRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
 				float vaa = diagRaw * CONVERT_14BIT_TO_5V;
-				if((vaa < VAA_MIN) || (vaa > VAA_MAX))
-				{
-					bmb[j].fault = BMB_VAA_F;
-				}
+				bmb[j].fault[BMB_VAA_F] = ((vaa < VAA_MIN) || (vaa > VAA_MAX));
 			}
 
 		}
@@ -292,10 +297,7 @@ void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs, Bmb_Fault_State_E diagno
 				uint16_t diagRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
 				diagRaw = (diagRaw >= 0x2000) ? (diagRaw - 0x2000) : (diagRaw + 0x2000);
 				float lsampOffset = diagRaw * CONVERT_14BIT_TO_5V;
-				if(lsampOffset > LSAMP_MAX_OFFSET)
-				{
-					bmb[j].fault = BMB_LSAMP_OFFSET_F;
-				}
+				bmb[j].fault[BMB_LSAMP_OFFSET_F] = (lsampOffset > LSAMP_MAX_OFFSET);
 			}
 		}
 		else
@@ -309,10 +311,7 @@ void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs, Bmb_Fault_State_E diagno
 			for(uint32_t j = 0; j < numBmbs; j++)
 			{
 				uint16_t diagRaw = (recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j];
-				if(diagRaw != ZERO_SCALE_ADC_SUCCESS)
-				{
-					bmb[j].fault = BMB_ADC_BIT_STUCK_HIGH_F;
-				}
+				bmb[j].fault[BMB_ADC_BIT_STUCK_HIGH_F] = (diagRaw != ZERO_SCALE_ADC_SUCCESS);
 			}
 		}
 		else
@@ -326,10 +325,7 @@ void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs, Bmb_Fault_State_E diagno
 			for(uint32_t j = 0; j < numBmbs; j++)
 			{
 				uint16_t diagRaw = (recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j];
-				if(diagRaw != FULL_SCALE_ADC_SUCCESS)
-				{
-					bmb[j].fault = BMB_ADC_BIT_STUCK_LOW_F;
-				}
+				bmb[j].fault[BMB_ADC_BIT_STUCK_LOW_F] = (diagRaw != FULL_SCALE_ADC_SUCCESS);
 			}
 		}
 		else
@@ -347,11 +343,7 @@ void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs, Bmb_Fault_State_E diagno
 				dieTempM *= CONVERT_DIE_TEMP_GAIN;
 				dieTempM += CONVERT_DIE_TEMP_OFFSET;
 				bmb[j].dieTemp = dieTempM;
-				if(dieTempM > DIE_TEMP_MAX)
-				{
-					bmb[j].fault = BMB_DIE_TEMP_F;
-				}
-				
+				bmb[j].fault[BMB_DIE_TEMP_F] = (dieTempM > DIE_TEMP_MAX);
 			}
 		}
 		else
@@ -365,15 +357,17 @@ void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs, Bmb_Fault_State_E diagno
 			for(uint32_t j = 0; j < numBmbs; j++)
 			{
 				uint16_t alrtBalSw = (recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j];
+				bool shortPresent = false;
 				for(uint8_t i = 1; i <= NUM_BRICKS_PER_BMB; i++)
 				{
 					if(alrtBalSw & 0x0001)
 					{
 						Debug("BMB balance switch short at SW: %d\n", i);
-						diagnosticOK = false;
+						shortPresent = true;
 					}
 					alrtBalSw >> 1;
 				}
+				bmb[j].fault[BMB_BAL_SW_SHORT_F] = shortPresent;
 			}
 		}
 		else
@@ -387,15 +381,17 @@ void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs, Bmb_Fault_State_E diagno
 			for(uint32_t j = 0; j < numBmbs; j++)
 			{
 				uint16_t alrtBalSw = (recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j];
+				bool openCircuitPresent = false;
 				for(uint8_t i = 1; i <= NUM_BRICKS_PER_BMB; i++)
 				{
 					if(alrtBalSw & 0x0001)
 					{
-						Debug("BMB balance switch short at SW: %d\n", i);
-						diagnosticOK = false;
+						Debug("BMB balance switch open at SW: %d\n", i);
+						openCircuitPresent = true;
 					}
 					alrtBalSw >> 1;
 				}
+				bmb[j].fault[BMB_BAL_SW_SHORT_F] = openCircuitPresent;
 			}
 		}
 		else
@@ -409,15 +405,17 @@ void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs, Bmb_Fault_State_E diagno
 			for(uint32_t j = 0; j < numBmbs; j++)
 			{
 				uint16_t alrtBalSw = (recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j];
-				for(uint8_t i = 1; i <= NUM_BRICKS_PER_BMB; i++)
+				bool openCircuitPresent = false;
+				for(uint8_t i = 1; i <= NUM_BRICKS_PER_BMB; i+=2)
 				{
 					if(alrtBalSw & 0x0001)
 					{
-						Debug("BMB balance switch short at SW: %d\n", i);
-						diagnosticOK = false;
+						Debug("BMB sense wire open at SW: %d\n", i);
+						openCircuitPresent = true;
 					}
-					alrtBalSw >> 1;
+					alrtBalSw >> 2;
 				}
+				bmb[j].fault[BMB_ODD_SENSE_OPEN_F] = openCircuitPresent;
 			}
 		}
 		else
@@ -431,15 +429,17 @@ void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs, Bmb_Fault_State_E diagno
 			for(uint32_t j = 0; j < numBmbs; j++)
 			{
 				uint16_t alrtBalSw = (recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j];
-				for(uint8_t i = 1; i <= NUM_BRICKS_PER_BMB; i++)
+				bool openCircuitPresent = false;
+				for(uint8_t i = 2; i <= NUM_BRICKS_PER_BMB; i+=2)
 				{
 					if(alrtBalSw & 0x0001)
 					{
-						Debug("BMB balance switch short at SW: %d\n", i);
-						diagnosticOK = false;
+						Debug("BMB sense wire open at SW: %d\n", i);
+						openCircuitPresent = true;
 					}
-					alrtBalSw >> 1;
+					alrtBalSw >> 2;
 				}
+				bmb[j].fault[BMB_EVEN_SENSE_OPEN_F] = openCircuitPresent;
 			}
 		}
 		else
@@ -450,55 +450,6 @@ void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs, Bmb_Fault_State_E diagno
 	default:
 		break;
 	}
-
-	// if (readAll(DIAG, recvBuffer, numBmbs))
-	// {
-	// 	for(uint32_t j = 0; j < numBmbs; j++)
-	// 	{
-	// 		bool diagnosticOK = false;
-	// 		// Read DIAG voltage stored in [15:2]
-	// 		uint16_t diagRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
-	// 		switch(diagnosticState)
-	// 		{
-	// 			case ALREF_DIAGNOSTIC:	
-	// 				float alref = diagRaw * CONVERT_14BIT_TO_5V;
-	// 				diagnosticOK = (alref >= ALREF_DIAGNOSTIC_MIN) & (alref <= ALREF_DIAGNOSTIC_MAX);
-	// 				break;
-	// 			case VAA_ADC1_DIAGNOSTIC:
-	// 				float vaaAdc1 = diagRaw * CONVERT_14BIT_TO_5V;
-	// 				diagnosticOK = (vaaAdc1 >= VAA_ADC1_DIAGNOSTIC_MIN) & (vaaAdc1 <= VAA_ADC1_DIAGNOSTIC_MAX);
-	// 				break;
-	// 			case VAA_ADC2_DIAGNOSTIC:
-	// 				float vaaAdc2 = diagRaw * CONVERT_14BIT_TO_5V;
-	// 				diagnosticOK = (vaaAdc2 >= VAA_ADC2_DIAGNOSTIC_MIN) & (vaaAdc2 <= VAA_ADC2_DIAGNOSTIC_MAX);
-	// 				break;
-	// 			case LSAMP_OFFSET_DIAGNOSTIC:
-	// 				(diagRaw >= 0x2000) ? (diagRaw -= 0x2000) : (diagRaw += 0x2000);
-	// 				float lsampOffset = diagRaw * CONVERT_14BIT_TO_5V;
-	// 				diagnosticOK = (lsampOffset <= LSAMP_OFFSET_DIAGNOSTIC_MAX);
-	// 				break;
-	// 			case ZERO_SCALE_ADC_DIAGNOSTIC:
-	// 				diagnosticOK = (diagRaw == ZERO_SCALE_ADC_DIAGNOSTIC_OUTPUT);
-	// 				break;
-	// 			case FULL_SCALE_ADC_DIAGNOSTIC:
-	// 				diagnosticOK = (diagRaw == FULL_SCALE_ADC_DIAGNOSTIC_OUTPUT);
-	// 				break;
-	// 			case DIE_TEMP_DIAGNOSTIC:
-	// 				float dieTemp = diagRaw * CONVERT_14BIT_TO_VREF;
-	// 				dieTemp *= CONVERT_DIE_TEMP_GAIN;
-	// 				dieTemp += CONVERT_DIE_TEMP_OFFSET;
-	// 				diagnosticOK = (dieTemp >= DIE_TEMP_DIAGNOSTIC_MIN) & (dieTemp <= DIE_TEMP_DIAGNOSTIC_MAX);
-	// 				break;
-	// 			default:
-	// 			diagnosticOK = true;
-	// 				break;
-	// 		}
-	// 		if(!diagnosticOK)
-	// 		{
-	// 			bmb[j].failedDiagnostic = diagnosticState;
-	// 		}
-	// 	}
-	// }
 }
 
 /*!
@@ -506,7 +457,7 @@ void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs, Bmb_Fault_State_E diagno
   @param   bmb - The array containing BMB data
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
-void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
+static void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 {
 	// Iterate through brick voltages
 	for (int i = 0; i < numBmbs; i++)
@@ -586,24 +537,11 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
   @param   numBmbs - The expected number of BMBs in the daisy chain
   @param   muxSetting - What mux setting should be used
 */
-void setMux(uint32_t numBmbs, uint8_t muxSetting)
+static void setMux(uint32_t numBmbs, uint8_t muxSetting)
 {
 	// Last 3 bits set GPIO logic state for channels 2, 1, 0 respectively
 	uint16_t gpioData = 0xF000 | (muxSetting & 0x07);
 	writeAll(GPIO, gpioData, numBmbs);
-}
-
-void cycleMux(uint32_t numBmbs)
-{
-	// Cycle to next MUX configuration
-	muxState = (muxState + 1) % NUM_MUX_CHANNELS;
-	setMux(numBmbs, muxState);
-}
-
-void cycleDiagnosticMode()
-{
-	// Cycle to next MUX configuration
-	diagnosticState = (diagnosticState + 1) % NUM_DIAGNOSTIC_STATES;
 }
 
 
@@ -669,54 +607,70 @@ void initBmbs(uint32_t numBmbs)
 	// Set brickUV voltage alert threshold
 }
 
+void smartBmbUpdate(Bmb_S* bmb, uint32_t numBmbs)
+{
+	switch (scanState)
+	{
+	case SCAN_SELECT:
+		if(HAL_GetTick() - lastDiagnostic >= 5000)
+		{
+			lastDiagnostic = HAL_GetTick();
+			diagnosticState = BMB_BAL_SW_SHORT_F;
+			performBalSwDiagnostic(numBmbs);
+			scanState = DIAGNOSTIC_SCAN;
+		}
+		else
+		{
+			performAcquisition(numBmbs);
+			scanState = ROUTINE_SCAN;
+		}
+		break;
+	case ROUTINE_SCAN:
+		if(HAL_GetTick() - lastScan >= 50)
+		{
+			lastScan = HAL_GetTick();
+			if(scanComplete(numBmbs))
+			{
+				updateCellData(bmb, numBmbs);
+				updateTempData(bmb, numBmbs);
+				updateDiagnosticData(bmb, numBmbs);
 
-// /*!
-//   @brief   Update BMB voltages and temperature data. Once new data gathered start new
-// 		   data acquisition scan
-//   @param   bmb - BMB array data
-//   @param   numBmbs - The expected number of BMBs in the daisy chain
-// */
-// bool smartUpdateBmbData(Bmb_S* bmb, uint32_t numBmbs, bool requestDiagnostic)
-// {
-// 	Scan_Status_E scanStatus = scanComplete(numBmbs);
-	
-// 	if(scanStatus == SCAN_ROUTINE_COMPLETE)
-// 	{
-// 		updateCellData(bmb, numBmbs);
-// 		updateTempData(bmb, numBmbs);
+				// Cycle to next MUX configuration
+				muxState = (muxState + 1) % NUM_MUX_CHANNELS;
+				setMux(numBmbs, muxState);
 
-// 		aggregateBmbData(bmb, numBmbs);
+				// Cycle to next diagnostic configuration
+				diagnosticState = (diagnosticState + 1) % BMB_BAL_SW_SHORT_F;
+			}
+			scanState = SCAN_SELECT;
+		}
+		break;
+	case DIAGNOSTIC_SCAN:
+		if(scanComplete(numBmbs))
+		{
+			updateDiagnosticData(bmb, numBmbs);
 
-// 		// Cycle to next MUX configuration
-// 		muxState = (muxState + 1) % NUM_MUX_CHANNELS;
-// 		setMux(numBmbs, muxState);
-// 	}
-// 	else if(scanStatus == SCAN_DIAGNOSTIC_COMPLETE)
-// 	{
-// 		// updateDiagnosticData(numBmbs);
-// 	}
-// 	else
-// 	{
-// 		return false;
-// 	}
-
-// 	if(requestDiagnostic)
-// 	{
-// 		if(!performDiagnostic(numBmbs))
-// 		{
-// 			return false;
-// 		}
-// 	}
-// 	else
-// 	{
-// 		// Start acquisition for next function call
-// 		if(!performAcquisition(numBmbs))
-// 		{
-// 			return false;
-// 		}
-// 	}
-// 	return true;
-// }
+			// Cycle to next diagnostic configuration
+			diagnosticState = (diagnosticState + 1) % NUM_BMB_FAULTS;
+			if(diagnosticState == BMB_REFERENCE_VOLTAGE_F)
+			{
+				scanState = SCAN_SELECT;
+			}
+			else
+			{
+				performBalSwDiagnostic(numBmbs);
+			}
+		}
+		else
+		{
+			scanState = SCAN_SELECT;
+		}
+		break;
+	default:
+		scanState = SCAN_SELECT;
+		break;
+	}
+}
 
 /*!
   @brief   Determine which bricks need to be balanced

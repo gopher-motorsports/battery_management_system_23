@@ -43,6 +43,8 @@
 #define NUM_BRICKS_PER_BMB		12
 #define NUM_BOARD_TEMP_PER_BMB 	4
 
+#define NUM_BMB_FAULTS_PER_BMB	10			
+
 // 3.3V range & 12 bit reading - 3.3/(2^12) = 805.664 uV/bit
 #define CONVERT_12BIT_TO_3V3	0.000805664f;
 // 5V range & 14 bit reading   - 5/(2^14)   = 305.176 uV/bit
@@ -102,8 +104,7 @@ typedef enum
 
 typedef enum
 {
-	BMB_NO_FAULT = 0,
-	BMB_REFERENCE_VOLTAGE_F,
+	BMB_REFERENCE_VOLTAGE_F = 0,
 	BMB_VAA_F,
 	BMB_LSAMP_OFFSET_F,
 	BMB_ADC_BIT_STUCK_HIGH_F,
@@ -121,6 +122,12 @@ typedef enum{
 	SCAN_ROUTINE_COMPLETE,
 	SCAN_DIAGNOSTIC_COMPLETE
 } Scan_Status_E;
+
+typedef enum{
+	SCAN_SELECT = 0,
+	ROUTINE_SCAN,
+	DIAGNOSTIC_SCAN
+} Bmb_Scan_State;
 
 
 /* ==================================================================== */
@@ -161,8 +168,8 @@ typedef struct
 	bool balSwRequested[NUM_BRICKS_PER_BMB];	// Set by BMS to determine which cells need to be balanced
 	bool balSwEnabled[NUM_BRICKS_PER_BMB];		// Set by BMB based on ability to balance in hardware
 
-	// Diagnostic Fault
-	Bmb_Fault_State_E fault; //TODO SET INIT VALUE
+	// Diagnostic information
+	bool fault[NUM_BMB_FAULTS_PER_BMB];
 	float dieTemp;
 } Bmb_S;
 
@@ -186,27 +193,7 @@ void initBmbs(uint32_t numBmbs);
 // */
 // bool smartUpdateBmbData(Bmb_S* bmb, uint32_t numBmbs, bool requestDiagnostic);
 
-Scan_Status_E scanComplete(uint32_t numBmbs);
-void performAcquisition(uint32_t numBmbs);
-bool performDiagnostic(uint32_t numBmbs, Bmb_Fault_State_E requestedDiagnostic)
-void updateCellData(Bmb_S* bmb, uint32_t numBmbs);
-void updateTempData(Bmb_S* bmb, uint32_t numBmbs);
-void updateDiagnosticData(Bmb_S* bmb, uint32_t numBmbs);
-void cycleDiagnosticMode();
-
-/*!
-  @brief   Set a given mux configuration on all BMBs
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-  @param   muxSetting - What mux setting should be used
-*/
-void setMux(uint32_t numBmbs, uint8_t muxSetting);
-
-/*!
-  @brief   Update BMB data statistics. Min/Max/Avg
-  @param   bmb - The array containing BMB data
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-*/
-void aggregateBmbData(Bmb_S* bmb,uint32_t numBmbs);
+void smartBmbUpdate(Bmb_S* bmb, uint32_t numBmbs);
 
 /*!
   @brief   Handles balancing the cells based on BMS control

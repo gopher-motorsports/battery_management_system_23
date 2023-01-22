@@ -91,12 +91,7 @@ bool overtemperatureFaultPresent(Bms_S* bms)
 
 bool bmbDiagnosticFaultPresent(Bms_S* bms)
 {
-    bool fault = false;
-    for(uint32_t i = 0; i < bms->numBmbs; i++)
-    {
-        fault |= (bms->bmb[i].fault != BMB_NO_FAULT);
-    }
-    return fault;
+    
 }
 
 Alert_S overvoltageAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERVOLTAGE_ALERT_SET_TIME_MS}, 

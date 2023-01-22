@@ -3,12 +3,6 @@
 #include "bmb.h"
 #include "debug.h"
 
-static uint32_t lastBmbUpdate = 0;
-static uint32_t lastBmbDiagnostic = 0;
-static bool diagnosticRequested = false;
-static bool diagnosticInProgress = false;
-static Bmb_Fault_State_E diagnosticState = BMB_NO_FAULT;
-
 
 #define INIT_BMS_BMB_ARRAY \
 { \
@@ -45,78 +39,11 @@ void initBatteryPack(uint32_t numBmbs)
 	initBmbs(numBmbs);
 
 	pBms->numBmbs = numBmbs;
-
-	for(uint32_t i = 0; i < numBmbs; i++)
-	{
-		pBms->bmb[i].fault = BMB_NO_FAULT;
-	}
 }
 
 void updatePackData(uint32_t numBmbs)
 {
-	if(diagnosticInProgress)
-	{
-		Scan_Status_E scanStatus = scanComplete(numBmbs);
-
-		if(scanStatus == SCAN_ROUTINE_COMPLETE)
-		{
-			Debug("BMB Diagnostic failed to complete");
-			diagnosticInProgress = false;
-		}
-		else if(scanStatus == SCAN_DIAGNOSTIC_COMPLETE)
-		{
-			Bms_S* pBms = &gBms;
-			updateDiagnosticData(pBms->bmb, numBmbs);
-			cycleDiagnosticMode();
-			if(!performDiagnostic(numBmbs))
-			{
-				diagnosticInProgress = false;
-				performAcquisition(numBmbs);
-			}
-		}
-		else{
-			return;
-		}
-	}
-
-	if(HAL_GetTick() - lastBmbDiagnostic >= 10000)
-	{
-		lastBmbDiagnostic = HAL_GetTick();
-		diagnosticRequested = true;
 		
-	}
-
-	if(HAL_GetTick() - lastBmbUpdate >= 50)
-	{
-		lastBmbUpdate = HAL_GetTick();
-
-		Scan_Status_E scanStatus = scanComplete(numBmbs);
-
-		if(scanStatus == SCAN_ROUTINE_COMPLETE)
-		{
-			Bms_S* pBms = &gBms;
-			updateCellData(pBms->bmb, numBmbs);
-			updateTempData(pBms->bmb, numBmbs);
-			aggregateBmbData(pBms->bmb, numBmbs);
-		}
-		else if(scanStatus == SCAN_INCOMPLETE)
-		{
-			lastBmbUpdate = HAL_GetTick() - 50;
-			return;
-		}
-		
-		if(diagnosticRequested)
-		{
-			cycleDiagnosticMode();
-			performDiagnostic(numBmbs);
-			diagnosticRequested = false;
-			diagnosticInProgress = true;
-		}
-		else
-		{
-			performAcquisition(numBmbs);
-		}
-	}	
 }
 
 /*!
