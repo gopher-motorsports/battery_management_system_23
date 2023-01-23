@@ -51,7 +51,7 @@ typedef struct
   @brief   Initialization function for the battery pack
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
-void initBatteryPack(uint32_t numBmbs);
+bool initBatteryPack();
 
 void updatePackData(uint32_t numBmbs);
 

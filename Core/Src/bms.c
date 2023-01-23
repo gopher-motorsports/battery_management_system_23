@@ -28,22 +28,20 @@ static void disableBmbBalancing(Bmb_S* bmb)
   @brief   Initialization function for the battery pack
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
-void initBatteryPack(uint32_t numBmbs)
+bool initBatteryPack()
 {
 	Bms_S* pBms = &gBms;
+	memset (pBms, 0, sizeof(Bms_S));
 
 	pBms->numBmbs = NUM_BMBS_PER_PACK;
 
-	memset (pBms, 0, sizeof(Bms_S));
-
-	initBmbs(numBmbs);
-
-	pBms->numBmbs = numBmbs;
+	initBmbs(NUM_BMBS_PER_PACK);
 }
 
 void updatePackData(uint32_t numBmbs)
 {
-		
+	Bms_S* pBms = &gBms;
+	smartBmbUpdate(pBms->bmb, numBmbs);
 }
 
 /*!

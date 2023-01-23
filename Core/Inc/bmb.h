@@ -37,6 +37,9 @@
 #define VBLOCK			0x2C
 #define AIN1			0x2D
 #define AIN2			0x2E
+#define BALSHRTTHR		0x4B
+#define BALLOWTHR 		0x4C
+#define BALHIGHTHR 		0x4D
 #define DIAG			0x50
 #define DIAGCFG 		0x51
 
@@ -111,17 +114,28 @@ typedef enum
 	BMB_ADC_BIT_STUCK_LOW_F,
 	BMB_DIE_TEMP_F,
 	BMB_BAL_SW_SHORT_F,
-	BMB_BAL_SW_OPEN_F,
-	BMB_ODD_SENSE_OPEN_F,
-	BMB_EVEN_SENSE_OPEN_F,
+	BMB_SENSE_OPEN_F,
 	NUM_BMB_FAULTS
 } Bmb_Fault_State_E;
 
 typedef enum{
-	SCAN_INCOMPLETE = 0,
-	SCAN_ROUTINE_COMPLETE,
-	SCAN_DIAGNOSTIC_COMPLETE
-} Scan_Status_E;
+	BMB_REFERENCE_VOLTAGE_DIAGNOSTIC = 0,
+	BMB_VAA_DIAGNOSTIC,
+	BMB_LSAMP_OFFSET_DIAGNOSTIC,
+	BMB_ADC_BIT_STUCK_HIGH_DIAGNOSTIC,
+	BMB_ADC_BIT_STUCK_LOW_DIAGNOSTIC,
+	BMB_DIE_TEMP_DIAGNOSTIC,
+	NUM_BMB_ROUTINE_DIAGNOSTIC_STATES
+} Bmb_Routine_Diagnostic_State_E;
+
+typedef enum{
+	BMB_BALSW_SHORT_DIAGNOSTIC = 0,
+	BMB_ODD_PRE_BLEED,
+	BMB_ODD_SENSE_OPEN_DIAGNOSTIC,
+	BMB_EVEN_PRE_BLEED,
+	BMB_EVEN_SENSE_OPEN_DIAGNOSTIC,
+	NUM_BALSW_DIAGNOSTIC_STATES
+} Bmb_BALSW_Diagnostic_State_E;
 
 typedef enum{
 	SCAN_SELECT = 0,
@@ -169,7 +183,7 @@ typedef struct
 	bool balSwEnabled[NUM_BRICKS_PER_BMB];		// Set by BMB based on ability to balance in hardware
 
 	// Diagnostic information
-	bool fault[NUM_BMB_FAULTS_PER_BMB];
+	bool faultN[NUM_BMB_FAULTS_PER_BMB];
 	float dieTemp;
 } Bmb_S;
 
@@ -183,7 +197,7 @@ typedef struct
   @param   numBmbs - The expected number of BMBs in the daisy chain
   @return  True if successful initialization, false otherwise
 */
-void initBmbs(uint32_t numBmbs);
+bool initBmbs(uint32_t numBmbs);
 
 // /*!
 //   @brief   Update BMB voltages and temperature data. Once new data gathered start new
@@ -194,6 +208,8 @@ void initBmbs(uint32_t numBmbs);
 // bool smartUpdateBmbData(Bmb_S* bmb, uint32_t numBmbs, bool requestDiagnostic);
 
 void smartBmbUpdate(Bmb_S* bmb, uint32_t numBmbs);
+
+void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs);
 
 /*!
   @brief   Handles balancing the cells based on BMS control

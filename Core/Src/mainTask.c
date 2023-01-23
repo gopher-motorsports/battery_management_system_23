@@ -45,6 +45,7 @@ uint32_t lastBalancingUpdate = 0;
 void printCellVoltages();
 void printCellTemperatures();
 void printBoardTemperatures();
+void printBoardDiagnostics();
 
 
 /* ==================================================================== */
@@ -79,7 +80,7 @@ void runMain()
 
 		// aggregatePackData(numBmbs);
 
-		if((HAL_GetTick() - lastUpdateMain) >= 1000)
+		if((HAL_GetTick() - lastUpdateMain) >= 5000)
 		{
 
 			// Clear console
@@ -93,12 +94,13 @@ void runMain()
 			{
 				printf("Balancing Enabled: FALSE\n");
 			}
-			balancePack(numBmbs, balancingEnabled);
+			// balancePack(numBmbs, balancingEnabled);
 			// balancePackToVoltage(numBmbs, 3.7f);
 
 			printCellVoltages();
 			printCellTemperatures();
 			printBoardTemperatures();
+			printBoardDiagnostics();
 
 			// Update lastUpdate
 			lastUpdateMain = HAL_GetTick();
@@ -107,7 +109,7 @@ void runMain()
 	}
 	else
 	{
-		printf("Failed to initialize\n");
+
 	}
 
 	// New functions to add UpdateBrickVoltages() - reads in all brick voltages
@@ -178,5 +180,27 @@ void printBoardTemperatures()
 	printf("\n");
 }
 
+void printBoardDiagnostics()
+{
+	printf("Board Diagnostics:\n");
+	printf("|   BMB   |  REF_F  |  VAA_F  |  LSO_F  |  BHI_F  |  BLO_F  |  DIE_F  |  SWS_F  |  ODD_F  |  EVE_F  |\n");
+	for (int i = 0; i < numBmbs; i++)
+	{
+		printf("|    %02d   |", i + 1);
+		for(int k = 0; k < NUM_BMB_FAULTS; k++)
+		{
+			if(gBms.bmb[i].faultN[k])
+			{
+				printf("   OK.   |");
+			}
+			else
+			{
+				printf("  FAULT  |");
+			}
+		}
+		printf("\n");
+	}
+	printf("\n");
+}
 
 
