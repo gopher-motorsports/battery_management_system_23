@@ -89,6 +89,11 @@ bool overtemperatureFaultPresent(Bms_S* bms)
     return (bms->maxBrickTemp > MAX_BRICK_TEMP_FAULT_C);
 }
 
+bool bmbDiagnosticFaultPresent(Bms_S* bms)
+{
+    
+}
+
 Alert_S overvoltageAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERVOLTAGE_ALERT_SET_TIME_MS}, 
                             .setTime_MS = OVERVOLTAGE_ALERT_SET_TIME_MS, .clearTime_MS = OVERVOLTAGE_ALERT_CLEAR_TIME_MS, 
                             .alertConditionPresent = overvoltagePresent};

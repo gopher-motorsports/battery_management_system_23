@@ -53,6 +53,8 @@ typedef struct
 */
 void initBatteryPack(uint32_t numBmbs);
 
+void updatePackData(uint32_t numBmbs);
+
 /*!
   @brief   Handles balancing the battery pack
   @param   numBmbs - The expected number of BMBs in the daisy chain

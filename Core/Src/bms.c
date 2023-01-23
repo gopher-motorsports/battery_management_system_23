@@ -1,5 +1,7 @@
+#include "main.h"
 #include "bms.h"
 #include "bmb.h"
+#include "debug.h"
 
 
 #define INIT_BMS_BMB_ARRAY \
@@ -41,7 +43,7 @@ void initBatteryPack(uint32_t numBmbs)
 
 void updatePackData(uint32_t numBmbs)
 {
-	// TODO - call underlying bmb.c functions
+		
 }
 
 /*!
