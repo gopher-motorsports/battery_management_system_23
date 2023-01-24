@@ -183,19 +183,19 @@ void printBoardTemperatures()
 void printBoardDiagnostics()
 {
 	printf("Board Diagnostics:\n");
-	printf("|   BMB   |  REF_F  |  VAA_F  |  LSO_F  |  BHI_F  |  BLO_F  |  DIE_F  |  SWS_F  |  ODD_F  |  EVE_F  |\n");
+	printf("|   BMB   |  REF_F  |  VAA_F  |  LSO_F  |  BHI_F  |  BLO_F  |  DIE_F  |  BSW_F  |\n");
 	for (int i = 0; i < numBmbs; i++)
 	{
 		printf("|    %02d   |", i + 1);
 		for(int k = 0; k < NUM_BMB_FAULTS; k++)
 		{
-			if(gBms.bmb[i].faultN[k])
+			if(gBms.bmb[i].fault[k])
 			{
-				printf("   OK.   |");
+				printf("  FAULT  |");
 			}
 			else
 			{
-				printf("  FAULT  |");
+				printf("   OK.   |");
 			}
 		}
 		printf("\n");

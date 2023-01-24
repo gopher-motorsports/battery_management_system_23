@@ -103,7 +103,17 @@ typedef enum
 	MUX7,
 	MUX8,
 	NUM_MUX_CHANNELS
-} Mux_State_E;
+} Bmb_Mux_State_E;
+
+typedef enum{
+	BMB_REFERENCE_VOLTAGE_DIAGNOSTIC = 0,
+	BMB_VAA_DIAGNOSTIC,
+	BMB_LSAMP_OFFSET_DIAGNOSTIC,
+	BMB_ADC_BIT_STUCK_HIGH_DIAGNOSTIC,
+	BMB_ADC_BIT_STUCK_LOW_DIAGNOSTIC,
+	BMB_DIE_TEMP_DIAGNOSTIC,
+	NUM_BMB_DIAGNOSTIC_STATES
+} Bmb_Diagnostic_State_E;
 
 typedef enum
 {
@@ -113,35 +123,16 @@ typedef enum
 	BMB_ADC_BIT_STUCK_HIGH_F,
 	BMB_ADC_BIT_STUCK_LOW_F,
 	BMB_DIE_TEMP_F,
-	BMB_BAL_SW_SHORT_F,
-	BMB_SENSE_OPEN_F,
+	BMB_BAL_SW_F,
 	NUM_BMB_FAULTS
 } Bmb_Fault_State_E;
 
 typedef enum{
-	BMB_REFERENCE_VOLTAGE_DIAGNOSTIC = 0,
-	BMB_VAA_DIAGNOSTIC,
-	BMB_LSAMP_OFFSET_DIAGNOSTIC,
-	BMB_ADC_BIT_STUCK_HIGH_DIAGNOSTIC,
-	BMB_ADC_BIT_STUCK_LOW_DIAGNOSTIC,
-	BMB_DIE_TEMP_DIAGNOSTIC,
-	NUM_BMB_ROUTINE_DIAGNOSTIC_STATES
-} Bmb_Routine_Diagnostic_State_E;
-
-typedef enum{
-	BMB_BALSW_SHORT_DIAGNOSTIC = 0,
-	BMB_ODD_PRE_BLEED,
-	BMB_ODD_SENSE_OPEN_DIAGNOSTIC,
-	BMB_EVEN_PRE_BLEED,
-	BMB_EVEN_SENSE_OPEN_DIAGNOSTIC,
-	NUM_BALSW_DIAGNOSTIC_STATES
-} Bmb_BALSW_Diagnostic_State_E;
-
-typedef enum{
-	SCAN_SELECT = 0,
-	ROUTINE_SCAN,
-	DIAGNOSTIC_SCAN
-} Bmb_Scan_State;
+	SCAN_STACK = 0,
+	VERIFY_BALSW_OPEN,
+	VERIFY_BALSW_CLOSED,
+	SCAN_ERROR
+} Bmb_Scan_State_E;
 
 
 /* ==================================================================== */
@@ -183,7 +174,7 @@ typedef struct
 	bool balSwEnabled[NUM_BRICKS_PER_BMB];		// Set by BMB based on ability to balance in hardware
 
 	// Diagnostic information
-	bool faultN[NUM_BMB_FAULTS_PER_BMB];
+	bool fault[NUM_BMB_FAULTS_PER_BMB];
 	float dieTemp;
 } Bmb_S;
 
@@ -207,7 +198,7 @@ bool initBmbs(uint32_t numBmbs);
 // */
 // bool smartUpdateBmbData(Bmb_S* bmb, uint32_t numBmbs, bool requestDiagnostic);
 
-void smartBmbUpdate(Bmb_S* bmb, uint32_t numBmbs);
+void runBmbUpdate(Bmb_S* bmb, uint32_t numBmbs);
 
 void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs);
 

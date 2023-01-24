@@ -41,7 +41,7 @@ bool initBatteryPack()
 void updatePackData(uint32_t numBmbs)
 {
 	Bms_S* pBms = &gBms;
-	smartBmbUpdate(pBms->bmb, numBmbs);
+	runBmbUpdate(pBms->bmb, numBmbs);
 }
 
 /*!
