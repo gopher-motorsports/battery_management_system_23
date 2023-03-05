@@ -132,14 +132,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		xSemaphoreGiveFromISR(asciSemHandle, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
-	if (GPIO_Pin == B1_Pin)
-	{
-		if (HAL_GetTick() - lastBalancingUpdate > 300)
-		{
-			lastBalancingUpdate = HAL_GetTick();
-			balancingEnabled = !balancingEnabled;
-		}
-	}
+	// if (GPIO_Pin == B1_Pin)
+	// {
+	// 	if (HAL_GetTick() - lastBalancingUpdate > 300)
+	// 	{
+	// 		lastBalancingUpdate = HAL_GetTick();
+	// 		balancingEnabled = !balancingEnabled;
+	// 	}
+	// }
 	if (GPIO_Pin == BUSY_Pin)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
@@ -428,19 +428,30 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, AMS_FAULT_OUT_Pin|MCU_HEARTBEAT_Pin|MCU_FAULT_Pin|MCU_GSENSE_Pin
+                          |SHDN_Pin|RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(CS_ASCI_GPIO_Port, CS_ASCI_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, SHDN_Pin|RST_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, CS_EPD_Pin|DC_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : B1_Pin INT_Pin */
-  GPIO_InitStruct.Pin = B1_Pin|INT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  /*Configure GPIO pins : AMS_FAULT_OUT_Pin MCU_HEARTBEAT_Pin MCU_FAULT_Pin MCU_GSENSE_Pin
+                           SHDN_Pin RST_Pin */
+  GPIO_InitStruct.Pin = AMS_FAULT_OUT_Pin|MCU_HEARTBEAT_Pin|MCU_FAULT_Pin|MCU_GSENSE_Pin
+                          |SHDN_Pin|RST_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : IMD_FAULT_SDC_Pin BSPD_FAULT_SDC_Pin */
+  GPIO_InitStruct.Pin = IMD_FAULT_SDC_Pin|BSPD_FAULT_SDC_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
@@ -451,12 +462,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(CS_ASCI_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SHDN_Pin RST_Pin */
-  GPIO_InitStruct.Pin = SHDN_Pin|RST_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  /*Configure GPIO pin : INT_Pin */
+  GPIO_InitStruct.Pin = INT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(INT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : CS_EPD_Pin DC_Pin */
   GPIO_InitStruct.Pin = CS_EPD_Pin|DC_Pin;
@@ -471,12 +481,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(BUSY_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : AMS_FAULT_SDC_Pin */
+  GPIO_InitStruct.Pin = AMS_FAULT_SDC_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(AMS_FAULT_SDC_GPIO_Port, &GPIO_InitStruct);
+
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
-
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
 
@@ -550,9 +563,17 @@ void StartEPaper(void const * argument)
 void StartIdle(void const * argument)
 {
   /* USER CODE BEGIN StartIdle */
+  static const uint32_t HEARTBEAT_UPDATE_RATE = 250;
   /* Infinite loop */
   for(;;)
   {
+    // Update Heartbeat LED
+    static uint32_t lastHeartbeat = 0;
+    if (HAL_GetTick() - lastHeartbeat >= HEARTBEAT_UPDATE_RATE)
+    {
+      HAL_GPIO_TogglePin(MCU_HEARTBEAT_GPIO_Port, MCU_HEARTBEAT_Pin);
+      lastHeartbeat = HAL_GetTick();
+    }
     osDelay(1);
   }
   /* USER CODE END StartIdle */
