@@ -16,7 +16,7 @@ static void disableBmbBalancing(Bmb_S* bmb);
 
 static void disableBmbBalancing(Bmb_S* bmb)
 {
-	for (int i = 0; i < NUM_BRICKS_PER_BMB; i++)
+	for (int32_t i = 0; i < NUM_BRICKS_PER_BMB; i++)
 	{
 		bmb->balSwRequested[i] = false;
 	}
@@ -57,7 +57,7 @@ void balancePack(uint32_t numBmbs, bool balanceRequested)
 	{
 		float bleedTargetVoltage = 5.0f;
 		// Determine minimum voltage across entire battery pack
-		for (int i = 0; i < numBmbs; i++)
+		for (int32_t i = 0; i < numBmbs; i++)
 		{
 			if (pBms->bmb[i].minBrickV + BALANCE_THRESHOLD_V < bleedTargetVoltage)
 			{
@@ -70,10 +70,10 @@ void balancePack(uint32_t numBmbs, bool balanceRequested)
 			bleedTargetVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
 		}
 		// Set bleed request on cells that have voltage higher than our bleedTargetVoltage
-		for (int i = 0; i < numBmbs; i++)
+		for (int32_t i = 0; i < numBmbs; i++)
 		{
 			// Iterate through all bricks and determine whether they should be bled or not
-			for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
+			for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 			{
 				if (pBms->bmb[i].brickV[j] > bleedTargetVoltage)
 				{
@@ -89,7 +89,7 @@ void balancePack(uint32_t numBmbs, bool balanceRequested)
 	else
 	{
 		// If bleeding not requested ensure balancing switches are all off
-		for (int i = 0; i < numBmbs; i++)
+		for (int32_t i = 0; i < numBmbs; i++)
 		{
 			disableBmbBalancing(&pBms->bmb[i]);
 		}
@@ -113,7 +113,7 @@ void aggregatePackData(uint32_t numBmbs)
 	float maxBrickTemp    = -200.0f;
 	float minBrickTemp 	  = 200.0f;
 	float avgBrickTempSum = 0.0f;
-	for (int i = 0; i < numBmbs; i++)
+	for (int32_t i = 0; i < numBmbs; i++)
 	{
 		Bmb_S* pBmb = &pBms->bmb[i];
 
@@ -157,10 +157,10 @@ void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
 	}
 
 
-	for (int i = 0; i < numBmbs; i++)
+	for (int32_t i = 0; i < numBmbs; i++)
 	{
 		// Iterate through all bricks and determine whether they should be bled or not
-		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
+		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
 			if (pBms->bmb[i].brickV[j] > targetBrickVoltage + BALANCE_THRESHOLD_V)
 			{

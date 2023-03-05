@@ -43,6 +43,8 @@ static uint8_t recvBuffer[SPI_BUFF_SIZE];
 /* ======================= EXTERNAL VARIABLES ========================= */
 /* ==================================================================== */
 
+extern LookupTable_S ntcTable;
+extern LookupTable_S zenerTable;
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
@@ -67,7 +69,7 @@ void updateBmbBalanceSwitches(Bmb_S* bmb)
 	writeDevice(WATCHDOG, (WATCHDOG_1S_STEP_SIZE | WATCHDOG_TIMER_LOAD_5), bmb->bmbIdx);
 	uint16_t balanceSwEnabled = 0x0000;
 	uint16_t mask = 0x0001;
-	for (int i = 0; i < NUM_BRICKS_PER_BMB; i++)
+	for (int32_t i = 0; i < NUM_BRICKS_PER_BMB; i++)
 	{
 		if (bmb->balSwEnabled[i])
 		{
@@ -174,7 +176,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 				Debug("Error during cellReg readAll!\n");
 
 				// Failed to acquire data. Set status to MIA
-				for (int j = 0; j < numBmbs; j++)
+				for (int32_t j = 0; j < numBmbs; j++)
 				{
 					bmb[j].brickVStatus[i] = MIA;
 				}
@@ -197,14 +199,14 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			Debug("Error during VBLOCK readAll!\n");
 
 			// Failed to acquire data. Set status to MIA
-			for (int j = 0; j < numBmbs; j++)
+			for (int32_t j = 0; j < numBmbs; j++)
 			{
 				bmb[j].blockVStatus = MIA;
 			}
 		}
 
 		// Read AUX/TEMP registers
-		for (int auxChannel = AIN1; auxChannel <= AIN2; auxChannel++)
+		for (int32_t auxChannel = AIN1; auxChannel <= AIN2; auxChannel++)
 		{
 			if (readAll(auxChannel, recvBuffer, numBmbs))
 			{
@@ -231,7 +233,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			{
 				Debug("Error during TEMP readAll!\n");
 				// Failed to acquire data. Set status to MIA
-				for (int j = 0; j < numBmbs; j++)
+				for (int32_t j = 0; j < numBmbs; j++)
 				{
 					bmb[j].tempStatus[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = MIA;
 				}
@@ -280,7 +282,7 @@ void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 			Debug("Error during cellReg readAll!\n");
 
 			// Failed to acquire data. Set status to MIA
-			for (int j = 0; j < numBmbs; j++)
+			for (int32_t j = 0; j < numBmbs; j++)
 			{
 				bmb[j].brickVStatus[i] = MIA;
 			}
@@ -303,7 +305,7 @@ void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 		Debug("Error during VBLOCK readAll!\n");
 
 		// Failed to acquire data. Set status to MIA
-		for (int j = 0; j < numBmbs; j++)
+		for (int32_t j = 0; j < numBmbs; j++)
 		{
 			bmb[j].blockVStatus = MIA;
 		}
@@ -325,7 +327,7 @@ void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs)
 		// Set Mux configuration
 		setMux(numBmbs, mux);
 		// Read AUX/TEMP registers
-		for (int auxChannel = AIN1; auxChannel <= AIN2; auxChannel++)
+		for (int32_t auxChannel = AIN1; auxChannel <= AIN2; auxChannel++)
 		{
 			if (readAll(auxChannel, recvBuffer, numBmbs))
 			{
@@ -351,7 +353,7 @@ void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs)
 			else
 			{
 				// Failed to acquire data. Set status to MIA
-				for (int j = 0; j < numBmbs; j++)
+				for (int32_t j = 0; j < numBmbs; j++)
 				{
 					bmb[j].tempStatus[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = MIA;
 				}
@@ -380,7 +382,7 @@ void setMux(uint32_t numBmbs, uint8_t muxSetting)
 void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 {
 	// Iterate through brick voltages
-	for (int i = 0; i < numBmbs; i++)
+	for (int32_t i = 0; i < numBmbs; i++)
 	{
 		Bmb_S* pBmb = &bmb[i];
 		float maxBrickV = MIN_VOLTAGE_SENSOR_VALUE_V;
@@ -394,7 +396,7 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		float boardTempSum = 0.0f;
 		// TODO If SNA do not count
 		// Aggregate brick voltage and temperature data
-		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
+		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
 			float brickV = pBmb->brickV[j];
 			float brickTemp = pBmb->brickTemp[j];
@@ -422,7 +424,7 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		}
 
 		// Aggregate board temp data
-		for (int j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
+		for (int32_t j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
 		{
 			float boardTemp = pBmb->boardTemp[j];
 
@@ -464,14 +466,14 @@ void balanceCells(Bmb_S* bmb, uint32_t numBmbs)
 	// Iterate through the array starting with the highest voltage and enable balancing switch
 	// if neighboring cells aren't being balanced. This is due to the circuit not allowing 
 	// neighboring cells to be balanced. 
-	for (int bmbIdx = 0; bmbIdx < numBmbs; bmbIdx++)
+	for (int32_t bmbIdx = 0; bmbIdx < numBmbs; bmbIdx++)
 	{
 		uint32_t numBricksNeedBalancing = 0;
 		Brick_S bricksToBalance[NUM_BRICKS_PER_BMB];
 		// Add all bricks that need balancing to array if board temp allows for it
 		if (bmb[bmbIdx].maxBoardTemp < MAX_BOARD_TEMP_BALANCING_ALLOWED_C)
 		{
-			for (int brickIdx = 0; brickIdx < NUM_BRICKS_PER_BMB; brickIdx++)
+			for (int32_t brickIdx = 0; brickIdx < NUM_BRICKS_PER_BMB; brickIdx++)
 			{
 				// Add brick to list of bricks that need balancing if balancing requested, brick
 				// isn't too hot, and the brick voltage is above the bleed threshold
@@ -489,7 +491,7 @@ void balanceCells(Bmb_S* bmb, uint32_t numBmbs)
 		// Clear all balance switches
 		memset(bmb[bmbIdx].balSwEnabled, 0, NUM_BRICKS_PER_BMB * sizeof(bool));
 
-		for (int i = numBricksNeedBalancing - 1; i >= 0; i--)
+		for (int32_t i = numBricksNeedBalancing - 1; i >= 0; i--)
 		{
 			// For each brick that needs balancing ensure that the neighboring bricks aren't being bled
 			Brick_S brick = bricksToBalance[i];

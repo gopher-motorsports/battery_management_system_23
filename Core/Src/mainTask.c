@@ -7,6 +7,7 @@
 #include "cmsis_os.h"
 #include "mainTask.h"
 #include "bmbInterface.h"
+#include "bmbUtils.h"
 #include "bmb.h"
 #include "epaper.h"
 #include "epaperUtils.h"
@@ -24,6 +25,9 @@ extern osSemaphoreId		epdBusySemHandle;
 extern SPI_HandleTypeDef 	hspi1;
 extern SPI_HandleTypeDef 	hspi2;
 extern Bms_S 				gBms;
+
+extern LeakyBucket_S asciCommsLeakyBucket;
+
 
 
 /* ==================================================================== */
@@ -80,7 +84,14 @@ void runMain()
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{
-
+			if (leakyBucketFilled(&asciCommsLeakyBucket))
+			{
+				// Try to reset the asci to re-establish comms
+				resetASCI();
+				initASCI();
+				helloAll(&numBmbs);
+				initBatteryPack(numBmbs);
+			}
 			// Clear console
 			printf("\e[1;1H\e[2J");
 
@@ -98,6 +109,7 @@ void runMain()
 			printCellVoltages();
 			printCellTemperatures();
 			printBoardTemperatures();
+			printf("Leaky bucket filled: %d\n", leakyBucketFilled(&asciCommsLeakyBucket));
 
 			// Update lastUpdate
 			lastUpdateMain = HAL_GetTick();
@@ -123,10 +135,10 @@ void printCellVoltages()
 {
 	printf("Cell Voltage:\n");
 	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    | StackV  |\n");
-	for (int i = 0; i < numBmbs; i++)
+	for (int32_t i = 0; i < numBmbs; i++)
 	{
-		printf("|    %02d   |", i + 1);
-		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
+		printf("|    %02ld   |", i + 1);
+		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
 			printf("  %5.3f", gBms.bmb[i].brickV[j]);
 			if(gBms.bmb[i].balSwEnabled[j])
@@ -149,10 +161,10 @@ void printCellTemperatures()
 {
 	printf("Cell Temp:\n");
 	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    |\n");
-	for (int i = 0; i < numBmbs; i++)
+	for (int32_t i = 0; i < numBmbs; i++)
 	{
-		printf("|    %02d   |", i + 1);
-		for (int j = 0; j < NUM_BRICKS_PER_BMB; j++)
+		printf("|    %02ld   |", i + 1);
+		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
 			printf(" %5.1fC  |", gBms.bmb[i].brickTemp[j]);
 		}
@@ -165,10 +177,10 @@ void printBoardTemperatures()
 {
 	printf("Board Temp:\n");
 	printf("|   BMB   |    1    |    2    |    3    |    4    |\n");
-	for (int i = 0; i < numBmbs; i++)
+	for (int32_t i = 0; i < numBmbs; i++)
 	{
-		printf("|    %02d   |", i + 1);
-		for (int j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
+		printf("|    %02ld   |", i + 1);
+		for (int32_t j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
 		{
 			printf(" %5.1fC  |", gBms.bmb[i].boardTemp[j]);
 		}

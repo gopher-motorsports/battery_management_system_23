@@ -6,6 +6,7 @@
 #include "cmsis_os.h"
 #include "bmbInterface.h"
 #include "debug.h"
+#include "bmbUtils.h"
 
 
 /* ==================================================================== */
@@ -24,11 +25,12 @@ extern osSemaphoreId asciSpiSemHandle;
 extern osSemaphoreId asciSemHandle;
 extern SPI_HandleTypeDef hspi1;
 
+extern LeakyBucket_S asciCommsLeakyBucket;
+
 
 /* ==================================================================== */
 /* ========================= LOCAL VARIABLES ========================== */
 /* ==================================================================== */
-
 
 
 /* ==================================================================== */
@@ -248,7 +250,7 @@ static void writeRegister(uint8_t registerAddress, uint8_t value)
 */
 static bool writeAndVerifyRegister(uint8_t registerAddress, uint8_t value)
 {
-	for (int i = 0; i < NUM_DATA_CHECKS; i++)
+	for (int32_t i = 0; i < NUM_DATA_CHECKS; i++)
 	{
 		writeRegister(registerAddress, value);
 		if (readRegister(registerAddress) == value)
@@ -271,10 +273,10 @@ static uint8_t calcCrc(uint8_t* byteArr, uint32_t numBytes)
 {
 	uint8_t crc = 0x00;
 	const uint8_t poly = 0xB2;
-	for (int i = 0; i < numBytes; i++)
+	for (int32_t i = 0; i < numBytes; i++)
 	{
 		crc = crc ^ byteArr[i];
-		for (int j = 0; j < 8; j++)
+		for (int32_t j = 0; j < 8; j++)
 		{
 			if (crc & 0x01)
 			{
@@ -311,7 +313,7 @@ static void clearTxBuffer()
 */
 static bool clearRxIntFlags()
 {
-	for (int i = 0; i < NUM_DATA_CHECKS; i++)
+	for (int32_t i = 0; i < NUM_DATA_CHECKS; i++)
 	{
 		writeRegister(R_RX_INTERRUPT_FLAGS, 0x00);
 		uint8_t result = readRegister(R_RX_INTERRUPT_FLAGS);
@@ -342,7 +344,7 @@ static bool readRxBusyFlag()
 */
 static bool clearRxBusyFlag()
 {
-	for (int i = 0; i < NUM_DATA_CHECKS; i++)
+	for (int32_t i = 0; i < NUM_DATA_CHECKS; i++)
 	{
 		writeRegister(R_RX_INTERRUPT_FLAGS, ~(0x20));
 		uint8_t result = readRegister(R_RX_INTERRUPT_FLAGS);
@@ -382,7 +384,7 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 	uint8_t recvBuffer[numBytes];
 	memset(recvBuffer, 0, numBytes * sizeof(uint8_t));
 	// Attempt to load the queue a set number of times before giving up
-	for (int i = 0; i < NUM_DATA_CHECKS; i++)
+	for (int32_t i = 0; i < NUM_DATA_CHECKS; i++)
 	{
 		bool queueDataVerified = false;
 
@@ -632,11 +634,13 @@ bool helloAll(uint32_t* numBmbs)
 	if (!sendReceiveMessageAsci(sendBuffer, &pRecvBuffer, numBytesToSend, numBytesToReceive))
 	{
 		Debug("Error in HelloAll!\n");
+		updateLeakyBucketFail(&asciCommsLeakyBucket);
 		return false;
 	}
 	
 	// Number of BMBs is last byte in the received message
 	*numBmbs = pRecvBuffer[bmbCmdLength - 1];
+	updateLeakyBucketSuccess(&asciCommsLeakyBucket);
 	return true;
 }
 
@@ -675,7 +679,7 @@ bool writeAll(uint8_t address, uint16_t value, uint32_t numBmbs)
 	bmbCmdBuffer[4] = calcCrc(bmbCmdBuffer, bmbCmdLength - 2);	// Calculate CRC on CMD, ADDRESS, LSB, MSB
 	bmbCmdBuffer[5] = 0x00;							// Alive counter seed value for BMBs
 
-	for (int i = 0; i < NUM_DATA_CHECKS; i++)
+	for (int32_t i = 0; i < NUM_DATA_CHECKS; i++)
 	{
 		bool writeAllSuccess = true;
 
@@ -691,10 +695,12 @@ bool writeAll(uint8_t address, uint16_t value, uint32_t numBmbs)
 
 		if (writeAllSuccess)
 		{
+			updateLeakyBucketSuccess(&asciCommsLeakyBucket);
 			return true;
 		}
 	}
 	Debug("Failed to write all\n");
+	updateLeakyBucketFail(&asciCommsLeakyBucket);
 	return false;
 }
 
@@ -733,7 +739,7 @@ bool writeDevice(uint8_t address, uint16_t value, uint32_t bmbIndex)
 	bmbCmdBuffer[4] = calcCrc(bmbCmdBuffer, bmbCmdLength - 2);	// Calculate CRC on CMD, ADDRESS, LSB, MSB
 	bmbCmdBuffer[5] = 0x00;							// Alive counter seed value for BMBs
 
-	for (int i = 0; i < NUM_DATA_CHECKS; i++)
+	for (int32_t i = 0; i < NUM_DATA_CHECKS; i++)
 	{
 		bool writeAllSuccess = true;
 
@@ -749,10 +755,12 @@ bool writeDevice(uint8_t address, uint16_t value, uint32_t bmbIndex)
 
 		if (writeAllSuccess)
 		{
+			updateLeakyBucketSuccess(&asciCommsLeakyBucket);
 			return true;
 		}
 	}
 	Debug("Failed to write device\n");
+	updateLeakyBucketFail(&asciCommsLeakyBucket);
 	return false;
 }
 
@@ -787,7 +795,7 @@ bool readAll(uint8_t address, uint8_t *data_p, uint32_t numBmbs)
 	bmbCmdBuffer[3] = calcCrc(bmbCmdBuffer, bmbCmdLength - 2);	// Calculate CRC on CMD, ADDRESS, DATA_CHECK
 	bmbCmdBuffer[4] = 0x00;							// Alive counter seed value for BMBs
 
-	for (int i = 0; i < NUM_DATA_CHECKS; i++)
+	for (int32_t i = 0; i < NUM_DATA_CHECKS; i++)
 	{
 		bool readAllSuccess = true;
 
@@ -805,10 +813,12 @@ bool readAll(uint8_t address, uint8_t *data_p, uint32_t numBmbs)
 
 		if (readAllSuccess)
 		{
+			updateLeakyBucketSuccess(&asciCommsLeakyBucket);
 			return true;
 		}
 	}
 	Debug("Failed to read all\n");
+	updateLeakyBucketFail(&asciCommsLeakyBucket);
 	return false;
 }
 
@@ -844,7 +854,7 @@ bool readDevice(uint8_t address, uint8_t *data_p, uint32_t bmbIndex)
 	bmbCmdBuffer[3] = calcCrc(bmbCmdBuffer, bmbCmdLength - 2);	// Calculate CRC on CMD, ADDRESS, DATA_CHECK
 	bmbCmdBuffer[4] = 0x00;							// Alive counter seed value for BMBs
 
-	for (int i = 0; i < NUM_DATA_CHECKS; i++)
+	for (int32_t i = 0; i < NUM_DATA_CHECKS; i++)
 	{
 		bool readAllSuccess = true;
 
@@ -862,9 +872,11 @@ bool readDevice(uint8_t address, uint8_t *data_p, uint32_t bmbIndex)
 
 		if (readAllSuccess)
 		{
+			updateLeakyBucketSuccess(&asciCommsLeakyBucket);
 			return true;
 		}
 	}
 	Debug("Failed to read device\n");
+	updateLeakyBucketFail(&asciCommsLeakyBucket);
 	return false;
 }
