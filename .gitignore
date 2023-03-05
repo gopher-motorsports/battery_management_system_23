@@ -11,5 +11,4 @@ build/
 .project.bak
 Makefile
 STM32Make.make
-openocd.cfg
 startup_stm32f446xx.s
