@@ -57,6 +57,8 @@ void printBoardTemperatures();
 
 void runMain()
 {
+	
+
 	if (!initialized && initRetries > 0)
 	{
 		initialized = true;
@@ -81,6 +83,8 @@ void runMain()
 		updateBmbData(gBms.bmb, numBmbs);
 
 		aggregatePackData(numBmbs);
+
+		updateIMDfault();
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{

@@ -83,6 +83,8 @@ void Error_Handler(void);
 #define BUSY_Pin GPIO_PIN_6
 #define BUSY_GPIO_Port GPIOC
 #define BUSY_EXTI_IRQn EXTI9_5_IRQn
+#define IMD_PWM_Pin GPIO_PIN_7
+#define IMD_PWM_GPIO_Port GPIOC
 #define RST_Pin GPIO_PIN_8
 #define RST_GPIO_Port GPIOC
 #define TMS_Pin GPIO_PIN_13
