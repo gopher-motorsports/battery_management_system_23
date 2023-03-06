@@ -10,8 +10,11 @@
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
 
+// The max spacing between two floats before they are considered not equal
 #define EPSILON 1e-4f
+// The max number of calls that are allowed in a binary search instance before erroring
 #define MAX_DEPTH 20
+// The number of values contained in a lookup table
 #define TABLE_SIZE 33
 
 
@@ -56,29 +59,15 @@ LeakyBucket_S asciCommsLeakyBucket =
 
 
 /* ==================================================================== */
-/* =================== LOCAL FUNCTION DECLARATIONS ==================== */
-/* ==================================================================== */
-
-bool equals(float f1, float f2);
-uint32_t binarySearch(const float *arr, const float target, int low, int high);
-float interpolate(float x, float x1, float x2, float y1, float y2);
-
-/*!
-  @brief   Search a sorted array of Brick_S structs using binary search
-  @param   arr - Pointer to the Brick_S array to be searched
-  @param   l - Index of the left element of the array 
-  @param   r - Index of the right element of the array
-  @param   v - The target voltage to be compared to the Brick_S struct voltage
-  @return  Index at which voltage is to be inserted
-*/
-int32_t brickBinarySearch(Brick_S *arr, int l, int r, float v);
-
-
-/* ==================================================================== */
 /* =================== LOCAL FUNCTION DEFINITIONS ===================== */
 /* ==================================================================== */
-
-bool equals(float f1, float f2)
+/*!
+    @brief   Compares two float values with a small tolerance defined by EPSILON
+    @param   f1 - The first float to compare
+    @param   f2 - The second float to compare
+    @return  true if the two values are within the tolerance defined by EPSILON, false otherwise
+*/
+static bool equals(float f1, float f2)
 {
     if (fabs(f1 - f2) < EPSILON)
     {
@@ -87,7 +76,15 @@ bool equals(float f1, float f2)
     return false;
 }
 
-uint32_t binarySearch(const float *arr, const float target, int low, int high)
+/*!
+    @brief   Search in an array of floats for a specific value using binary search
+    @param   arr - The array of floats to search
+    @param   target - The target value to search for
+    @param   low - The lowest index in the search range
+    @param   high - The highest index in the search range
+    @return  The index of the upper float that bounds the value of interest
+*/
+static uint32_t binarySearch(const float *arr, const float target, int low, int high)
 {
     //check for invalid bounds
     if(low > high)
@@ -135,7 +132,16 @@ uint32_t binarySearch(const float *arr, const float target, int low, int high)
     return 0;
 }
 
-float interpolate(float x, float x1, float x2, float y1, float y2)
+/*!
+    @brief   Interpolate a value y given two endpoints (x1, y1) and (x2, y2) and an input value x
+    @param   x - The input value to interpolate
+    @param   x1 - The x-coordinate of the first endpoint
+    @param   x2 - The x-coordinate of the second endpoint
+    @param   y1 - The y-coordinate of the first endpoint
+    @param   y2 - The y-coordinate of the second endpoint
+    @return  The interpolated value of y at x
+*/
+static float interpolate(float x, float x1, float x2, float y1, float y2)
 {
     //if infinite slope, return y2
     if (equals(x1, x2))
@@ -182,7 +188,12 @@ int32_t brickBinarySearch(Brick_S *arr, int l, int r, float v)
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
 /* ==================================================================== */
-
+/*!
+    @brief   Look up the value of a function in a lookup table, given an input value
+    @param   x - The input value to look up in the table
+    @param   table - A pointer to the lookup table containing the function values
+    @return  The interpolated value of the function corresponding to the input value, or 0 if an error occurs
+*/
 float lookup(float x, const LookupTable_S* table)
 {
     //Clamp input to bounds of lookup table
