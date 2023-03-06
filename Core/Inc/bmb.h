@@ -180,7 +180,7 @@ void balanceCells(Bmb_S* bmb, uint32_t numBmbs);
 
 
 /*!
-  @brief   Updates IMD fault state based on current imd frequency and duty cycle\
+  @brief   Updates IMD fault state based on current imd frequency and duty cycle
 */
 void updateIMDfault();
 

@@ -182,16 +182,21 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
     // Record imd update time
     imdLastUpdate = HAL_GetTick();
 
-		// Read the raw IC value
+		// Read the raw IC value of the timer with rising edge detection
 		uint32_t inputCaptureRaw = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
-
+    // Prevent divide by 0
 		if (inputCaptureRaw != 0)
 		{
 			// Calculate the Duty Cycle
+      // The captured value in channel one contains the timestamp of the falling edge. Since the timer is reset
+      // on a rising edge this contains the pulse width of the high time. This value is then divided by 
+      // inputCaptureRaw - which is the period of the PWM cycle in timer ticks to get duty cycle 
 			imdDutyCycle = (HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1) * 100) / inputCaptureRaw;
 
       // Calculate the Frequency
+      // The timer CLK runs at 2x frequency of PCLK1. This is then divided by the prescalar.
       uint32_t timerFrequency = (HAL_RCC_GetPCLK1Freq() * 2) / htim3.Init.Prescaler;
+      // Frequency scaling
 			imdFrequency =  timerFrequency / inputCaptureRaw;
 		}
 	}
@@ -656,7 +661,6 @@ void StartMainTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    // printf("TIMER3: %lu\n", TIM3->CNT);
     runMain();
     osDelay(1);
   }
@@ -725,13 +729,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-
-  if (htim->Instance == TIM3)
-  {
-    uint8_t state = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_7);
-    printf("Frequency: %d\n", 0);
-    printf("State: %d\n\n", state);
-  }
 
   /* USER CODE END Callback 1 */
 }
