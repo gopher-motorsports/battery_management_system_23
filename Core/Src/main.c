@@ -45,6 +45,8 @@
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
 
+TIM_HandleTypeDef htim3;
+
 UART_HandleTypeDef huart1;
 
 osThreadId defaultTaskHandle;
@@ -59,6 +61,10 @@ osSemaphoreId epdBusySemHandle;
 extern bool balancingEnabled;
 extern uint32_t lastBalancingUpdate;
 
+volatile uint32_t imdFrequency;
+volatile uint32_t imdDutyCycle;
+volatile uint32_t imdLastUpdate;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -67,6 +73,7 @@ static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_TIM3_Init(void);
 void StartDefaultTask(void const * argument);
 void StartMainTask(void const * argument);
 void StartEPaper(void const * argument);
@@ -92,12 +99,12 @@ GETCHAR_PROTOTYPE
   uint8_t ch = 0;
 
   /* Clear the Overrun flag just before receiving the first character */
-  __HAL_UART_CLEAR_OREFLAG(&huart2);
+  __HAL_UART_CLEAR_OREFLAG(&huart1);
 
   /* Wait for reception of a character on the USART RX line and echo this
    * character on console */
-  HAL_UART_Receive(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
-  HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+  HAL_UART_Receive(&huart1, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
   return ch;
 }
 /* USER CODE END PFP */
@@ -164,6 +171,37 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	}
 }
 
+/*!
+  @brief   Interrupt when Timer input capture triggered
+  @param   TIM Handle
+*/
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+	if ((htim == &htim3) && (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2))  // If the interrupt is triggered by channel 2 (Rising edge detection)
+	{
+    // Record imd update time
+    imdLastUpdate = HAL_GetTick();
+
+		// Read the raw IC value of the timer with rising edge detection
+		uint32_t inputCaptureRaw = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
+    // Prevent divide by 0
+		if (inputCaptureRaw != 0)
+		{
+			// Calculate the Duty Cycle
+      // The captured value in channel one contains the timestamp of the falling edge. Since the timer is reset
+      // on a rising edge this contains the pulse width of the high time. This value is then divided by 
+      // inputCaptureRaw - which is the period of the PWM cycle in timer ticks to get duty cycle 
+			imdDutyCycle = (HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1) * 100) / inputCaptureRaw;
+
+      // Calculate the Frequency
+      // The timer CLK runs at 2x frequency of PCLK1. This is then divided by the prescalar.
+      uint32_t timerFrequency = (HAL_RCC_GetPCLK1Freq() * 2) / htim3.Init.Prescaler;
+      // Frequency scaling
+			imdFrequency =  timerFrequency / inputCaptureRaw;
+		}
+	}
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -197,7 +235,12 @@ int main(void)
   MX_SPI1_Init();
   MX_SPI2_Init();
   MX_USART1_UART_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+  
+  // Start IMD timer capture
+  HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2);   // Main channel
+  HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_1);      // Indirect channel
 
   /* USER CODE END 2 */
 
@@ -394,6 +437,80 @@ static void MX_SPI2_Init(void)
   /* USER CODE BEGIN SPI2_Init 2 */
 
   /* USER CODE END SPI2_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
+  TIM_IC_InitTypeDef sConfigIC = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 214-1;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 65535;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_IC_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
+  sSlaveConfig.InputTrigger = TIM_TS_TI2FP2;
+  sSlaveConfig.TriggerPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sSlaveConfig.TriggerPrescaler = TIM_ICPSC_DIV1;
+  sSlaveConfig.TriggerFilter = 0;
+  if (HAL_TIM_SlaveConfigSynchro(&htim3, &sSlaveConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_FALLING;
+  sConfigIC.ICSelection = TIM_ICSELECTION_INDIRECTTI;
+  sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
+  sConfigIC.ICFilter = 0;
+  if (HAL_TIM_IC_ConfigChannel(&htim3, &sConfigIC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
+  if (HAL_TIM_IC_ConfigChannel(&htim3, &sConfigIC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
 
 }
 

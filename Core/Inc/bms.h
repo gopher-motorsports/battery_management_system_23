@@ -23,7 +23,23 @@
 // The maximum cell temperature where charging is allowed
 #define MAX_CELL_TEMP_CHARGING_ALLOWED_C	50.0f
 
+// Timeout of IMD PWM signal in milliseconds
+#define IMD_PWM_TIMOUT_MS 200
 
+/* ==================================================================== */
+/* ========================= ENUMERATED TYPES========================== */
+/* ==================================================================== */
+
+typedef enum
+{
+	IMD_NO_SIGNAL = 0,
+	IMD_NORMAL,
+	IMD_UNDER_VOLT,
+	IMD_SPEED_START_MEASUREMENT_GOOD,
+	IMD_SPEED_START_MEASUREMENT_BAD,
+	IMD_DEVICE_ERROR,
+	IMD_EARTH_FAULT
+} IMD_State_E;
 
 /* ==================================================================== */
 /* ============================== STRUCTS============================== */
@@ -41,6 +57,8 @@ typedef struct
 	float maxBrickTemp;
 	float minBrickTemp;
 	float avgBrickTemp;
+
+	IMD_State_E imdState;
 } Bms_S;
 
 
