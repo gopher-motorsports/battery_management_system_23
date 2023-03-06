@@ -87,7 +87,27 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-
+  // Turn off the heartbeat LED
+  HAL_GPIO_WritePin(MCU_HEARTBEAT_GPIO_Port, MCU_HEARTBEAT_Pin, GPIO_PIN_RESET);
+  uint32_t tim6Period = htim6.Init.Period;
+  // Reset the TIM6 timer
+  TIM6->CNT = 0;
+  for (uint32_t i = 0; i < 20; i++)
+  {
+    // Wait for some delay
+    for (uint32_t j = 0; j < 250; j++)
+    {
+      // Wait for 1ms to elapse
+      while (TIM6->CNT <= tim6Period/2) {}
+      while (TIM6->CNT > tim6Period/2) {}
+    }
+    // Toggle the hardfault led
+    HAL_GPIO_TogglePin(MCU_FAULT_GPIO_Port, MCU_FAULT_Pin);
+  }
+  // Turn led off
+  HAL_GPIO_WritePin(MCU_FAULT_GPIO_Port, MCU_FAULT_Pin, GPIO_PIN_RESET);
+  // Reset the MCU
+  NVIC_SystemReset();
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
@@ -169,8 +189,8 @@ void EXTI9_5_IRQHandler(void)
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
 
   /* USER CODE END EXTI9_5_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(BUSY_Pin);
   HAL_GPIO_EXTI_IRQHandler(INT_Pin);
+  HAL_GPIO_EXTI_IRQHandler(BUSY_Pin);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
 
   /* USER CODE END EXTI9_5_IRQn 1 */
@@ -202,20 +222,6 @@ void SPI2_IRQHandler(void)
   /* USER CODE BEGIN SPI2_IRQn 1 */
 
   /* USER CODE END SPI2_IRQn 1 */
-}
-
-/**
-  * @brief This function handles EXTI line[15:10] interrupts.
-  */
-void EXTI15_10_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI15_10_IRQn 0 */
-
-  /* USER CODE END EXTI15_10_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(B1_Pin);
-  /* USER CODE BEGIN EXTI15_10_IRQn 1 */
-
-  /* USER CODE END EXTI15_10_IRQn 1 */
 }
 
 /**
