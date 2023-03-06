@@ -92,17 +92,26 @@ typedef struct
 	const uint32_t bmbIdx;
 	uint32_t numBricks;
 	// TODO - set initial status value to SNA
+	// The status of all the brick sensors
 	Bmb_Sensor_Status_E brickVStatus[NUM_BRICKS_PER_BMB];
+	// The brick voltages for the bmb
 	float brickV[NUM_BRICKS_PER_BMB];
+
+	// The stack voltage measurement status 
+	Bmb_Sensor_Status_E stackVStatus;
+	// The stack voltage measurement is the total BMB voltage (sum of bricks = stack)
 	float stackV;
 
-	Bmb_Sensor_Status_E blockVStatus;
-	float blockV;
-
+	// The status of all the temp sensors
 	Bmb_Sensor_Status_E tempStatus[NUM_BRICKS_PER_BMB+NUM_BOARD_TEMP_PER_BMB];
+	// The raw voltage measurements from all the temp sensors
 	float tempVoltage[NUM_BRICKS_PER_BMB+NUM_BOARD_TEMP_PER_BMB];
+	// The converted temperatures for all the brick temp sensors
 	float brickTemp[NUM_BRICKS_PER_BMB];
+	// The converted temperature for all board temp sensors
 	float boardTemp[NUM_BOARD_TEMP_PER_BMB];
+
+	float sumBrickV;
 
 	float maxBrickV;
 	float minBrickV;
