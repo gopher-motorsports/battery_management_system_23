@@ -455,6 +455,31 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 }
 
 /*!
+  @brief   Determine if a power-on reset (POR) occurred and if so properly reset the device
+  @param   bmb - The array containing BMB data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
+void detectPowerOnReset(Bmb_S* bmb, uint32_t numBmbs)
+{
+	if (readAll(STATUS, recvBuffer, numBmbs))
+	{
+		for (uint8_t j = 0; j < numBmbs; j++)
+		{
+			// Read ALRTRST in STATUS [15]
+			const bool por = (recvBuffer[3 + j] & ALRTRST) != 0;
+			if (por)
+			{
+				bmb[j].reinitRequired = true;
+			}
+		}
+	}
+	else
+	{
+		Debug("Error during STATUS readAll!\n");
+	}
+}
+
+/*!
   @brief   Determine which bricks need to be balanced
   @param   bmb - The array containing BMB data
   @param   numBmbs - The expected number of BMBs in the daisy chain

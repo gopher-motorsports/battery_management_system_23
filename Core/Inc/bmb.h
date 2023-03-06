@@ -37,6 +37,8 @@
 #define AIN1			0x2D
 #define AIN2			0x2E
 
+#define ALRTRST			0x8000
+
 #define NUM_BRICKS_PER_BMB		12
 #define NUM_BOARD_TEMP_PER_BMB 	4
 
@@ -124,6 +126,9 @@ typedef struct
 	float minBoardTemp;
 	float avgBoardTemp;
 
+	// Indicates that a BMB reinitialization is required
+	bool reinitRequired;
+
 	// Balancing Configuration
 	bool balSwRequested[NUM_BRICKS_PER_BMB];	// Set by BMS to determine which cells need to be balanced
 	bool balSwEnabled[NUM_BRICKS_PER_BMB];		// Set by BMB based on ability to balance in hardware
@@ -178,6 +183,13 @@ void setMux(uint32_t numBmbs, uint8_t muxSetting);
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
 void aggregateBmbData(Bmb_S* bmb,uint32_t numBmbs);
+
+/*!
+  @brief   Determine if a power-on reset (POR) occurred and if so properly reset the device
+  @param   bmb - The array containing BMB data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
+void detectPowerOnReset(Bmb_S* bmb, uint32_t numBmbs);
 
 /*!
   @brief   Handles balancing the cells based on BMS control
