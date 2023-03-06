@@ -2,10 +2,10 @@
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
 
-#include <bms.h>
 #include "main.h"
 #include "cmsis_os.h"
 #include "mainTask.h"
+#include "bms.h"
 #include "bmbInterface.h"
 #include "bmbUtils.h"
 #include "bmb.h"
@@ -57,7 +57,6 @@ void printBoardTemperatures();
 
 void runMain()
 {
-	
 
 	if (!initialized && initRetries > 0)
 	{

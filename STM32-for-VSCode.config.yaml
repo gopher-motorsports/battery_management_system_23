@@ -87,6 +87,9 @@ includeDirectories:
   - Core/Src/**
   - Core/Lib/**
   - Core/Epaper/**
+  - ../gophercan-lib
+
+
 
 
 # Files that should be included in the compilation.
@@ -133,6 +136,9 @@ sourceFiles:
   - Core/Src/**
   - Core/Epaper/**
   - Core/Lib/**
+  - ../gophercan-lib/GopherCAN.c
+  - ../gophercan-lib/GopherCAN_buffers.c
+  - ../gophercan-lib/GopherCAN_network.c
 
 
 # When no makefile is present it will show a warning pop-up.
