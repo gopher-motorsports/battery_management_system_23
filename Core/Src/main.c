@@ -425,7 +425,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_64;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -564,11 +564,18 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+<<<<<<< HEAD
   HAL_GPIO_WritePin(GPIOC, AMS_FAULT_OUT_Pin|MCU_HEARTBEAT_Pin|MCU_FAULT_Pin|MCU_GSENSE_Pin
                           |SHDN_Pin|RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(CS_ASCI_GPIO_Port, CS_ASCI_Pin, GPIO_PIN_RESET);
+=======
+  HAL_GPIO_WritePin(GPIOB, SHDN_Pin|DC_Pin|CS_ASCI_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, RST_Pin|CS_EPD_Pin, GPIO_PIN_RESET);
+>>>>>>> b4872b4 (Working Epaper code)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, CS_EPD_Pin|DC_Pin, GPIO_PIN_RESET);
@@ -601,8 +608,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(INT_GPIO_Port, &GPIO_InitStruct);
 
+<<<<<<< HEAD
   /*Configure GPIO pins : CS_EPD_Pin DC_Pin */
   GPIO_InitStruct.Pin = CS_EPD_Pin|DC_Pin;
+=======
+  /*Configure GPIO pins : SHDN_Pin DC_Pin CS_ASCI_Pin */
+  GPIO_InitStruct.Pin = SHDN_Pin|DC_Pin|CS_ASCI_Pin;
+>>>>>>> b4872b4 (Working Epaper code)
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -614,11 +626,26 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(BUSY_GPIO_Port, &GPIO_InitStruct);
 
+<<<<<<< HEAD
   /*Configure GPIO pin : AMS_FAULT_SDC_Pin */
   GPIO_InitStruct.Pin = AMS_FAULT_SDC_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(AMS_FAULT_SDC_GPIO_Port, &GPIO_InitStruct);
+=======
+  /*Configure GPIO pins : RST_Pin CS_EPD_Pin */
+  GPIO_InitStruct.Pin = RST_Pin|CS_EPD_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : INT_Pin */
+  GPIO_InitStruct.Pin = INT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(INT_GPIO_Port, &GPIO_InitStruct);
+>>>>>>> b4872b4 (Working Epaper code)
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);

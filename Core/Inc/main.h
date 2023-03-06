@@ -57,6 +57,7 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+<<<<<<< HEAD
 #define AMS_FAULT_OUT_Pin GPIO_PIN_13
 #define AMS_FAULT_OUT_GPIO_Port GPIOC
 #define IMD_FAULT_SDC_Pin GPIO_PIN_14
@@ -78,6 +79,17 @@ void Error_Handler(void);
 #define INT_EXTI_IRQn EXTI9_5_IRQn
 #define CS_EPD_Pin GPIO_PIN_12
 #define CS_EPD_GPIO_Port GPIOB
+=======
+#define B1_Pin GPIO_PIN_13
+#define B1_GPIO_Port GPIOC
+#define B1_EXTI_IRQn EXTI15_10_IRQn
+#define USART_TX_Pin GPIO_PIN_2
+#define USART_TX_GPIO_Port GPIOA
+#define USART_RX_Pin GPIO_PIN_3
+#define USART_RX_GPIO_Port GPIOA
+#define SHDN_Pin GPIO_PIN_10
+#define SHDN_GPIO_Port GPIOB
+>>>>>>> b4872b4 (Working Epaper code)
 #define DC_Pin GPIO_PIN_14
 #define DC_GPIO_Port GPIOB
 #define BUSY_Pin GPIO_PIN_6
@@ -87,6 +99,14 @@ void Error_Handler(void);
 #define IMD_PWM_GPIO_Port GPIOC
 #define RST_Pin GPIO_PIN_8
 #define RST_GPIO_Port GPIOC
+<<<<<<< HEAD
+=======
+#define CS_EPD_Pin GPIO_PIN_9
+#define CS_EPD_GPIO_Port GPIOC
+#define INT_Pin GPIO_PIN_8
+#define INT_GPIO_Port GPIOA
+#define INT_EXTI_IRQn EXTI9_5_IRQn
+>>>>>>> b4872b4 (Working Epaper code)
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14

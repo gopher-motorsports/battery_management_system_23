@@ -7,6 +7,7 @@
 /* ==================================================================== */
 
 #include "main.h"
+#include "bms.h"
 
 
 /* ==================================================================== */
@@ -67,8 +68,11 @@ typedef enum
 /* ==================================================================== */
 
 void epdClear();
+// void epdFullRefresh();
+// void epdPopulateData(Bms_S* bms);
+void epdSleep();
+
 void epdDisplay(uint8_t *Image);
 void epdDisplayPartial(uint8_t *Image);
-void epdSleep();
 
 #endif /* INC_EPAPER_H_ */

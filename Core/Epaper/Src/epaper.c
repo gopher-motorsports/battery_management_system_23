@@ -1,21 +1,19 @@
 /* ==================================================================== */
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
-
 #include <string.h>
 #include <stdio.h>
 #include "debug.h"
 #include "epaper.h"
 #include "cmsis_os.h"
-
+#include "epaperUtils.h"
 
 /* ==================================================================== */
 /* ========================= LOCAL VARIABLES ========================== */
 /* ==================================================================== */
 
-uint8_t clearScreenData[UPDATE_BYTES] = {[0 ... UPDATE_BYTES-1] = 0xFF};
-Epaper_Configuration_E epdConfig = UNINITIALIZED;
-uint8_t sendBuffer[8] = { 0 };
+uint8_t blackScreenData[4736] = {[0 ... 4735] = 0xff};
+uint8_t sendBuffer[8];
 uint8_t WF_PARTIAL_LUT[LUT_SIZE] =
 {
 0x0,	0x40,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
@@ -55,14 +53,24 @@ uint8_t WS_20_30_LUT[LUT_SIZE] =
 0x0,	0x0,	0x0,	0x22,	0x17,	0x41,	0x0,	0x32,	0x36
 };	
 
-
 /* ==================================================================== */
 /* ======================= EXTERNAL VARIABLES ========================= */
 /* ==================================================================== */
 
+// extern osSemaphoreId epdSpiSemHandle;
+// extern osSemaphoreId epapBusySemHandle;
+// extern SPI_HandleTypeDef hspi1;
+// extern SPI_HandleTypeDef hspi2;
+// extern UART_HandleTypeDef huart2;
 extern osSemaphoreId epdSpiSemHandle;
 extern osSemaphoreId epdBusySemHandle;
 extern SPI_HandleTypeDef hspi2;
+
+
+
+/* ==================================================================== */
+/* ======================= INTERUPT HANDLERS ========================== */
+/* ==================================================================== */
 
 
 /* ==================================================================== */
@@ -126,15 +134,36 @@ static void waitBusyRelease()
 {
     if(HAL_GPIO_ReadPin(BUSY_GPIO_Port, BUSY_Pin) == 1)
     {
+
         // Debug("e-Paper busy\r\n");
-        xSemaphoreTake(epdBusySemHandle, 0); // Guarantee epdBusySemHandle set to 0 
-        if (!(xSemaphoreTake(epdBusySemHandle, TIMEOUT_BUSY_RELEASE_MS) == pdTRUE))
+        xSemaphoreTake(epdBusySemHandle, 0); // Guarantee epapBusySemHandle set to 0 
+        if (!(xSemaphoreTake(epdBusySemHandle, 5000) == pdTRUE))
             {
-                Debug("Interrupt failed to occur EPAP BUSY\n");
+                Debug("AAAInterrupt failed to occur during SPI transmit\n");
+				// uint8_t buff[10] = {[0 ... 9] = 0x41};
+
+				// HAL_UART_Transmit(&huart2, buff, 5, HAL_MAX_DELAY);
+				
             }
         Debug("e-Paper busy release\r\n");
     }
 }
+
+// static void waitBusyRelease()
+// {
+//     if(HAL_GPIO_ReadPin(BUSY_GPIO_Port, BUSY_Pin) == 1)
+//     {
+//         // Debug("e-Paper busy\r\n");
+//         xSemaphoreTake(epdBusySemHandle, 0); // Guarantee epdBusySemHandle set to 0 
+//         if (!(xSemaphoreTake(epdBusySemHandle, TIMEOUT_BUSY_RELEASE_MS) == pdTRUE))
+//             {
+//                 Debug("Interrupt failed to occur EPAP BUSY\n");
+//             }
+//         Debug("e-Paper busy release\r\n");
+//     }
+// }
+
+
 
 /*!
   @brief   Send a command to the epaper
@@ -150,9 +179,9 @@ static void sendCommand(uint8_t command)
 	// Write command to spi 
     HAL_SPI_Transmit_IT(&hspi2, (uint8_t *)&command, 1);
 	// Wait for spi interupt signaling data transfer complete - timeout 10ms
-    if (!(xSemaphoreTake(epdSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) == pdTRUE))
+    if (!(xSemaphoreTake(epdSpiSemHandle, 10) == pdTRUE))
 	{
-		Debug("Interrupt failed to occur during EPAP SPI transmit\n");
+		Debug("Interrupt failed to occur during SPI transmit\n");
 	}
 
 	// Close spi communication
@@ -175,9 +204,9 @@ static void sendMessage(uint8_t command, uint8_t* data, uint16_t numBytes)
 		// Write command to spi 
 		HAL_SPI_Transmit_IT(&hspi2, (uint8_t *)&command, 1);
 		// Wait for spi interupt signaling data transfer complete - timeout 10ms
-		if (!(xSemaphoreTake(epdSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) == pdTRUE))
+		if (!(xSemaphoreTake(epdSpiSemHandle, 10) == pdTRUE))
 		{
-			Debug("Interrupt failed to occur during EPAP SPI transmit\n");
+			Debug("Interrupt failed to occur during SPI transmit\n");
 		}
 
 		// Set Epaper to data mode
@@ -188,7 +217,7 @@ static void sendMessage(uint8_t command, uint8_t* data, uint16_t numBytes)
 		// Wait for spi interupt signaling data transfer complete - timout 50ms
 		if (!(xSemaphoreTake(epdSpiSemHandle, 1000) == pdTRUE))
 		{
-			Debug("Interrupt failed to occur during EPAP SPI transmit\n");
+			Debug("Interrupt failed to occur during SPI transmit\n");
 		}
 
 		// Close spi communication
@@ -228,8 +257,28 @@ static void setLookupTable(uint8_t *lut)
 /*!
   @brief   Turn on Epaper display
 */
-static void updateDisplay()
+static void turnOnDisplay()
 {
+	// Set display update sequence
+	sendBuffer[0] = 0xc7;
+	sendMessage(CMD_DISPLAY_UPDATE_CONTROL_2, sendBuffer, 1);
+
+	// Activate display update sequence
+	sendCommand(CMD_MASTER_ACTIVATION);
+
+	// Wait for busy_release interupt
+	waitBusyRelease();
+}
+
+/*!
+  @brief   	Turn on Epaper display Partial
+*/
+static void turnOnDisplayPartial()
+{
+	// Set display update sequence
+	sendBuffer[0] = 0x0F;
+	sendMessage(CMD_DISPLAY_UPDATE_CONTROL_2, sendBuffer, 1);
+
 	// Activate display update sequence
 	sendCommand(CMD_MASTER_ACTIVATION);
 
@@ -277,9 +326,9 @@ static void setCursor(uint16_t Xstart, uint16_t Ystart)
 }
 
 /*!
-  @brief	Set epaper display configuration to full refresh settings
+  @brief	Initialize epaper display
 */
-static void setFullRefreshSettings()
+static void setDefaultSettings()
 {
 	// Set initial pin configuration
 	setCommandMode();
@@ -320,23 +369,59 @@ static void setFullRefreshSettings()
 
 	// Wait for busy_release interupt
 	waitBusyRelease();
+}
+
+/* ==================================================================== */
+/* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
+/* ==================================================================== */
+
+/*!
+  @brief	Clear epaper display
+*/
+void epdClear()
+{
+	// Reset initial settings
+	setDefaultSettings();
+	
+	// Set initial lookup table register 
+	setLookupTable(WS_20_30_LUT);
+
+	// Write white image to Black and White RAM
+	sendMessage(CMD_WRITE_RAM_BLACK_WHITE, blackScreenData, (EPD_WIDTH * EPD_HEIGHT) / 8);
+	
+	// Activate display
+	turnOnDisplay();
+}
+
+/*!
+  @brief	Sends the image buffer in RAM to e-Paper and enables display
+  @param	Image	Image to display
+*/
+void epdDisplay(uint8_t *Image)
+{
+	// Reset initial settings
+	setDefaultSettings();
 
 	// Set initial lookup table register 
 	setLookupTable(WS_20_30_LUT);
 
-    // Set display update sequence
-	sendBuffer[0] = 0xc7;
-	sendMessage(CMD_DISPLAY_UPDATE_CONTROL_2, sendBuffer, 1);
+	// Write image to Black and White RAM
+	sendMessage(CMD_WRITE_RAM_BLACK_WHITE, Image, (EPD_WIDTH * EPD_HEIGHT) / 8);
 
-	epdConfig = FULL_REFRESH;
+	// Write image to Red RAM
+	sendMessage(CMD_WRITE_RAM_RED, Image, (EPD_WIDTH * EPD_HEIGHT) / 8);
+
+	// Activate display
+	turnOnDisplay();
 }
 
 /*!
-  @brief	Set epaper display configuration to partial refresh settings
+  @brief	Sends the partial image buffer in RAM to e-Paper and displays 
+  @param	Image	Image to display
 */
-static void setPartialRefreshSettings()
+void epdDisplayPartial(uint8_t *Image)
 {
-	// Reset epaper communication
+    // // Reset epaper communication
 	reset();
 	enable();
 
@@ -374,76 +459,11 @@ static void setPartialRefreshSettings()
 	setWindows(0, 0, EPD_WIDTH-1, EPD_HEIGHT-1);
 	setCursor(0, 0);
 
-	// Set display update sequence
-	sendBuffer[0] = 0x0F;
-	sendMessage(CMD_DISPLAY_UPDATE_CONTROL_2, sendBuffer, 1);
-
-	epdConfig = PARTIAL_REFRESH;
-}
-
-
-/* ==================================================================== */
-/* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
-/* ==================================================================== */
-
-/*!
-  @brief	Clear epaper display
-*/
-void epdClear()
-{
-	if(epdConfig != FULL_REFRESH)
-	{
-		// Reset initial settings
-		setFullRefreshSettings();
-	}
-
-	// Create white image
-	// uint8_t clearScreenData[UPDATE_BYTES];
-	// memset(clearScreenData, 0xFF, UPDATE_BYTES * sizeof(uint8_t));
-	
-	// Write white image to Black and White RAM
-	sendMessage(CMD_WRITE_RAM_BLACK_WHITE, clearScreenData, UPDATE_BYTES);
-	
-	// Activate display
-	updateDisplay();
-}
-
-/*!
-  @brief	Sends the image buffer in RAM to e-Paper and enables display
-  @param	Image	Image to display
-*/
-void epdDisplay(uint8_t *Image)
-{
-	if(epdConfig != FULL_REFRESH)
-	{
-		// Reset initial settings
-		setFullRefreshSettings();
-	}
-
-	// Write image to Black and White RAM
-	sendMessage(CMD_WRITE_RAM_BLACK_WHITE, Image, UPDATE_BYTES);
-
-	// Write image to Red RAM
-	sendMessage(CMD_WRITE_RAM_RED, Image, UPDATE_BYTES);
-
-	// Activate display
-	updateDisplay();
-}
-
-/*!
-  @brief	Sends the partial image buffer in RAM to e-Paper and displays 
-  @param	Image	Image to display
-*/
-void epdDisplayPartial(uint8_t *Image)
-{
-	// Configure epaper for partial refresh
-	setPartialRefreshSettings();
-
 	// Write Black and White image to RAM
-	sendMessage(CMD_WRITE_RAM_BLACK_WHITE, Image, UPDATE_BYTES);
+	sendMessage(CMD_WRITE_RAM_BLACK_WHITE, Image, (EPD_WIDTH * EPD_HEIGHT) / 8);
 
 	// Turn on epaper display
-	updateDisplay();
+	turnOnDisplayPartial();
 }
 
 /*!
