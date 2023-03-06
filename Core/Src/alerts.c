@@ -6,11 +6,56 @@
 #include "packData.h"
 
 
+/* ==================================================================== */
+/* =================== LOCAL FUNCTION DEFINITIONS ===================== */
+/* ==================================================================== */
+
+static bool overvoltagePresent(Bms_S* bms)
+{
+    return (bms->maxBrickV > MAX_BRICK_VOLTAGE);
+}
+
+static bool undervoltagePresent(Bms_S* bms)
+{
+    return (bms->minBrickV < MIN_BRICK_VOLTAGE);
+}
+
+static bool cellImbalancePresent(Bms_S* bms)
+{
+    float maxCellImbalanceV = bms->maxBrickV - bms->minBrickV;
+
+    return (maxCellImbalanceV > MAX_CELL_IMBALANCE_V);
+}
+
+static bool overtemperatureWarningPresent(Bms_S* bms)
+{
+    return (bms->maxBrickTemp > MAX_BRICK_TEMP_WARNING_C);
+}
+
+static bool overtemperatureFaultPresent(Bms_S* bms)
+{
+    return (bms->maxBrickTemp > MAX_BRICK_TEMP_FAULT_C);
+}
+
+/* ==================================================================== */
+/* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
+/* ==================================================================== */
+
+/*!
+  @brief   Get the status of any given alert
+  @param   alert - The alert data structure whose status to read
+  @return  The current status of the alert
+*/
 AlertStatus_E alertStatus(Alert_S* alert)
 {
     return alert->alertStatus;
 }
 
+/*!
+  @brief   Run the alert monitor to update the status of the alert
+  @param   bms - The BMS data structure
+  @param   alert - The Alert data structure
+*/
 void runAlertMonitor(Bms_S* bms, Alert_S* alert)
 {
     if (alert->alertStatus == ALERT_CLEARED)
@@ -62,32 +107,10 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
     }
 }
 
-bool overvoltagePresent(Bms_S* bms)
-{
-    return (bms->maxBrickV > MAX_BRICK_VOLTAGE);
-}
 
-bool undervoltagePresent(Bms_S* bms)
-{
-    return (bms->minBrickV < MIN_BRICK_VOLTAGE);
-}
-
-bool cellImbalancePresent(Bms_S* bms)
-{
-    float maxCellImbalanceV = bms->maxBrickV - bms->minBrickV;
-
-    return (maxCellImbalanceV > MAX_CELL_IMBALANCE_V);
-}
-
-bool overtemperatureWarningPresent(Bms_S* bms)
-{
-    return (bms->maxBrickTemp > MAX_BRICK_TEMP_WARNING_C);
-}
-
-bool overtemperatureFaultPresent(Bms_S* bms)
-{
-    return (bms->maxBrickTemp > MAX_BRICK_TEMP_FAULT_C);
-}
+/* ==================================================================== */
+/* ========================= GLOBAL VARIABLES ========================= */
+/* ==================================================================== */
 
 Alert_S overvoltageAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERVOLTAGE_ALERT_SET_TIME_MS}, 
                             .setTime_MS = OVERVOLTAGE_ALERT_SET_TIME_MS, .clearTime_MS = OVERVOLTAGE_ALERT_CLEAR_TIME_MS, 
