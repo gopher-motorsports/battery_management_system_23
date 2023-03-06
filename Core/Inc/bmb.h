@@ -1,7 +1,6 @@
 #ifndef INC_BMB_H_
 #define INC_BMB_H_
 
-
 /* ==================================================================== */
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
@@ -186,12 +185,6 @@ void aggregateBmbData(Bmb_S* bmb,uint32_t numBmbs);
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
 void balanceCells(Bmb_S* bmb, uint32_t numBmbs);
-
-
-/*!
-  @brief   Updates IMD fault state based on current imd frequency and duty cycle
-*/
-void updateIMDfault();
 
 
 #endif /* INC_BMB_H_ */

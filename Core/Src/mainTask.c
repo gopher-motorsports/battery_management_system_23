@@ -84,7 +84,7 @@ void runMain()
 
 		aggregatePackData(numBmbs);
 
-		updateIMDfault();
+		updateImdStatus();
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{
