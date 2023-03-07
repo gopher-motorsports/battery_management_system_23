@@ -12,6 +12,7 @@
 #include "epaper.h"
 #include "epaperUtils.h"
 #include <stdlib.h>
+#include "GopherCAN_network.h"
 
 
 /* ==================================================================== */
@@ -57,6 +58,10 @@ void printBoardTemperatures();
 
 void runMain()
 {
+	float value = bmsTractiveSystemCurrentLow_A.data;
+	float value2 = bmsTractiveSystemCurrentHigh_A.data;
+	printf("CSNS: %f\n", value);
+	printf("CSNS: %f\n", value*2);
 
 	if (!initialized && initRetries > 0)
 	{
