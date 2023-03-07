@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include "main.h"
 #include "bmb.h"
 #include "imd.h"
 
@@ -29,6 +30,12 @@
 /* ========================= ENUMERATED TYPES========================== */
 /* ==================================================================== */
 
+typedef enum
+{
+	BMS_NOMINAL = 0,
+	BMS_GSNS_INIT_FAILURE,
+	BMS_BMB_INIT_FAILURE
+} Bms_Hardware_State_E;
 
 /* ==================================================================== */
 /* ============================== STRUCTS============================== */
@@ -48,6 +55,8 @@ typedef struct
 	float avgBrickTemp;
 
 	IMD_State_E imdState;
+
+	Bms_Hardware_State_E bmsHwState;
 } Bms_S;
 
 
@@ -60,13 +69,14 @@ typedef struct
 */
 void initBatteryPack(uint32_t numBmbs);
 
+void initBmsGopherCan(CAN_HandleTypeDef* hcan);
+
 /*!
   @brief   Handles balancing the battery pack
   @param   numBmbs - The expected number of BMBs in the daisy chain
   @param   balanceRequested - True if we want to balance, false otherwise
 */
 void balancePack(uint32_t numBmbs, bool balanceRequested);
-
 
 /*!
   @brief   Update BMS data statistics. Min/Max/Avg

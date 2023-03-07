@@ -2,9 +2,9 @@
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
 #include "cmsis_os.h"
-#include "main.h"
 #include "bms.h"
 #include "bmb.h"
+#include "GopherCAN.h"
 
 
 /* ==================================================================== */
@@ -28,6 +28,15 @@ static void disableBmbBalancing(Bmb_S* bmb)
 	for (int32_t i = 0; i < NUM_BRICKS_PER_BMB; i++)
 	{
 		bmb->balSwRequested[i] = false;
+	}
+}
+
+void initBmsGopherCan(CAN_HandleTypeDef* hcan)
+{
+	// initialize CAN
+	if (init_can(GCAN0, hcan, BMS_ID, BXTYPE_MASTER))
+	{
+		gBms.bmsHwState = BMS_GSNS_INIT_FAILURE;
 	}
 }
 

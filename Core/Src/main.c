@@ -23,7 +23,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "mainTask.h"
+#include "idleTask.h"
 #include "epaperTask.h"
+#include "bms.h"
 
 /* USER CODE END Includes */
 
@@ -61,6 +63,7 @@ osSemaphoreId asciSemHandle;
 osSemaphoreId epdSpiSemHandle;
 osSemaphoreId epdBusySemHandle;
 /* USER CODE BEGIN PV */
+// TODO: Get rid of these 2
 extern bool balancingEnabled;
 extern uint32_t lastBalancingUpdate;
 
@@ -244,7 +247,8 @@ int main(void)
   MX_CAN1_Init();
   MX_CAN2_Init();
   /* USER CODE BEGIN 2 */
-  
+  initBmsGopherCan(&hcan2);
+
   // Start IMD timer capture
   HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2);   // Main channel
   HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_1);      // Indirect channel
@@ -777,18 +781,12 @@ void StartEPaper(void const * argument)
 void StartIdle(void const * argument)
 {
   /* USER CODE BEGIN StartIdle */
-  static const uint32_t HEARTBEAT_UPDATE_RATE = 250;
   /* Infinite loop */
   for(;;)
   {
-    // Update Heartbeat LED
-    static uint32_t lastHeartbeat = 0;
-    if (HAL_GetTick() - lastHeartbeat >= HEARTBEAT_UPDATE_RATE)
-    {
-      HAL_GPIO_TogglePin(MCU_HEARTBEAT_GPIO_Port, MCU_HEARTBEAT_Pin);
-      lastHeartbeat = HAL_GetTick();
-    }
-    osDelay(1);
+    // Update heartbeat and fault leds
+    runIdle();
+    osDelay(10);
   }
   /* USER CODE END StartIdle */
 }
