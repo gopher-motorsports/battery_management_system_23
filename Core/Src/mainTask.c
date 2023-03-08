@@ -90,6 +90,8 @@ void runMain()
 
 		updateImdStatus();
 
+		updateSdcStatus();
+
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{
 			if (leakyBucketFilled(&asciCommsLeakyBucket))

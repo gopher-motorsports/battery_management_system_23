@@ -56,6 +56,10 @@ typedef struct
 
 	IMD_State_E imdState;
 
+	bool bspdFault;
+	bool imdFault;
+	bool amsFault;
+
 	Bms_Hardware_State_E bmsHwState;
 } Bms_S;
 
@@ -91,5 +95,10 @@ void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage);
 */
 void updateImdStatus();
 
+
+/*!
+  @brief   Update the SDC status
+*/
+void updateSdcStatus();
 
 #endif /* INC_BMS_H_ */

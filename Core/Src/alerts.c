@@ -37,6 +37,22 @@ static bool overtemperatureFaultPresent(Bms_S* bms)
     return (bms->maxBrickTemp > MAX_BRICK_TEMP_FAULT_C);
 }
 
+static bool amsSdcFaultPresent(Bms_S* bms)
+{
+    return bms->amsFault;
+}
+
+static bool bspdSdcFaultPresent(Bms_S* bms)
+{
+    return bms->bspdFault;
+}
+
+static bool imdSdcFaultPresent(Bms_S* bms)
+{
+    return bms->imdFault;
+}
+
+
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
 /* ==================================================================== */
@@ -131,3 +147,15 @@ Alert_S overtemperatureWarningAlert = {.alertStatus = ALERT_CLEARED, .alertTimer
 Alert_S overtemperatureFaultAlert   = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS}, 
                                        .setTime_MS = OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = OVERTEMPERATURE_FAULT_ALERT_CLEAR_TIME_MS, 
                                        .alertConditionPresent = overtemperatureFaultPresent};
+
+Alert_S amsSdcFaultAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
+                            .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
+                            .alertConditionPresent = amsSdcFaultPresent};
+
+Alert_S bspdSdcFaultAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
+                             .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
+                             .alertConditionPresent = bspdSdcFaultPresent};
+
+Alert_S imdSdcFaultAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
+                            .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
+                            .alertConditionPresent = imdSdcFaultPresent};

@@ -27,6 +27,9 @@
 #define OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS     2000
 #define OVERTEMPERATURE_FAULT_ALERT_CLEAR_TIME_MS   2000
 
+#define SDC_FAULT_ALERT_SET_TIME_MS   0
+#define SDC_FAULT_ALERT_CLEAR_TIME_MS 0
+
 
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
@@ -63,6 +66,9 @@ extern Alert_S undervoltageAlert;
 extern Alert_S cellImbalanceAlert;
 extern Alert_S overtemperatureWarningAlert;
 extern Alert_S overtemperatureFaultAlert;
+extern Alert_S amsSdcFaultAlert;
+extern Alert_S bspdSdcFaultAlert;
+extern Alert_S imdSdcFaultAlert;
 
 
 /* ==================================================================== */

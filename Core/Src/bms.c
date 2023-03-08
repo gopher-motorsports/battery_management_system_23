@@ -204,3 +204,15 @@ void updateImdStatus()
 	pBms->imdState = getImdStatus();
 }
 
+
+/*!
+  @brief   Update the SDC status
+*/
+void updateSdcStatus()
+{
+	Bms_S* pBms = &gBms;
+
+	pBms->amsFault  = HAL_GPIO_ReadPin(AMS_FAULT_SDC_GPIO_Port, AMS_FAULT_SDC_Pin);
+	pBms->bspdFault = HAL_GPIO_ReadPin(BSPD_FAULT_SDC_GPIO_Port, BSPD_FAULT_SDC_Pin);
+	pBms->imdFault  = HAL_GPIO_ReadPin(IMD_FAULT_SDC_GPIO_Port, IMD_FAULT_SDC_Pin);
+}
