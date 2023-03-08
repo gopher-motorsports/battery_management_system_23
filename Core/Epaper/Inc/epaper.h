@@ -7,6 +7,7 @@
 /* ==================================================================== */
 
 #include "main.h"
+#include "bms.h"
 
 
 /* ==================================================================== */
@@ -25,7 +26,7 @@
 #define LUT_SIZE                        159
 
 // Update size, given by resolution in bytes
-#define UPDATE_BYTES                    (EPD_WIDTH * EPD_HEIGHT) / 8
+#define IMAGE_SIZE                    (EPD_WIDTH * EPD_HEIGHT) / 8
 
 // Command Registers
 #define CMD_DRIVER_OUTPUT_CONTROL           0x01
@@ -49,26 +50,34 @@
 #define CMD_SET_RAM_X_COUNTER               0x4E
 #define CMD_SET_RAM_Y_COUNTER               0x4F
 
-
-/* ==================================================================== */
-/* ========================= ENUMERATED TYPES ========================= */
-/* ==================================================================== */
-
-typedef enum
-{
-    UNINITIALIZED = 0,
-    FULL_REFRESH,
-    PARTIAL_REFRESH
-} Epaper_Configuration_E;
-
-
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
 /* ==================================================================== */
 
+/*!
+  @brief	Creates the default BMS display template in memory
+*/
+void epdInit();
+
+/*!
+  @brief	Clear epaper display
+*/
 void epdClear();
-void epdDisplay(uint8_t *Image);
-void epdDisplayPartial(uint8_t *Image);
+
+/*!
+  @brief	Performs a full update of the epaper with the current BMS display image stored in memory
+*/
+void epdFullRefresh();
+
+/*!
+  @brief	Updates only the data in the BMS display image and performs a partial update
+  @param bms The BMS struct containing current BMS data 
+*/
+void epdPopulateData(Epaper_Data_S* epapData);
+
+/*!
+  @brief	Enable epaper sleep mode
+*/
 void epdSleep();
 
 #endif /* INC_EPAPER_H_ */

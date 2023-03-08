@@ -54,6 +54,10 @@ typedef struct
 	float minBrickTemp;
 	float avgBrickTemp;
 
+	float maxBoardTemp;
+	float minBoardTemp;
+	float avgBoardTemp;
+
 	IMD_State_E imdState;
 
 	bool bspdFault;
@@ -62,6 +66,21 @@ typedef struct
 
 	Bms_Hardware_State_E bmsHwState;
 } Bms_S;
+
+typedef struct
+{
+	float maxBrickV;
+	float minBrickV;
+	float avgBrickV;
+
+	float maxBrickTemp;
+	float minBrickTemp;
+	float avgBrickTemp;
+
+	float maxBoardTemp;
+	float minBoardTemp;
+	float avgBoardTemp;
+} Epaper_Data_S;
 
 
 /* ==================================================================== */
@@ -100,5 +119,10 @@ void updateImdStatus();
   @brief   Update the SDC status
 */
 void updateSdcStatus();
+
+/*!
+  @brief   Update the epaper display with current data
+*/
+void updateEpaper();
 
 #endif /* INC_BMS_H_ */

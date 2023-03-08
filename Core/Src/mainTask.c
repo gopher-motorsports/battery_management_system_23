@@ -58,10 +58,12 @@ void printBoardTemperatures();
 
 void runMain()
 {
-	float value = bmsTractiveSystemCurrentLow_A.data;
-	float value2 = bmsTractiveSystemCurrentHigh_A.data;
-	printf("CSNS: %f\n", value);
-	printf("CSNS: %f\n", value*2);
+	// float value = bmsTractiveSystemCurrentLow_A.data;
+	// float value2 = bmsTractiveSystemCurrentHigh_A.data;
+	// printf("CSNS: %f\n", value);
+	// printf("CSNS: %f\n", value*2);
+
+	gBms.bmsHwState = BMS_BMB_INIT_FAILURE;
 
 	if (!initialized && initRetries > 0)
 	{
@@ -84,6 +86,7 @@ void runMain()
 	}
 	else if(initialized)
 	{
+
 		updateBmbData(gBms.bmb, numBmbs);
 
 		aggregatePackData(numBmbs);
@@ -91,6 +94,8 @@ void runMain()
 		updateImdStatus();
 
 		updateSdcStatus();
+
+		updateEpaper();
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{

@@ -76,6 +76,8 @@ void Error_Handler(void);
 #define INT_Pin GPIO_PIN_5
 #define INT_GPIO_Port GPIOC
 #define INT_EXTI_IRQn EXTI9_5_IRQn
+#define RST_Pin GPIO_PIN_10
+#define RST_GPIO_Port GPIOB
 #define CS_EPD_Pin GPIO_PIN_12
 #define CS_EPD_GPIO_Port GPIOB
 #define DC_Pin GPIO_PIN_14
@@ -85,8 +87,6 @@ void Error_Handler(void);
 #define BUSY_EXTI_IRQn EXTI9_5_IRQn
 #define IMD_PWM_Pin GPIO_PIN_7
 #define IMD_PWM_GPIO_Port GPIOC
-#define RST_Pin GPIO_PIN_8
-#define RST_GPIO_Port GPIOC
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
