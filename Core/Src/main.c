@@ -23,8 +23,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "mainTask.h"
-#include "idleTask.h"
 #include "epaperTask.h"
+#include "idleTask.h"
 #include "bms.h"
 #include "gopher_sense.h"
 
@@ -63,6 +63,7 @@ osThreadId defaultTaskHandle;
 osThreadId mainTaskHandle;
 osThreadId ePaperHandle;
 osThreadId idleHandle;
+osMessageQId epaperQueueHandle;
 osSemaphoreId asciSpiSemHandle;
 osSemaphoreId asciSemHandle;
 osSemaphoreId epdSpiSemHandle;
@@ -258,9 +259,9 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
-  // initBmsGopherCan(&hcan2);
+  initBmsGopherCan(&hcan2);
   gsense_init(&hcan2, &hadc1, 0, 0, &htim10, MCU_GSENSE_GPIO_Port, MCU_GSENSE_Pin);
-
+  
   // Start IMD timer capture
   HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2);   // Main channel
   HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_1);      // Indirect channel
@@ -299,6 +300,11 @@ int main(void)
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
+
+  /* Create the queue(s) */
+  /* definition and creation of epaperQueue */
+  osMessageQDef(epaperQueue, 1, Epaper_Data_S);
+  epaperQueueHandle = osMessageCreate(osMessageQ(epaperQueue), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -770,18 +776,18 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, AMS_FAULT_OUT_Pin|MCU_HEARTBEAT_Pin|MCU_FAULT_Pin|MCU_GSENSE_Pin
-                          |SHDN_Pin|RST_Pin, GPIO_PIN_RESET);
+                          |SHDN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(CS_ASCI_GPIO_Port, CS_ASCI_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, CS_EPD_Pin|DC_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, RST_Pin|CS_EPD_Pin|DC_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : AMS_FAULT_OUT_Pin MCU_HEARTBEAT_Pin MCU_FAULT_Pin MCU_GSENSE_Pin
-                           SHDN_Pin RST_Pin */
+                           SHDN_Pin */
   GPIO_InitStruct.Pin = AMS_FAULT_OUT_Pin|MCU_HEARTBEAT_Pin|MCU_FAULT_Pin|MCU_GSENSE_Pin
-                          |SHDN_Pin|RST_Pin;
+                          |SHDN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -806,8 +812,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(INT_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : CS_EPD_Pin DC_Pin */
-  GPIO_InitStruct.Pin = CS_EPD_Pin|DC_Pin;
+  /*Configure GPIO pins : RST_Pin CS_EPD_Pin DC_Pin */
+  GPIO_InitStruct.Pin = RST_Pin|CS_EPD_Pin|DC_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -882,10 +888,11 @@ void StartMainTask(void const * argument)
 void StartEPaper(void const * argument)
 {
   /* USER CODE BEGIN StartEPaper */
+  initEpaperTask();
   /* Infinite loop */
   for(;;)
   {
-    runEpaper();
+    runEpaperTask();
     osDelay(1);
   }
   /* USER CODE END StartEPaper */
@@ -906,7 +913,7 @@ void StartIdle(void const * argument)
   {
     // Update heartbeat and fault leds
     runIdle();
-    osDelay(10);
+    osDelay(1);
   }
   /* USER CODE END StartIdle */
 }

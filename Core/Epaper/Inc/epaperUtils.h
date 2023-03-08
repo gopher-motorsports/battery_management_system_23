@@ -1,11 +1,99 @@
 #ifndef __EPAPER_UTILS_H
 #define __EPAPER_UTILS_H
 
-#include "fonts.h"
+/* ==================================================================== */
+/* ============================= INCLUDES ============================= */
+/* ==================================================================== */
 
-/**
- * Image attributes
-**/
+#include "fonts.h"
+#include <stdint.h>
+
+/* ==================================================================== */
+/* ============================= DEFINES ============================== */
+/* ==================================================================== */
+
+#define ROTATE_0            0
+#define ROTATE_90           90
+#define ROTATE_180          180
+#define ROTATE_270          270
+
+#define DATA_START_X        50
+#define DATA_START_Y        63
+#define DATA_SEPERATION_X   63
+#define DATA_SEPERATION_Y   21
+
+#define WHITE               0xFF
+#define BLACK               0x00
+
+#define IMAGE_BACKGROUND    WHITE
+#define FONT_FOREGROUND     BLACK
+#define FONT_BACKGROUND     WHITE
+
+/* ==================================================================== */
+/* ========================= ENUMERATED TYPES========================== */
+/* ==================================================================== */
+
+typedef enum {
+    MIRROR_NONE  = 0x00,
+    MIRROR_HORIZONTAL = 0x01,
+    MIRROR_VERTICAL = 0x02,
+    MIRROR_ORIGIN = 0x03,
+} MIRROR_IMAGE;
+#define MIRROR_IMAGE_DFT MIRROR_NONE
+
+typedef enum {
+    DOT_PIXEL_1X1  = 1,		// 1 x 1
+    DOT_PIXEL_2X2  , 		// 2 X 2
+    DOT_PIXEL_3X3  ,		// 3 X 3
+    DOT_PIXEL_4X4  ,		// 4 X 4
+    DOT_PIXEL_5X5  , 		// 5 X 5
+    DOT_PIXEL_6X6  , 		// 6 X 6
+    DOT_PIXEL_7X7  , 		// 7 X 7
+    DOT_PIXEL_8X8  , 		// 8 X 8
+} DOT_PIXEL;
+#define DOT_PIXEL_DFT  DOT_PIXEL_1X1  //Default dot pilex
+
+typedef enum {
+    DOT_FILL_AROUND  = 1,		// dot pixel 1 x 1
+    DOT_FILL_RIGHTUP  , 		// dot pixel 2 X 2
+} DOT_STYLE;
+#define DOT_STYLE_DFT  DOT_FILL_AROUND  //Default dot pilex
+
+typedef enum {
+    LINE_STYLE_SOLID = 0,
+    LINE_STYLE_DOTTED,
+} LINE_STYLE;
+
+typedef enum {
+    DRAW_FILL_EMPTY = 0,
+    DRAW_FILL_FULL,
+} DRAW_FILL;
+
+typedef enum {
+    DATA_VOLTAGE = 0,
+    DATA_PACK_TEMP,
+    DATA_BOARD_TEMP
+}   DATA_TABLE_COL;
+
+typedef enum {
+    DATA_AVG = 0,
+    DATA_MAX,
+    DATA_MIN
+}   DATA_TABLE_ROW;
+
+/* ==================================================================== */
+/* ============================== STRUCTS============================== */
+/* ==================================================================== */
+
+typedef struct {
+    uint16_t Year;  //0000
+    uint8_t  Month; //1 - 12
+    uint8_t  Day;   //1 - 30
+    uint8_t  Hour;  //0 - 23
+    uint8_t  Min;   //0 - 59
+    uint8_t  Sec;   //0 - 59
+} PAINT_TIME;
+
 typedef struct {
     uint8_t *Image;
     uint16_t Width;
@@ -19,130 +107,40 @@ typedef struct {
     uint16_t HeightByte;
     uint16_t Scale;
 } PAINT;
-extern PAINT Paint;
 
-/**
- * Display rotate
-**/
-#define ROTATE_0            0
-#define ROTATE_90           90
-#define ROTATE_180          180
-#define ROTATE_270          270
+/* ==================================================================== */
+/* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
+/* ==================================================================== */
 
-/**
- * Display Flip
-**/
-typedef enum {
-    MIRROR_NONE  = 0x00,
-    MIRROR_HORIZONTAL = 0x01,
-    MIRROR_VERTICAL = 0x02,
-    MIRROR_ORIGIN = 0x03,
-} MIRROR_IMAGE;
-#define MIRROR_IMAGE_DFT MIRROR_NONE
+/*!
+  @brief    Initialize BMS template image
+  @param    emptyImage Empty image array to modify with BMS data 
+*/
+void Paint_InitBmsImage(uint8_t* emptyImage);
 
-/**
- * image color
-**/
-#define WHITE          0xFF
-#define BLACK          0x00
+/*!
+  @brief    Update BMS Image with current voltage, pack temp, and board temp data
+  @param    data Data to display on table
+  @param    col Column of data table to populate
+  @param    row Row of data table to populate 
+*/
+void Paint_DrawTableData(float data, DATA_TABLE_COL col, DATA_TABLE_ROW row);
 
-#define IMAGE_BACKGROUND    WHITE
-#define FONT_FOREGROUND     BLACK
-#define FONT_BACKGROUND     WHITE
+/*!
+  @brief    Update BMS Image with current SOC
+  @param    SOC BMS State of Charge as a percentage 
+*/
+void Paint_DrawSOC(uint32_t SOC);
 
-// #define TRUE 1
-// #define FALSE 0
+/*!
+  @brief   Update BMS Image with state data
+*/
+void Paint_DrawState();
 
-//4 Gray level
-#define  GRAY1 0x03 //Blackest
-#define  GRAY2 0x02
-#define  GRAY3 0x01 //gray
-#define  GRAY4 0x00 //white
-
-/**
- * The size of the point
-**/
-typedef enum {
-    DOT_PIXEL_1X1  = 1,		// 1 x 1
-    DOT_PIXEL_2X2  , 		// 2 X 2
-    DOT_PIXEL_3X3  ,		// 3 X 3
-    DOT_PIXEL_4X4  ,		// 4 X 4
-    DOT_PIXEL_5X5  , 		// 5 X 5
-    DOT_PIXEL_6X6  , 		// 6 X 6
-    DOT_PIXEL_7X7  , 		// 7 X 7
-    DOT_PIXEL_8X8  , 		// 8 X 8
-} DOT_PIXEL;
-#define DOT_PIXEL_DFT  DOT_PIXEL_1X1  //Default dot pilex
-
-/**
- * Point size fill style
-**/
-typedef enum {
-    DOT_FILL_AROUND  = 1,		// dot pixel 1 x 1
-    DOT_FILL_RIGHTUP  , 		// dot pixel 2 X 2
-} DOT_STYLE;
-#define DOT_STYLE_DFT  DOT_FILL_AROUND  //Default dot pilex
-
-/**
- * Line style, solid or dashed
-**/
-typedef enum {
-    LINE_STYLE_SOLID = 0,
-    LINE_STYLE_DOTTED,
-} LINE_STYLE;
-
-/**
- * Whether the graphic is filled
-**/
-typedef enum {
-    DRAW_FILL_EMPTY = 0,
-    DRAW_FILL_FULL,
-} DRAW_FILL;
-
-/**
- * Custom structure of a time attribute
-**/
-typedef struct {
-    uint16_t Year;  //0000
-    uint8_t  Month; //1 - 12
-    uint8_t  Day;   //1 - 30
-    uint8_t  Hour;  //0 - 23
-    uint8_t  Min;   //0 - 59
-    uint8_t  Sec;   //0 - 59
-} PAINT_TIME;
-extern PAINT_TIME sPaint_time;
-
-//init and Clear
-void Paint_NewImage(uint8_t *image, uint16_t Width, uint16_t Height, uint16_t Rotate, uint16_t Color);
-void Paint_SelectImage(uint8_t *image);
-void Paint_SetRotate(uint16_t Rotate);
-void Paint_SetMirroring(uint8_t mirror);
-void Paint_SetPixel(uint16_t Xpoint, uint16_t Ypoint, uint16_t Color);
-void Paint_SetScale(uint8_t scale);
-
-void Paint_Clear(uint16_t Color);
-void Paint_ClearWindows(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend, uint16_t Color);
-
-//Drawing
-void Paint_DrawPoint(uint16_t Xpoint, uint16_t Ypoint, uint16_t Color, DOT_PIXEL Dot_Pixel, DOT_STYLE Dot_FillWay);
-void Paint_DrawLine(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend, uint16_t Color, DOT_PIXEL Line_width, LINE_STYLE Line_Style);
-void Paint_DrawRectangle(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend, uint16_t Color, DOT_PIXEL Line_width, DRAW_FILL Draw_Fill);
-void Paint_DrawCircle(uint16_t X_Center, uint16_t Y_Center, uint16_t Radius, uint16_t Color, DOT_PIXEL Line_width, DRAW_FILL Draw_Fill);
-
-//Display string
-void Paint_DrawChar(uint16_t Xstart, uint16_t Ystart, const char Acsii_Char, sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background);
-void Paint_DrawString_EN(uint16_t Xstart, uint16_t Ystart, const char * pString, sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background);
-void Paint_DrawNum(uint16_t Xpoint, uint16_t Ypoint, int32_t Nummber, sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background);
-void Paint_DrawNumDecimals(uint16_t Xpoint, uint16_t Ypoint, double Nummber, sFONT* Font, uint16_t Digit, uint16_t Color_Foreground, uint16_t Color_Background); // Able to display decimals
-void Paint_DrawTime(uint16_t Xstart, uint16_t Ystart, PAINT_TIME *pTime, sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background);
-
-//pic
-void Paint_DrawBitMap(const unsigned char* image_buffer);
-void Paint_DrawBitMap_Paste(const unsigned char* image_buffer, uint16_t Xstart, uint16_t Ystart, uint16_t imageWidth, uint16_t imageHeight, uint8_t flipColor);
-//void Paint_DrawBitMap_Half(const unsigned char* image_buffer, uint8_t Region);
-//void Paint_DrawBitMap_OneQuarter(const unsigned char* image_buffer, uint8_t Region);
-//void Paint_DrawBitMap_OneEighth(const unsigned char* image_buffer, uint8_t Region);
-void Paint_DrawBitMap_Block(const unsigned char* image_buffer, uint8_t Region);
+/*!
+  @brief   Update BMS Image with fault data
+*/
+void Paint_DrawFault();
 
 #endif // __EPAPER_UTILS_H
 

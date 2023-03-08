@@ -21,6 +21,10 @@ Bms_S gBms =
     .bmb = INIT_BMS_BMB_ARRAY
 };
 
+extern osMessageQId epaperQueueHandle;
+
+static uint32_t lastEpapUpdate = 0;
+
 static void disableBmbBalancing(Bmb_S* bmb);
 
 static void disableBmbBalancing(Bmb_S* bmb)
@@ -131,6 +135,11 @@ void aggregatePackData(uint32_t numBmbs)
 	float maxBrickTemp    = -200.0f;
 	float minBrickTemp 	  = 200.0f;
 	float avgBrickTempSum = 0.0f;
+
+	float maxBoardTemp    = -200.0f;
+	float minBoardTemp 	  = 200.0f;
+	float avgBoardTempSum = 0.0f;
+
 	for (int32_t i = 0; i < numBmbs; i++)
 	{
 		Bmb_S* pBmb = &pBms->bmb[i];
@@ -153,8 +162,18 @@ void aggregatePackData(uint32_t numBmbs)
 			minBrickTemp = pBmb->minBrickTemp;
 		}
 
+		if (pBmb->maxBoardTemp > maxBoardTemp)
+		{
+			maxBoardTemp = pBmb->maxBoardTemp;
+		}
+		if (pBmb->minBoardTemp < minBoardTemp)
+		{
+			minBoardTemp = pBmb->minBoardTemp;
+		}
+
 		avgBrickVSum += pBmb->avgBrickV;
 		avgBrickTempSum += pBmb->avgBrickTemp;
+		avgBoardTempSum += pBmb->avgBoardTemp;
 	}
 	pBms->maxBrickV = maxBrickV;
 	pBms->minBrickV = minBrickV;
@@ -162,6 +181,9 @@ void aggregatePackData(uint32_t numBmbs)
 	pBms->maxBrickTemp = maxBrickTemp;
 	pBms->minBrickTemp = minBrickTemp;
 	pBms->avgBrickTemp = avgBrickTempSum / NUM_BMBS_PER_PACK;
+	pBms->maxBoardTemp = maxBoardTemp;
+	pBms->minBoardTemp = minBoardTemp;
+	pBms->avgBoardTemp = avgBoardTempSum / NUM_BMBS_PER_PACK;
 }
 
 void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
@@ -215,4 +237,27 @@ void updateSdcStatus()
 	pBms->amsFault  = HAL_GPIO_ReadPin(AMS_FAULT_SDC_GPIO_Port, AMS_FAULT_SDC_Pin);
 	pBms->bspdFault = HAL_GPIO_ReadPin(BSPD_FAULT_SDC_GPIO_Port, BSPD_FAULT_SDC_Pin);
 	pBms->imdFault  = HAL_GPIO_ReadPin(IMD_FAULT_SDC_GPIO_Port, IMD_FAULT_SDC_Pin);
+}
+
+void updateEpaper()
+{
+	if((HAL_GetTick() - lastEpapUpdate) > 2000)
+	{
+		lastEpapUpdate = HAL_GetTick();
+
+		Epaper_Data_S epapData;
+		epapData.avgBrickV = gBms.avgBrickV;
+		epapData.maxBrickV = gBms.maxBrickV;
+		epapData.minBrickV = gBms.minBrickV;
+
+		epapData.avgBrickTemp = gBms.avgBrickTemp;
+		epapData.maxBrickTemp = gBms.maxBrickTemp;
+		epapData.minBrickTemp = gBms.minBrickTemp;
+
+		epapData.avgBoardTemp = gBms.avgBoardTemp;
+		epapData.maxBoardTemp = gBms.maxBoardTemp;
+		epapData.minBoardTemp = gBms.minBoardTemp;
+
+		xQueueOverwrite(epaperQueueHandle, &epapData);
+	}
 }

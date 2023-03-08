@@ -1,3 +1,7 @@
+/* ==================================================================== */
+/* ============================= INCLUDES ============================= */
+/* ==================================================================== */
+
 #include "epaperUtils.h"
 #include "debug.h"
 #include <stdio.h>
@@ -5,8 +9,13 @@
 #include <stdlib.h>
 #include <string.h> //memset()
 #include <math.h>
+#include "epaper.h"
 
 PAINT Paint;
+
+/* ==================================================================== */
+/* =================== LOCAL FUNCTION DEFINITIONS ===================== */
+/* ==================================================================== */
 
 /******************************************************************************
 function: Create Image
@@ -16,7 +25,7 @@ parameter:
     Height  :   The height of the picture
     Color   :   Whether the picture is inverted
 ******************************************************************************/
-void Paint_NewImage(uint8_t *image, uint16_t Width, uint16_t Height, uint16_t Rotate, uint16_t Color)
+static void Paint_NewImage(uint8_t *image, uint16_t Width, uint16_t Height, uint16_t Rotate, uint16_t Color)
 {
     Paint.Image = NULL;
     Paint.Image = image;
@@ -48,58 +57,57 @@ function: Select Image
 parameter:
     image : Pointer to the image cache
 ******************************************************************************/
-void Paint_SelectImage(uint8_t *image)
-{
-    Paint.Image = image;
-}
+// static void Paint_SelectImage(uint8_t *image)
+// {
+//     Paint.Image = image;
+// }
 
 /******************************************************************************
 function: Select Image Rotate
 parameter:
     Rotate : 0,90,180,270
 ******************************************************************************/
-void Paint_SetRotate(uint16_t Rotate)
-{
-    if(Rotate == ROTATE_0 || Rotate == ROTATE_90 || Rotate == ROTATE_180 || Rotate == ROTATE_270) {
-        Debug("Set image Rotate %d\r\n", Rotate);
-        Paint.Rotate = Rotate;
-    } else {
-        Debug("rotate = 0, 90, 180, 270\r\n");
-    }
-}
+// static void Paint_SetRotate(uint16_t Rotate)
+// {
+//     if(Rotate == ROTATE_0 || Rotate == ROTATE_90 || Rotate == ROTATE_180 || Rotate == ROTATE_270) {
+//         Debug("Set image Rotate %d\r\n", Rotate);
+//         Paint.Rotate = Rotate;
+//     } else {
+//         Debug("rotate = 0, 90, 180, 270\r\n");
+//     }
+// }
 
-void Paint_SetScale(uint8_t scale)
-{
-    if(scale == 2){
-        Paint.Scale = scale;
-        Paint.WidthByte = (Paint.WidthMemory % 8 == 0)? (Paint.WidthMemory / 8 ): (Paint.WidthMemory / 8 + 1);
-    }else if(scale == 4){
-        Paint.Scale = scale;
-        Paint.WidthByte = (Paint.WidthMemory % 4 == 0)? (Paint.WidthMemory / 4 ): (Paint.WidthMemory / 4 + 1);
-    }else if(scale == 7){//Only applicable with 5in65 e-Paper
-				Paint.Scale = scale;
-				Paint.WidthByte = (Paint.WidthMemory % 2 == 0)? (Paint.WidthMemory / 2 ): (Paint.WidthMemory / 2 + 1);;
-		}else{
-        Debug("Set Scale Input parameter error\r\n");
-        Debug("Scale Only support: 2 4 7\r\n");
-    }
-}
+// static void Paint_SetScale(uint8_t scale)
+// {
+//     if(scale == 2){
+//         Paint.Scale = scale;
+//         Paint.WidthByte = (Paint.WidthMemory % 8 == 0)? (Paint.WidthMemory / 8 ): (Paint.WidthMemory / 8 + 1);
+//     }else if(scale == 4){
+//         Paint.Scale = scale;
+//         Paint.WidthByte = (Paint.WidthMemory % 4 == 0)? (Paint.WidthMemory / 4 ): (Paint.WidthMemory / 4 + 1);
+//     }else if(scale == 7){//Only applicable with 5in65 e-Paper
+// 				Paint.Scale = scale;
+// 				Paint.WidthByte = (Paint.WidthMemory % 2 == 0)? (Paint.WidthMemory / 2 ): (Paint.WidthMemory / 2 + 1);;
+// 		}else{
+//         Debug("Set Scale Input parameter error\r\n");
+//         Debug("Scale Only support: 2 4 7\r\n");
+//     }
+// }
 /******************************************************************************
 function:	Select Image mirror
 parameter:
     mirror   :Not mirror,Horizontal mirror,Vertical mirror,Origin mirror
 ******************************************************************************/
-void Paint_SetMirroring(uint8_t mirror)
-{
-    if(mirror == MIRROR_NONE || mirror == MIRROR_HORIZONTAL || 
-        mirror == MIRROR_VERTICAL || mirror == MIRROR_ORIGIN) {
-        Debug("mirror image x:%s, y:%s\r\n",(mirror & 0x01)? "mirror":"none", ((mirror >> 1) & 0x01)? "mirror":"none");
-        Paint.Mirror = mirror;
-    } else {
-        Debug("mirror should be MIRROR_NONE, MIRROR_HORIZONTAL, \
-        MIRROR_VERTICAL or MIRROR_ORIGIN\r\n");
-    }    
-}
+// static void Paint_SetMirroring(uint8_t mirror)
+// {
+//     if(mirror == MIRROR_NONE || mirror == MIRROR_HORIZONTAL || 
+//         mirror == MIRROR_VERTICAL || mirror == MIRROR_ORIGIN) {
+//         Debug("mirror image x:%s, y:%s\r\n",(mirror & 0x01)? "mirror":"none", ((mirror >> 1) & 0x01)? "mirror":"none");
+//         Paint.Mirror = mirror;
+//     } else {
+//         Debug("mirror should be MIRROR_NONE, MIRROR_HORIZONTAL, MIRROR_VERTICAL or MIRROR_ORIGIN\r\n");
+//     }    
+// }
 
 /******************************************************************************
 function: Draw Pixels
@@ -108,7 +116,7 @@ parameter:
     Ypoint : At point Y
     Color  : Painted colors
 ******************************************************************************/
-void Paint_SetPixel(uint16_t Xpoint, uint16_t Ypoint, uint16_t Color)
+static void Paint_SetPixel(uint16_t Xpoint, uint16_t Ypoint, uint16_t Color)
 {
     if(Xpoint > Paint.Width || Ypoint > Paint.Height){
         Debug("Exceeding display boundaries\r\n");
@@ -187,7 +195,7 @@ function: Clear the color of the picture
 parameter:
     Color : Painted colors
 ******************************************************************************/
-void Paint_Clear(uint16_t Color)
+static void Paint_Clear(uint16_t Color)
 {
 	if(Paint.Scale == 2) {
 		for (uint16_t Y = 0; Y < Paint.HeightByte; Y++) {
@@ -222,7 +230,7 @@ parameter:
     Yend   : y end point
     Color  : Painted colors
 ******************************************************************************/
-void Paint_ClearWindows(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend, uint16_t Color)
+static void Paint_ClearWindows(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend, uint16_t Color)
 {
     uint16_t X, Y;
     for (Y = Ystart; Y < Yend; Y++) {
@@ -241,7 +249,7 @@ parameter:
     Dot_Pixel	: point size
     Dot_Style	: point Style
 ******************************************************************************/
-void Paint_DrawPoint(uint16_t Xpoint, uint16_t Ypoint, uint16_t Color,
+static void Paint_DrawPoint(uint16_t Xpoint, uint16_t Ypoint, uint16_t Color,
                      DOT_PIXEL Dot_Pixel, DOT_STYLE Dot_Style)
 {
     if (Xpoint > Paint.Width || Ypoint > Paint.Height) {
@@ -281,7 +289,7 @@ parameter:
     Line_width : Line width
     Line_Style: Solid and dotted lines
 ******************************************************************************/
-void Paint_DrawLine(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend,
+static void Paint_DrawLine(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend,
                     uint16_t Color, DOT_PIXEL Line_width, LINE_STYLE Line_Style)
 {
     if (Xstart > Paint.Width || Ystart > Paint.Height ||
@@ -339,7 +347,7 @@ parameter:
     Line_width: Line width
     Draw_Fill : Whether to fill the inside of the rectangle
 ******************************************************************************/
-void Paint_DrawRectangle(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend,
+static void Paint_DrawRectangle(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend,
                          uint16_t Color, DOT_PIXEL Line_width, DRAW_FILL Draw_Fill)
 {
     if (Xstart > Paint.Width || Ystart > Paint.Height ||
@@ -372,64 +380,64 @@ parameter:
     Line_width: Line width
     Draw_Fill : Whether to fill the inside of the Circle
 ******************************************************************************/
-void Paint_DrawCircle(uint16_t X_Center, uint16_t Y_Center, uint16_t Radius,
-                      uint16_t Color, DOT_PIXEL Line_width, DRAW_FILL Draw_Fill)
-{
-    if (X_Center > Paint.Width || Y_Center >= Paint.Height) {
-        Debug("Paint_DrawCircle Input exceeds the normal display range\r\n");
-        return;
-    }
+// static void Paint_DrawCircle(uint16_t X_Center, uint16_t Y_Center, uint16_t Radius,
+//                       uint16_t Color, DOT_PIXEL Line_width, DRAW_FILL Draw_Fill)
+// {
+//     if (X_Center > Paint.Width || Y_Center >= Paint.Height) {
+//         Debug("Paint_DrawCircle Input exceeds the normal display range\r\n");
+//         return;
+//     }
 
-    //Draw a circle from(0, R) as a starting point
-    int16_t XCurrent, YCurrent;
-    XCurrent = 0;
-    YCurrent = Radius;
+//     //Draw a circle from(0, R) as a starting point
+//     int16_t XCurrent, YCurrent;
+//     XCurrent = 0;
+//     YCurrent = Radius;
 
-    //Cumulative error,judge the next point of the logo
-    int16_t Esp = 3 - (Radius << 1 );
+//     //Cumulative error,judge the next point of the logo
+//     int16_t Esp = 3 - (Radius << 1 );
 
-    int16_t sCountY;
-    if (Draw_Fill == DRAW_FILL_FULL) {
-        while (XCurrent <= YCurrent ) { //Realistic circles
-            for (sCountY = XCurrent; sCountY <= YCurrent; sCountY ++ ) {
-                Paint_DrawPoint(X_Center + XCurrent, Y_Center + sCountY, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);//1
-                Paint_DrawPoint(X_Center - XCurrent, Y_Center + sCountY, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);//2
-                Paint_DrawPoint(X_Center - sCountY, Y_Center + XCurrent, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);//3
-                Paint_DrawPoint(X_Center - sCountY, Y_Center - XCurrent, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);//4
-                Paint_DrawPoint(X_Center - XCurrent, Y_Center - sCountY, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);//5
-                Paint_DrawPoint(X_Center + XCurrent, Y_Center - sCountY, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);//6
-                Paint_DrawPoint(X_Center + sCountY, Y_Center - XCurrent, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);//7
-                Paint_DrawPoint(X_Center + sCountY, Y_Center + XCurrent, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);
-            }
-            if (Esp < 0 )
-                Esp += 4 * XCurrent + 6;
-            else {
-                Esp += 10 + 4 * (XCurrent - YCurrent );
-                YCurrent --;
-            }
-            XCurrent ++;
-        }
-    } else { //Draw a hollow circle
-        while (XCurrent <= YCurrent ) {
-            Paint_DrawPoint(X_Center + XCurrent, Y_Center + YCurrent, Color, Line_width, DOT_STYLE_DFT);//1
-            Paint_DrawPoint(X_Center - XCurrent, Y_Center + YCurrent, Color, Line_width, DOT_STYLE_DFT);//2
-            Paint_DrawPoint(X_Center - YCurrent, Y_Center + XCurrent, Color, Line_width, DOT_STYLE_DFT);//3
-            Paint_DrawPoint(X_Center - YCurrent, Y_Center - XCurrent, Color, Line_width, DOT_STYLE_DFT);//4
-            Paint_DrawPoint(X_Center - XCurrent, Y_Center - YCurrent, Color, Line_width, DOT_STYLE_DFT);//5
-            Paint_DrawPoint(X_Center + XCurrent, Y_Center - YCurrent, Color, Line_width, DOT_STYLE_DFT);//6
-            Paint_DrawPoint(X_Center + YCurrent, Y_Center - XCurrent, Color, Line_width, DOT_STYLE_DFT);//7
-            Paint_DrawPoint(X_Center + YCurrent, Y_Center + XCurrent, Color, Line_width, DOT_STYLE_DFT);//0
+//     int16_t sCountY;
+//     if (Draw_Fill == DRAW_FILL_FULL) {
+//         while (XCurrent <= YCurrent ) { //Realistic circles
+//             for (sCountY = XCurrent; sCountY <= YCurrent; sCountY ++ ) {
+//                 Paint_DrawPoint(X_Center + XCurrent, Y_Center + sCountY, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);//1
+//                 Paint_DrawPoint(X_Center - XCurrent, Y_Center + sCountY, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);//2
+//                 Paint_DrawPoint(X_Center - sCountY, Y_Center + XCurrent, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);//3
+//                 Paint_DrawPoint(X_Center - sCountY, Y_Center - XCurrent, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);//4
+//                 Paint_DrawPoint(X_Center - XCurrent, Y_Center - sCountY, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);//5
+//                 Paint_DrawPoint(X_Center + XCurrent, Y_Center - sCountY, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);//6
+//                 Paint_DrawPoint(X_Center + sCountY, Y_Center - XCurrent, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);//7
+//                 Paint_DrawPoint(X_Center + sCountY, Y_Center + XCurrent, Color, DOT_PIXEL_DFT, DOT_STYLE_DFT);
+//             }
+//             if (Esp < 0 )
+//                 Esp += 4 * XCurrent + 6;
+//             else {
+//                 Esp += 10 + 4 * (XCurrent - YCurrent );
+//                 YCurrent --;
+//             }
+//             XCurrent ++;
+//         }
+//     } else { //Draw a hollow circle
+//         while (XCurrent <= YCurrent ) {
+//             Paint_DrawPoint(X_Center + XCurrent, Y_Center + YCurrent, Color, Line_width, DOT_STYLE_DFT);//1
+//             Paint_DrawPoint(X_Center - XCurrent, Y_Center + YCurrent, Color, Line_width, DOT_STYLE_DFT);//2
+//             Paint_DrawPoint(X_Center - YCurrent, Y_Center + XCurrent, Color, Line_width, DOT_STYLE_DFT);//3
+//             Paint_DrawPoint(X_Center - YCurrent, Y_Center - XCurrent, Color, Line_width, DOT_STYLE_DFT);//4
+//             Paint_DrawPoint(X_Center - XCurrent, Y_Center - YCurrent, Color, Line_width, DOT_STYLE_DFT);//5
+//             Paint_DrawPoint(X_Center + XCurrent, Y_Center - YCurrent, Color, Line_width, DOT_STYLE_DFT);//6
+//             Paint_DrawPoint(X_Center + YCurrent, Y_Center - XCurrent, Color, Line_width, DOT_STYLE_DFT);//7
+//             Paint_DrawPoint(X_Center + YCurrent, Y_Center + XCurrent, Color, Line_width, DOT_STYLE_DFT);//0
 
-            if (Esp < 0 )
-                Esp += 4 * XCurrent + 6;
-            else {
-                Esp += 10 + 4 * (XCurrent - YCurrent );
-                YCurrent --;
-            }
-            XCurrent ++;
-        }
-    }
-}
+//             if (Esp < 0 )
+//                 Esp += 4 * XCurrent + 6;
+//             else {
+//                 Esp += 10 + 4 * (XCurrent - YCurrent );
+//                 YCurrent --;
+//             }
+//             XCurrent ++;
+//         }
+//     }
+// }
 
 /******************************************************************************
 function: Show English characters
@@ -441,7 +449,7 @@ parameter:
     Color_Foreground : Select the foreground color
     Color_Background : Select the background color
 ******************************************************************************/
-void Paint_DrawChar(uint16_t Xpoint, uint16_t Ypoint, const char Acsii_Char,
+static void Paint_DrawChar(uint16_t Xpoint, uint16_t Ypoint, const char Acsii_Char,
                     sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background)
 {
     uint16_t Page, Column;
@@ -490,7 +498,7 @@ parameter:
     Color_Foreground : Select the foreground color
     Color_Background : Select the background color
 ******************************************************************************/
-void Paint_DrawString_EN(uint16_t Xstart, uint16_t Ystart, const char * pString,
+static void Paint_DrawString_EN(uint16_t Xstart, uint16_t Ystart, const char * pString,
                          sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background)
 {
     uint16_t Xpoint = Xstart;
@@ -534,7 +542,7 @@ parameter:
     Color_Background : Select the background color
 ******************************************************************************/
 #define  ARRAY_LEN 255
-void Paint_DrawNum(uint16_t Xpoint, uint16_t Ypoint, int32_t Nummber,
+static void Paint_DrawNum(uint16_t Xpoint, uint16_t Ypoint, int32_t Nummber,
                    sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background)
 {
 
@@ -577,7 +585,7 @@ parameter:
     Color_Foreground : Select the foreground color
     Color_Background : Select the background color
 ******************************************************************************/
-void Paint_DrawNumDecimals(uint16_t Xpoint, uint16_t Ypoint, double Nummber,
+static void Paint_DrawNumDecimals(uint16_t Xpoint, uint16_t Ypoint, double Nummber,
                     sFONT* Font, uint16_t Digit, uint16_t Color_Foreground, uint16_t Color_Background)
 {
     int16_t Num_Bit = 0, Str_Bit = 0;
@@ -636,23 +644,23 @@ parameter:
     Color_Foreground : Select the foreground color
     Color_Background : Select the background color
 ******************************************************************************/
-void Paint_DrawTime(uint16_t Xstart, uint16_t Ystart, PAINT_TIME *pTime, sFONT* Font,
-                    uint16_t Color_Foreground, uint16_t Color_Background)
-{
-    uint8_t value[10] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+// static void Paint_DrawTime(uint16_t Xstart, uint16_t Ystart, PAINT_TIME *pTime, sFONT* Font,
+//                     uint16_t Color_Foreground, uint16_t Color_Background)
+// {
+//     uint8_t value[10] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 
-    uint16_t Dx = Font->Width;
+//     uint16_t Dx = Font->Width;
 
-    //Write data into the cache
-    Paint_DrawChar(Xstart                           , Ystart, value[pTime->Hour / 10], Font, Color_Background, Color_Foreground);
-    Paint_DrawChar(Xstart + Dx                      , Ystart, value[pTime->Hour % 10], Font, Color_Background, Color_Foreground);
-    Paint_DrawChar(Xstart + Dx  + Dx / 4 + Dx / 2   , Ystart, ':'                    , Font, Color_Background, Color_Foreground);
-    Paint_DrawChar(Xstart + Dx * 2 + Dx / 2         , Ystart, value[pTime->Min / 10] , Font, Color_Background, Color_Foreground);
-    Paint_DrawChar(Xstart + Dx * 3 + Dx / 2         , Ystart, value[pTime->Min % 10] , Font, Color_Background, Color_Foreground);
-    Paint_DrawChar(Xstart + Dx * 4 + Dx / 2 - Dx / 4, Ystart, ':'                    , Font, Color_Background, Color_Foreground);
-    Paint_DrawChar(Xstart + Dx * 5                  , Ystart, value[pTime->Sec / 10] , Font, Color_Background, Color_Foreground);
-    Paint_DrawChar(Xstart + Dx * 6                  , Ystart, value[pTime->Sec % 10] , Font, Color_Background, Color_Foreground);
-}
+//     //Write data into the cache
+//     Paint_DrawChar(Xstart                           , Ystart, value[pTime->Hour / 10], Font, Color_Background, Color_Foreground);
+//     Paint_DrawChar(Xstart + Dx                      , Ystart, value[pTime->Hour % 10], Font, Color_Background, Color_Foreground);
+//     Paint_DrawChar(Xstart + Dx  + Dx / 4 + Dx / 2   , Ystart, ':'                    , Font, Color_Background, Color_Foreground);
+//     Paint_DrawChar(Xstart + Dx * 2 + Dx / 2         , Ystart, value[pTime->Min / 10] , Font, Color_Background, Color_Foreground);
+//     Paint_DrawChar(Xstart + Dx * 3 + Dx / 2         , Ystart, value[pTime->Min % 10] , Font, Color_Background, Color_Foreground);
+//     Paint_DrawChar(Xstart + Dx * 4 + Dx / 2 - Dx / 4, Ystart, ':'                    , Font, Color_Background, Color_Foreground);
+//     Paint_DrawChar(Xstart + Dx * 5                  , Ystart, value[pTime->Sec / 10] , Font, Color_Background, Color_Foreground);
+//     Paint_DrawChar(Xstart + Dx * 6                  , Ystart, value[pTime->Sec % 10] , Font, Color_Background, Color_Foreground);
+// }
 
 /******************************************************************************
 function:	Display monochrome bitmap
@@ -662,18 +670,18 @@ info:
     Use a computer to convert the image into a corresponding array,
     and then embed the array directly into Imagedata.cpp as a .c file.
 ******************************************************************************/
-void Paint_DrawBitMap(const unsigned char* image_buffer)
-{
-    uint16_t x, y;
-    uint32_t Addr = 0;
+// static void Paint_DrawBitMap(const unsigned char* image_buffer)
+// {
+//     uint16_t x, y;
+//     uint32_t Addr = 0;
 
-    for (y = 0; y < Paint.HeightByte; y++) {
-        for (x = 0; x < Paint.WidthByte; x++) {//8 pixel =  1 byte
-            Addr = x + y * Paint.WidthByte;
-            Paint.Image[Addr] = (unsigned char)image_buffer[Addr];
-        }
-    }
-}
+//     for (y = 0; y < Paint.HeightByte; y++) {
+//         for (x = 0; x < Paint.WidthByte; x++) {//8 pixel =  1 byte
+//             Addr = x + y * Paint.WidthByte;
+//             Paint.Image[Addr] = (unsigned char)image_buffer[Addr];
+//         }
+//     }
+// }
 
 /******************************************************************************
 function:	paste monochrome bitmap to a frame buff
@@ -687,34 +695,224 @@ parameter:
 info:
     Use this function to paste image data into a buffer
 ******************************************************************************/
-void Paint_DrawBitMap_Paste(const unsigned char* image_buffer, uint16_t xStart, uint16_t yStart, uint16_t imageWidth, uint16_t imageHeight, uint8_t flipColor)
-{
-    uint8_t color, srcImage;
-    uint16_t x, y;
-    uint16_t width = (imageWidth%8==0 ? imageWidth/8 : imageWidth/8+1);
+// static void Paint_DrawBitMap_Paste(const unsigned char* image_buffer, uint16_t xStart, uint16_t yStart, uint16_t imageWidth, uint16_t imageHeight, uint8_t flipColor)
+// {
+//     uint8_t color, srcImage;
+//     uint16_t x, y;
+//     uint16_t width = (imageWidth%8==0 ? imageWidth/8 : imageWidth/8+1);
     
-    for (y = 0; y < imageHeight; y++) {
-        for (x = 0; x < imageWidth; x++) {
-            srcImage = image_buffer[y*width + x/8];
-            if(flipColor)
-                color = (((srcImage<<(x%8) & 0x80) == 0) ? 1 : 0);
-            else
-                color = (((srcImage<<(x%8) & 0x80) == 0) ? 0 : 1);
-            Paint_SetPixel(x+xStart, y+yStart, color);
-        }
-    }
+//     for (y = 0; y < imageHeight; y++) {
+//         for (x = 0; x < imageWidth; x++) {
+//             srcImage = image_buffer[y*width + x/8];
+//             if(flipColor)
+//                 color = (((srcImage<<(x%8) & 0x80) == 0) ? 1 : 0);
+//             else
+//                 color = (((srcImage<<(x%8) & 0x80) == 0) ? 0 : 1);
+//             Paint_SetPixel(x+xStart, y+yStart, color);
+//         }
+//     }
+// }
+
+
+// static void Paint_DrawBitMap_Block(const unsigned char* image_buffer, uint8_t Region)
+// {
+//     uint16_t x, y;
+//     uint32_t Addr = 0;
+// 		for (y = 0; y < Paint.HeightByte; y++) {
+// 				for (x = 0; x < Paint.WidthByte; x++) {//8 pixel =  1 byte
+// 						Addr = x + y * Paint.WidthByte ;
+// 						Paint.Image[Addr] =  (unsigned char)image_buffer[Addr+ (Paint.HeightByte)*Paint.WidthByte*(Region - 1)];
+// 				}
+// 		}
+// }
+
+/*!
+  @brief    Calculate number of integer digits in a number
+  @param    num Target number to calculate number of digits for
+*/
+static uint8_t calculateIntegerDigits(uint32_t num)
+{
+    uint8_t digits = 1;
+	while(((num /= 10) > 0) && (digits < 11))
+	{
+		digits++;
+	}
+    return digits;
 }
 
+/* ==================================================================== */
+/* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
+/* ==================================================================== */
 
-void Paint_DrawBitMap_Block(const unsigned char* image_buffer, uint8_t Region)
+/*!
+  @brief    Initialize BMS template image
+  @param    emptyImage Empty image array to modify with BMS data 
+*/
+void Paint_InitBmsImage(uint8_t* emptyImage)
 {
-    uint16_t x, y;
-    uint32_t Addr = 0;
-		for (y = 0; y < Paint.HeightByte; y++) {
-				for (x = 0; x < Paint.WidthByte; x++) {//8 pixel =  1 byte
-						Addr = x + y * Paint.WidthByte ;
-						Paint.Image[Addr] = \
-						(unsigned char)image_buffer[Addr+ (Paint.HeightByte)*Paint.WidthByte*(Region - 1)];
-				}
-		}
+    // Initilize bms image array as a blank image
+	Paint_NewImage(emptyImage, EPD_WIDTH, EPD_HEIGHT, 90, WHITE);
+	Paint_Clear(WHITE);
+
+	// Create data table template
+	Paint_DrawRectangle(46, 60, 237, 123, BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
+	Paint_DrawLine(46, 81, 237, 81, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	Paint_DrawLine(46, 102, 237, 102, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	Paint_DrawLine(110, 60, 110, 123, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	Paint_DrawLine(174, 60, 174, 123, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+
+	// Print table labels for pack voltage, pack temp, and board temp
+	Paint_DrawString_EN(55, 43, "VOLT", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(120, 43, "TEMP", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(178, 43, "BLEED", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(252, 43, "SOC", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(5, 63, "AVG", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(5, 84, "MAX", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(5, 105, "MIN", &Font16, WHITE, BLACK);
+
+	// Print labels for State and Fault indicators
+	Paint_DrawString_EN(5, 5, "STATE:", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(5, 25, "FAULT:", &Font16, WHITE, BLACK);
+
+	// Print default battery template
+	Paint_DrawRectangle(255, 65, 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
+	Paint_DrawRectangle(263, 60, 275, 65, BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
+}
+
+/*!
+  @brief    Update BMS Image with current voltage, pack temp, and board temp data
+  @param    data Data to display on table
+  @param    col Column of data table to populate
+  @param    row Row of data table to populate 
+*/
+void Paint_DrawTableData(float data, DATA_TABLE_COL col, DATA_TABLE_ROW row)
+{
+    // Set starting X and Y cordinates
+    uint16_t startX = DATA_START_X + (col * DATA_SEPERATION_X);
+    uint16_t startY = DATA_START_Y + (row * DATA_SEPERATION_Y);
+
+    // Clear data entry space
+    Paint_ClearWindows(startX, startY, startX + Font16.Width * 5, startY + Font16.Height, WHITE);
+
+    // Wrap to printable bounds
+    if(data > 9999.0)
+    {
+        data = 9999;
+    }
+    else if(data < -999)
+    {
+        data = -999;
+    }
+
+    // Data position adjustment variables
+    uint8_t digits = 0;
+    bool negative = 0;
+
+    // Determine if data is negative and flip sign if neccesary
+    // Minus sign will take up one digit space
+    if(data < 0)
+    {
+        negative = true;
+        data *= -1;
+        digits++;
+    }
+
+    // Calucalte number of digits before decimal place
+    digits += calculateIntegerDigits(data);
+
+    bool decimal = false;
+    if(digits < 3)
+    {
+        decimal = true;
+        (col == DATA_VOLTAGE) ? (digits += 3) : (digits += 2);
+    }
+
+    startX += (Font16.Width / 2 ) * (4 - digits);
+
+    if(negative)
+    {
+        Paint_DrawString_EN(startX, startY, "-", &Font16, WHITE, BLACK);
+        startX += Font16.Width;
+    }
+
+    // Draw number as integer or decimal depending on number of digits
+    if(decimal)
+    {
+        if(col == DATA_VOLTAGE)
+        {
+            Paint_DrawNumDecimals(startX, startY, data, &Font16, 2, BLACK, WHITE);
+        }
+        else
+        {
+            Paint_DrawNumDecimals(startX, startY, data, &Font16, 1, BLACK, WHITE);
+        }
+    }
+    else
+    {
+        Paint_DrawNum(startX, startY, data, &Font16, BLACK, WHITE);
+    }
+
+    // Set data label to display
+    if(col == DATA_VOLTAGE)
+    {
+        Paint_DrawString_EN(startX + (digits * Font16.Width) - (negative ? Font16.Width : 0), startY, "V", &Font16, WHITE, BLACK);
+    }
+    else
+    {
+        Paint_DrawString_EN(startX + (digits * Font16.Width) - (negative ? Font16.Width : 0), startY, "C", &Font16, WHITE, BLACK);
+    }
+	
+}
+
+/*!
+  @brief    Update BMS Image with current SOC
+  @param    SOC BMS State of Charge as a percentage 
+*/
+void Paint_DrawSOC(uint32_t SOC)
+{
+	// Check bounds of SOC
+	if(SOC < 0)
+	{
+		SOC = 0;
+	}
+	else if(SOC > 100)
+	{
+		SOC = 100;
+	}
+
+	// Calculate the number of digits in the SOC percent value
+	uint8_t digits = calculateIntegerDigits(SOC);
+
+	// The x value in the below statements is slected such that 100% is centered
+	// In order to center the SOC percentage given any number of digits, 
+	// the printed data is shifted by half a width for each digit less than three (100) 
+	uint16_t startXAdjust =  (Font16.Width / 2) * (3 - digits);
+
+	// Populate BMS image with current SOC percent
+	Paint_ClearWindows(246 + startXAdjust, 105, 246 + Font16.Width * 4, 105 + Font16.Height, WHITE);
+	Paint_DrawNum(246 + startXAdjust, 105, SOC, &Font16, BLACK, WHITE);
+
+	// Place a percent sign directly after the last number, given by the font width times the number of digits
+	Paint_DrawString_EN(246 + startXAdjust + Font16.Width * digits, 105, "%", &Font16, WHITE, BLACK);
+
+	// Adjust the height of the printed battery level based on the SOC as a percentage
+	Paint_DrawRectangle(255, 102 - ((37 * SOC) / 100), 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_FULL);
+}
+
+/*!
+  @brief   Update BMS Image with state data
+*/
+void Paint_DrawState()
+{
+	Paint_ClearWindows(70, 5, 70 + Font16.Width * 12, 5 + Font16.Height, WHITE);
+	Paint_DrawString_EN(70, 5, "YOUR MOTHER", &Font16, WHITE, BLACK);
+}
+
+/*!
+  @brief   Update BMS Image with fault data
+*/
+void Paint_DrawFault()
+{
+    Paint_ClearWindows(70, 25, 70 + Font16.Width * 12, 25 + Font16.Height, WHITE);
+	Paint_DrawString_EN(70, 25, "NO FAULT", &Font16, WHITE, BLACK);
 }

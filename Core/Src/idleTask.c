@@ -50,6 +50,7 @@ void runIdle()
           // Start a new double blink
           remainingBlinks = 2;
         }
+        break;
       }
     }
 
