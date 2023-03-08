@@ -120,6 +120,11 @@ void aggregatePackData(uint32_t numBmbs)
 	float maxBrickTemp    = -200.0f;
 	float minBrickTemp 	  = 200.0f;
 	float avgBrickTempSum = 0.0f;
+
+	float maxBoardTemp    = -200.0f;
+	float minBoardTemp 	  = 200.0f;
+	float avgBoardTempSum = 0.0f;
+
 	for (int32_t i = 0; i < numBmbs; i++)
 	{
 		Bmb_S* pBmb = &pBms->bmb[i];
@@ -142,8 +147,18 @@ void aggregatePackData(uint32_t numBmbs)
 			minBrickTemp = pBmb->minBrickTemp;
 		}
 
+		if (pBmb->maxBoardTemp > maxBoardTemp)
+		{
+			maxBoardTemp = pBmb->maxBoardTemp;
+		}
+		if (pBmb->minBoardTemp < minBoardTemp)
+		{
+			minBoardTemp = pBmb->minBoardTemp;
+		}
+
 		avgBrickVSum += pBmb->avgBrickV;
 		avgBrickTempSum += pBmb->avgBrickTemp;
+		avgBoardTempSum += pBmb->avgBoardTemp;
 	}
 	pBms->maxBrickV = maxBrickV;
 	pBms->minBrickV = minBrickV;
@@ -151,6 +166,9 @@ void aggregatePackData(uint32_t numBmbs)
 	pBms->maxBrickTemp = maxBrickTemp;
 	pBms->minBrickTemp = minBrickTemp;
 	pBms->avgBrickTemp = avgBrickTempSum / NUM_BMBS_PER_PACK;
+	pBms->maxBoardTemp = maxBoardTemp;
+	pBms->minBoardTemp = minBoardTemp;
+	pBms->avgBoardTemp = avgBoardTempSum / NUM_BMBS_PER_PACK;
 }
 
 void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)

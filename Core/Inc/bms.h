@@ -58,6 +58,10 @@ typedef struct
 	float minBrickTemp;
 	float avgBrickTemp;
 
+	float maxBoardTemp;
+	float minBoardTemp;
+	float avgBoardTemp;
+
 	IMD_State_E imdState;
 } Bms_S;
 

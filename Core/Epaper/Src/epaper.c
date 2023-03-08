@@ -3,6 +3,7 @@
 /* ==================================================================== */
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "debug.h"
 #include "epaper.h"
 #include "cmsis_os.h"
@@ -14,6 +15,7 @@
 
 uint8_t blackScreenData[4736] = {[0 ... 4735] = 0xff};
 uint8_t sendBuffer[8];
+uint8_t *bmsImage;
 uint8_t WF_PARTIAL_LUT[LUT_SIZE] =
 {
 0x0,	0x40,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
@@ -57,21 +59,9 @@ uint8_t WS_20_30_LUT[LUT_SIZE] =
 /* ======================= EXTERNAL VARIABLES ========================= */
 /* ==================================================================== */
 
-// extern osSemaphoreId epdSpiSemHandle;
-// extern osSemaphoreId epapBusySemHandle;
-// extern SPI_HandleTypeDef hspi1;
-// extern SPI_HandleTypeDef hspi2;
-// extern UART_HandleTypeDef huart2;
 extern osSemaphoreId epdSpiSemHandle;
 extern osSemaphoreId epdBusySemHandle;
 extern SPI_HandleTypeDef hspi2;
-
-
-
-/* ==================================================================== */
-/* ======================= INTERUPT HANDLERS ========================== */
-/* ==================================================================== */
-
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DEFINITIONS ===================== */
@@ -134,36 +124,15 @@ static void waitBusyRelease()
 {
     if(HAL_GPIO_ReadPin(BUSY_GPIO_Port, BUSY_Pin) == 1)
     {
-
-        // Debug("e-Paper busy\r\n");
+		
         xSemaphoreTake(epdBusySemHandle, 0); // Guarantee epapBusySemHandle set to 0 
         if (!(xSemaphoreTake(epdBusySemHandle, 5000) == pdTRUE))
             {
                 Debug("AAAInterrupt failed to occur during SPI transmit\n");
-				// uint8_t buff[10] = {[0 ... 9] = 0x41};
-
-				// HAL_UART_Transmit(&huart2, buff, 5, HAL_MAX_DELAY);
-				
             }
         Debug("e-Paper busy release\r\n");
     }
 }
-
-// static void waitBusyRelease()
-// {
-//     if(HAL_GPIO_ReadPin(BUSY_GPIO_Port, BUSY_Pin) == 1)
-//     {
-//         // Debug("e-Paper busy\r\n");
-//         xSemaphoreTake(epdBusySemHandle, 0); // Guarantee epdBusySemHandle set to 0 
-//         if (!(xSemaphoreTake(epdBusySemHandle, TIMEOUT_BUSY_RELEASE_MS) == pdTRUE))
-//             {
-//                 Debug("Interrupt failed to occur EPAP BUSY\n");
-//             }
-//         Debug("e-Paper busy release\r\n");
-//     }
-// }
-
-
 
 /*!
   @brief   Send a command to the epaper
@@ -371,33 +340,12 @@ static void setDefaultSettings()
 	waitBusyRelease();
 }
 
-/* ==================================================================== */
-/* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
-/* ==================================================================== */
-
-/*!
-  @brief	Clear epaper display
-*/
-void epdClear()
-{
-	// Reset initial settings
-	setDefaultSettings();
-	
-	// Set initial lookup table register 
-	setLookupTable(WS_20_30_LUT);
-
-	// Write white image to Black and White RAM
-	sendMessage(CMD_WRITE_RAM_BLACK_WHITE, blackScreenData, (EPD_WIDTH * EPD_HEIGHT) / 8);
-	
-	// Activate display
-	turnOnDisplay();
-}
 
 /*!
   @brief	Sends the image buffer in RAM to e-Paper and enables display
   @param	Image	Image to display
 */
-void epdDisplay(uint8_t *Image)
+static void epdDisplay(uint8_t *Image)
 {
 	// Reset initial settings
 	setDefaultSettings();
@@ -419,7 +367,7 @@ void epdDisplay(uint8_t *Image)
   @brief	Sends the partial image buffer in RAM to e-Paper and displays 
   @param	Image	Image to display
 */
-void epdDisplayPartial(uint8_t *Image)
+static void epdDisplayPartial(uint8_t *Image)
 {
     // // Reset epaper communication
 	reset();
@@ -466,6 +414,76 @@ void epdDisplayPartial(uint8_t *Image)
 	turnOnDisplayPartial();
 }
 
+/* ==================================================================== */
+/* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
+/* ==================================================================== */
+
+/*!
+  @brief	Creates the default BMS display template in memory
+*/
+void epdInit()
+{
+	// Allocate memory for bms image array
+	uint16_t imageSize = ((EPD_WIDTH % 8 == 0)? (EPD_WIDTH / 8 ): (EPD_WIDTH / 8 + 1)) * EPD_HEIGHT;
+	if((bmsImage = (uint8_t *)malloc(imageSize)) == NULL) {
+		Debug("Failed to apply for black memory...\r\n");
+	}
+
+	Paint_InitBmsImage(bmsImage);
+}
+
+/*!
+  @brief	Clear epaper display
+*/
+void epdClear()
+{
+	epdDisplay(blackScreenData);
+}
+
+/*!
+  @brief	Performs a full update of the epaper with the current BMS display image stored in memory
+*/
+void epdFullRefresh()
+{
+	epdDisplay(bmsImage);
+}
+
+/*!
+  @brief	Updates only the data in the BMS display image and performs a partial update
+  @param bms The BMS struct containing current BMS data 
+*/
+void epdPopulateData(Bms_S* bms)
+{
+
+	// Populate BMS image with current AVG, MAX, and MIN voltage data
+	Paint_DrawTableData(bms->avgBrickV, DATA_VOLTAGE, DATA_AVG);
+	Paint_DrawTableData(bms->maxBrickV, DATA_VOLTAGE, DATA_MAX);
+	Paint_DrawTableData(bms->minBrickV, DATA_VOLTAGE, DATA_MIN);
+	
+	// Populate BMS image with current AVG, MAX, and MIN pack temp data
+	Paint_DrawTableData(bms->avgBrickTemp, DATA_PACK_TEMP, DATA_AVG);
+	Paint_DrawTableData(bms->maxBrickTemp, DATA_PACK_TEMP, DATA_MAX);
+	Paint_DrawTableData(bms->minBrickTemp, DATA_PACK_TEMP, DATA_MIN);
+
+	// Populate BMS image with current AVG, MAX, and MIN board temp data
+	Paint_DrawTableData(bms->avgBoardTemp, DATA_BOARD_TEMP, DATA_AVG);
+	Paint_DrawTableData(bms->maxBoardTemp, DATA_BOARD_TEMP, DATA_MAX);
+	Paint_DrawTableData(bms->minBoardTemp, DATA_BOARD_TEMP, DATA_MIN);
+
+	// Populate BMS image with current SOC percent
+	Paint_DrawSOC(25);
+
+	// Populate BMS image with current State
+	Paint_DrawState();
+
+	// Populate BMS image with current Fault
+	Paint_DrawFault();
+	
+	// Perform a partial refresh of the epaper display
+	epdDisplayPartial(bmsImage);
+}
+
+
 /*!
   @brief	Enable epaper sleep mode
 */
@@ -483,5 +501,4 @@ void epdSleep()
 	setCommandMode();
     csOn();
 	reset();
-
 }
