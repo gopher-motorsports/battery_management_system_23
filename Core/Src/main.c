@@ -259,7 +259,7 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
-  // initBmsGopherCan(&hcan2);
+  initBmsGopherCan(&hcan2);
   gsense_init(&hcan2, &hadc1, 0, 0, &htim10, MCU_GSENSE_GPIO_Port, MCU_GSENSE_Pin);
   
   // Start IMD timer capture
@@ -888,10 +888,11 @@ void StartMainTask(void const * argument)
 void StartEPaper(void const * argument)
 {
   /* USER CODE BEGIN StartEPaper */
+  initEpaperTask();
   /* Infinite loop */
   for(;;)
   {
-    runEpaper();
+    runEpaperTask();
     osDelay(1);
   }
   /* USER CODE END StartEPaper */

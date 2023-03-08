@@ -370,7 +370,7 @@ static void epdDisplay(uint8_t *Image)
 */
 static void epdDisplayPartial(uint8_t *Image)
 {
-    // // Reset epaper communication
+    // Reset epaper communication
 	reset();
 	enable();
 

@@ -63,8 +63,6 @@ void runMain()
 	// printf("CSNS: %f\n", value);
 	// printf("CSNS: %f\n", value*2);
 
-	gBms.bmsHwState = BMS_BMB_INIT_FAILURE;
-
 	if (!initialized && initRetries > 0)
 	{
 		initialized = true;
