@@ -1,7 +1,6 @@
 #ifndef INC_BMB_H_
 #define INC_BMB_H_
 
-
 /* ==================================================================== */
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
@@ -37,6 +36,8 @@
 #define VBLOCK			0x2C
 #define AIN1			0x2D
 #define AIN2			0x2E
+
+#define ALRTRST			0x8000
 
 #define NUM_BRICKS_PER_BMB		12
 #define NUM_BOARD_TEMP_PER_BMB 	4
@@ -92,17 +93,26 @@ typedef struct
 	const uint32_t bmbIdx;
 	uint32_t numBricks;
 	// TODO - set initial status value to SNA
+	// The status of all the brick sensors
 	Bmb_Sensor_Status_E brickVStatus[NUM_BRICKS_PER_BMB];
+	// The brick voltages for the bmb
 	float brickV[NUM_BRICKS_PER_BMB];
+
+	// The stack voltage measurement status 
+	Bmb_Sensor_Status_E stackVStatus;
+	// The stack voltage measurement is the total BMB voltage (sum of bricks = stack)
 	float stackV;
 
-	Bmb_Sensor_Status_E blockVStatus;
-	float blockV;
-
+	// The status of all the temp sensors
 	Bmb_Sensor_Status_E tempStatus[NUM_BRICKS_PER_BMB+NUM_BOARD_TEMP_PER_BMB];
+	// The raw voltage measurements from all the temp sensors
 	float tempVoltage[NUM_BRICKS_PER_BMB+NUM_BOARD_TEMP_PER_BMB];
+	// The converted temperatures for all the brick temp sensors
 	float brickTemp[NUM_BRICKS_PER_BMB];
+	// The converted temperature for all board temp sensors
 	float boardTemp[NUM_BOARD_TEMP_PER_BMB];
+
+	float sumBrickV;
 
 	float maxBrickV;
 	float minBrickV;
@@ -115,6 +125,9 @@ typedef struct
 	float maxBoardTemp;
 	float minBoardTemp;
 	float avgBoardTemp;
+
+	// Indicates that a BMB reinitialization is required
+	bool reinitRequired;
 
 	// Balancing Configuration
 	bool balSwRequested[NUM_BRICKS_PER_BMB];	// Set by BMS to determine which cells need to be balanced
@@ -172,17 +185,18 @@ void setMux(uint32_t numBmbs, uint8_t muxSetting);
 void aggregateBmbData(Bmb_S* bmb,uint32_t numBmbs);
 
 /*!
+  @brief   Determine if a power-on reset (POR) occurred and if so properly reset the device
+  @param   bmb - The array containing BMB data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
+void detectPowerOnReset(Bmb_S* bmb, uint32_t numBmbs);
+
+/*!
   @brief   Handles balancing the cells based on BMS control
   @param   bmb - The array containing BMB data
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
 void balanceCells(Bmb_S* bmb, uint32_t numBmbs);
-
-
-/*!
-  @brief   Updates IMD fault state based on current imd frequency and duty cycle
-*/
-void updateIMDfault();
 
 
 #endif /* INC_BMB_H_ */

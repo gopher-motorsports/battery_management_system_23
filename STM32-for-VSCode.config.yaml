@@ -10,7 +10,7 @@ target: battery_management_system_23
 # Can be C or C++
 language: C
 
-optimization: Og
+optimization: O0
 
 # MCU settings
 targetMCU: stm32f4x
@@ -87,6 +87,11 @@ includeDirectories:
   - Core/Src/**
   - Core/Lib/**
   - Core/Epaper/**
+  - ../gophercan-lib
+  - ../Gopher_Sense/lib
+  - ../Gopher_Sense/Build
+
+
 
 
 # Files that should be included in the compilation.
@@ -133,6 +138,13 @@ sourceFiles:
   - Core/Src/**
   - Core/Epaper/**
   - Core/Lib/**
+  - ../gophercan-lib/GopherCAN.c
+  - ../gophercan-lib/GopherCAN_buffers.c
+  - ../gophercan-lib/GopherCAN_network.c
+  - ../Gopher_Sense/lib/adc_lib.c
+  - ../Gopher_Sense/lib/gopher_sense.c
+  - ../Gopher_Sense/Build/module_hw_config.c
+  - ../Gopher_Sense/Build/sensors.c
 
 
 # When no makefile is present it will show a warning pop-up.

@@ -1,9 +1,15 @@
+/* ==================================================================== */
+/* ============================= INCLUDES ============================= */
+/* ==================================================================== */
 #include "cmsis_os.h"
-#include "main.h"
 #include "bms.h"
 #include "bmb.h"
+#include "GopherCAN.h"
 
 
+/* ==================================================================== */
+/* ============================= DEFINES ============================== */
+/* ==================================================================== */
 #define INIT_BMS_BMB_ARRAY \
 { \
     [0 ... NUM_BMBS_PER_PACK-1] = {.bmbIdx = __COUNTER__} \
@@ -15,10 +21,6 @@ Bms_S gBms =
     .bmb = INIT_BMS_BMB_ARRAY
 };
 
-extern volatile uint32_t imdFrequency;
-extern volatile uint32_t imdDutyCycle;
-extern volatile uint32_t imdLastUpdate;
-
 static void disableBmbBalancing(Bmb_S* bmb);
 
 static void disableBmbBalancing(Bmb_S* bmb)
@@ -26,6 +28,15 @@ static void disableBmbBalancing(Bmb_S* bmb)
 	for (int32_t i = 0; i < NUM_BRICKS_PER_BMB; i++)
 	{
 		bmb->balSwRequested[i] = false;
+	}
+}
+
+void initBmsGopherCan(CAN_HandleTypeDef* hcan)
+{
+	// initialize CAN
+	if (init_can(GCAN0, hcan, BMS_ID, BXTYPE_MASTER))
+	{
+		gBms.bmsHwState = BMS_GSNS_INIT_FAILURE;
 	}
 }
 
@@ -183,44 +194,25 @@ void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
 	balanceCells(pBms->bmb, numBmbs);
 }
 
-void updateIMDfault()
+/*!
+  @brief   Update the IMD status based on measured frequency and duty cycle
+*/
+void updateImdStatus()
 {
 	Bms_S* pBms = &gBms;
 
-	if (imdFrequency > 45)
-	{
-		pBms->imdState = IMD_EARTH_FAULT;
-	}
-	else if (imdFrequency > 35)
-	{
-		pBms->imdState = IMD_DEVICE_ERROR;
-	}
-	else if (imdFrequency > 25)
-	{
-		if(imdDutyCycle < 15)
-		{
-			pBms->imdState = IMD_SPEED_START_MEASUREMENT_GOOD;
-		}
-		else
-		{
-			pBms->imdState = IMD_SPEED_START_MEASUREMENT_BAD;
-		}
-	}
-	else if (imdFrequency > 15)
-	{
-		pBms->imdState = IMD_UNDER_VOLT;
-	}
-	else if (imdFrequency > 5)
-	{
-		pBms->imdState = IMD_NORMAL;
-	}
-	else
-	{
-		pBms->imdState = IMD_NO_SIGNAL;
-	}
+	pBms->imdState = getImdStatus();
+}
 
-	if((HAL_GetTick() - imdLastUpdate) > IMD_PWM_TIMOUT_MS)
-	{
-		pBms->imdState = IMD_NO_SIGNAL;
-	}
+
+/*!
+  @brief   Update the SDC status
+*/
+void updateSdcStatus()
+{
+	Bms_S* pBms = &gBms;
+
+	pBms->amsFault  = HAL_GPIO_ReadPin(AMS_FAULT_SDC_GPIO_Port, AMS_FAULT_SDC_Pin);
+	pBms->bspdFault = HAL_GPIO_ReadPin(BSPD_FAULT_SDC_GPIO_Port, BSPD_FAULT_SDC_Pin);
+	pBms->imdFault  = HAL_GPIO_ReadPin(IMD_FAULT_SDC_GPIO_Port, IMD_FAULT_SDC_Pin);
 }

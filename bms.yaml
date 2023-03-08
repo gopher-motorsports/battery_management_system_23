@@ -1,0 +1,22 @@
+
+module_name: "bms"
+
+buckets:
+    high_frequency_tcm:
+        # NOTE: frequency will be converted to an integer number of ms for a delay
+        frequency_hz: 250
+        parameters:
+            # these must directly be a variable defined in GopherCAN
+            bmsTractiveSystemCurrentLow_A:
+                ADC: ADC1_IN1
+                sensor: current_sensor_1
+                samples_buffered: 1
+            bmsTractiveSystemCurrentHigh_A:
+                ADC: ADC1_IN0
+                sensor: current_sensor_2
+                samples_buffered: 1
+            
+            
+    
+
+

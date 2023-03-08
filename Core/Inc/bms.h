@@ -9,7 +9,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include <bmb.h>
+#include "main.h"
+#include "bmb.h"
+#include "imd.h"
 
 
 /* ==================================================================== */
@@ -23,8 +25,6 @@
 // The maximum cell temperature where charging is allowed
 #define MAX_CELL_TEMP_CHARGING_ALLOWED_C	50.0f
 
-// Timeout of IMD PWM signal in milliseconds
-#define IMD_PWM_TIMOUT_MS 200
 
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
@@ -32,14 +32,10 @@
 
 typedef enum
 {
-	IMD_NO_SIGNAL = 0,
-	IMD_NORMAL,
-	IMD_UNDER_VOLT,
-	IMD_SPEED_START_MEASUREMENT_GOOD,
-	IMD_SPEED_START_MEASUREMENT_BAD,
-	IMD_DEVICE_ERROR,
-	IMD_EARTH_FAULT
-} IMD_State_E;
+	BMS_NOMINAL = 0,
+	BMS_GSNS_INIT_FAILURE,
+	BMS_BMB_INIT_FAILURE
+} Bms_Hardware_State_E;
 
 /* ==================================================================== */
 /* ============================== STRUCTS============================== */
@@ -59,6 +55,12 @@ typedef struct
 	float avgBrickTemp;
 
 	IMD_State_E imdState;
+
+	bool bspdFault;
+	bool imdFault;
+	bool amsFault;
+
+	Bms_Hardware_State_E bmsHwState;
 } Bms_S;
 
 
@@ -71,13 +73,14 @@ typedef struct
 */
 void initBatteryPack(uint32_t numBmbs);
 
+void initBmsGopherCan(CAN_HandleTypeDef* hcan);
+
 /*!
   @brief   Handles balancing the battery pack
   @param   numBmbs - The expected number of BMBs in the daisy chain
   @param   balanceRequested - True if we want to balance, false otherwise
 */
 void balancePack(uint32_t numBmbs, bool balanceRequested);
-
 
 /*!
   @brief   Update BMS data statistics. Min/Max/Avg
@@ -87,5 +90,15 @@ void aggregatePackData(uint32_t numBmbs);
 
 void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage);
 
+/*!
+  @brief   Update the IMD status based on measured frequency and duty cycle
+*/
+void updateImdStatus();
+
+
+/*!
+  @brief   Update the SDC status
+*/
+void updateSdcStatus();
 
 #endif /* INC_BMS_H_ */

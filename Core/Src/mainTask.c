@@ -2,16 +2,17 @@
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
 
-#include <bms.h>
 #include "main.h"
 #include "cmsis_os.h"
 #include "mainTask.h"
+#include "bms.h"
 #include "bmbInterface.h"
 #include "bmbUtils.h"
 #include "bmb.h"
 #include "epaper.h"
 #include "epaperUtils.h"
 #include <stdlib.h>
+#include "GopherCAN_network.h"
 
 
 /* ==================================================================== */
@@ -57,7 +58,10 @@ void printBoardTemperatures();
 
 void runMain()
 {
-	
+	float value = bmsTractiveSystemCurrentLow_A.data;
+	float value2 = bmsTractiveSystemCurrentHigh_A.data;
+	printf("CSNS: %f\n", value);
+	printf("CSNS: %f\n", value*2);
 
 	if (!initialized && initRetries > 0)
 	{
@@ -84,7 +88,9 @@ void runMain()
 
 		aggregatePackData(numBmbs);
 
-		updateIMDfault();
+		updateImdStatus();
+
+		updateSdcStatus();
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{

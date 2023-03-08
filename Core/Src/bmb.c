@@ -183,15 +183,15 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			}
 		}
 
-		// Read VBLOCK register
+		// Read VBLOCK register which is the sum of all brick voltages (stack voltage)
 		if (readAll(VBLOCK, recvBuffer, numBmbs))
 		{
 			for (uint8_t j = 0; j < numBmbs; j++)
 			{
 				// Read block voltage in [15:2]
-				uint32_t blockVRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
-				float blockV = blockVRaw * CONVERT_14BIT_TO_60V;
-				bmb[j].blockV = blockV;
+				uint32_t stackVRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
+				float stackV = stackVRaw * CONVERT_14BIT_TO_60V;
+				bmb[j].stackV = stackV;
 			}
 		}
 		else
@@ -201,7 +201,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			// Failed to acquire data. Set status to MIA
 			for (int32_t j = 0; j < numBmbs; j++)
 			{
-				bmb[j].blockVStatus = MIA;
+				bmb[j].stackVStatus = MIA;
 			}
 		}
 
@@ -289,17 +289,17 @@ void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 		}
 	}
 
-	// Read VBLOCK register
-	if (readAll(VBLOCK, recvBuffer, numBmbs))
-	{
-		for (uint8_t j = 0; j < numBmbs; j++)
+	// Read VBLOCK register which is the sum of all brick voltages (stack voltage)
+		if (readAll(VBLOCK, recvBuffer, numBmbs))
 		{
-			// Read block voltage in [15:2]
-			uint32_t blockVRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
-			float blockV = blockVRaw * CONVERT_14BIT_TO_60V;
-			bmb[j].blockV = blockV;
+			for (uint8_t j = 0; j < numBmbs; j++)
+			{
+				// Read block voltage in [15:2]
+				uint32_t stackVRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
+				float stackV = stackVRaw * CONVERT_14BIT_TO_60V;
+				bmb[j].stackV = stackV;
+			}
 		}
-	}
 	else
 	{
 		Debug("Error during VBLOCK readAll!\n");
@@ -307,7 +307,7 @@ void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 		// Failed to acquire data. Set status to MIA
 		for (int32_t j = 0; j < numBmbs; j++)
 		{
-			bmb[j].blockVStatus = MIA;
+			bmb[j].stackVStatus = MIA;
 		}
 	}
 
@@ -387,7 +387,7 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		Bmb_S* pBmb = &bmb[i];
 		float maxBrickV = MIN_VOLTAGE_SENSOR_VALUE_V;
 		float minBrickV = MAX_VOLTAGE_SENSOR_VALUE_V;
-		float stackV	= 0.0f;
+		float sumV	= 0.0f;
 		float maxBrickTemp = MIN_TEMP_SENSOR_VALUE_C;
 		float minBrickTemp = MAX_TEMP_SENSOR_VALUE_C;
 		float brickTempSum = 0.0f;
@@ -419,7 +419,7 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 				minBrickTemp = brickTemp;
 			}
 
-			stackV += brickV;
+			sumV += brickV;
 			brickTempSum += brickTemp;
 		}
 
@@ -443,14 +443,39 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		// Update BMB statistics
 		pBmb->maxBrickV = maxBrickV;
 		pBmb->minBrickV = minBrickV;
-		pBmb->stackV	= stackV;
-		pBmb->avgBrickV = stackV / NUM_BRICKS_PER_BMB;
+		pBmb->sumBrickV	= sumV;
+		pBmb->avgBrickV = sumV / NUM_BRICKS_PER_BMB;
 		pBmb->maxBrickTemp = maxBrickTemp;
 		pBmb->minBrickTemp = minBrickTemp;
 		pBmb->avgBrickTemp = brickTempSum / NUM_BRICKS_PER_BMB;
 		pBmb->maxBoardTemp = maxBoardTemp;
 		pBmb->minBoardTemp = minBoardTemp;
 		pBmb->avgBoardTemp = boardTempSum / NUM_BOARD_TEMP_PER_BMB;
+	}
+}
+
+/*!
+  @brief   Determine if a power-on reset (POR) occurred and if so properly reset the device
+  @param   bmb - The array containing BMB data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
+void detectPowerOnReset(Bmb_S* bmb, uint32_t numBmbs)
+{
+	if (readAll(STATUS, recvBuffer, numBmbs))
+	{
+		for (uint8_t j = 0; j < numBmbs; j++)
+		{
+			// Read ALRTRST in STATUS [15]
+			const bool por = (recvBuffer[3 + j] & ALRTRST) != 0;
+			if (por)
+			{
+				bmb[j].reinitRequired = true;
+			}
+		}
+	}
+	else
+	{
+		Debug("Error during STATUS readAll!\n");
 	}
 }
 
