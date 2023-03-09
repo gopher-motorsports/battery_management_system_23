@@ -25,7 +25,7 @@
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */
 /* ==================================================================== */
 
-void getTractiveSystemCurrent(Bms_S bms);
+void getTractiveSystemCurrent(Bms_S* bms);
 
 
 #endif /* INC_CURRENT_SENSE_H_ */
