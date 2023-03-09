@@ -56,6 +56,7 @@ SPI_HandleTypeDef hspi2;
 
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim10;
+TIM_HandleTypeDef htim13;
 
 UART_HandleTypeDef huart1;
 
@@ -63,6 +64,7 @@ osThreadId defaultTaskHandle;
 osThreadId mainTaskHandle;
 osThreadId ePaperHandle;
 osThreadId idleHandle;
+osThreadId statusTaskHandle;
 osMessageQId epaperQueueHandle;
 osSemaphoreId asciSpiSemHandle;
 osSemaphoreId asciSemHandle;
@@ -76,6 +78,8 @@ extern uint32_t lastBalancingUpdate;
 volatile uint32_t imdFrequency;
 volatile uint32_t imdDutyCycle;
 volatile uint32_t imdLastUpdate;
+
+volatile uint32_t ulHighFrequencyTimerTicks;
 
 /* USER CODE END PV */
 
@@ -91,10 +95,12 @@ static void MX_CAN1_Init(void);
 static void MX_CAN2_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM10_Init(void);
+static void MX_TIM13_Init(void);
 void StartDefaultTask(void const * argument);
 void StartMainTask(void const * argument);
 void StartEPaper(void const * argument);
 void StartIdle(void const * argument);
+void startStatusTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 #ifdef __GNUC__
@@ -219,6 +225,17 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 	}
 }
 
+void configureTimerForRunTimeStats(void)
+{
+    ulHighFrequencyTimerTicks = 0;
+    HAL_TIM_Base_Start_IT(&htim13);
+}
+
+unsigned long getRunTimeCounterValue(void)
+{
+	return ulHighFrequencyTimerTicks;
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -258,6 +275,7 @@ int main(void)
   MX_CAN2_Init();
   MX_ADC1_Init();
   MX_TIM10_Init();
+  MX_TIM13_Init();
   /* USER CODE BEGIN 2 */
   // initBmsGopherCan(&hcan2);
   // gsense_init(&hcan2, &hadc1, 0, 0, &htim10, MCU_GSENSE_GPIO_Port, MCU_GSENSE_Pin);
@@ -326,6 +344,10 @@ int main(void)
   /* definition and creation of idle */
   osThreadDef(idle, StartIdle, osPriorityLow, 0, 128);
   idleHandle = osThreadCreate(osThread(idle), NULL);
+
+  /* definition and creation of statusTask */
+  osThreadDef(statusTask, startStatusTask, osPriorityIdle, 0, 128);
+  statusTaskHandle = osThreadCreate(osThread(statusTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -551,7 +573,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -706,6 +728,37 @@ static void MX_TIM10_Init(void)
   /* USER CODE BEGIN TIM10_Init 2 */
 
   /* USER CODE END TIM10_Init 2 */
+
+}
+
+/**
+  * @brief TIM13 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM13_Init(void)
+{
+
+  /* USER CODE BEGIN TIM13_Init 0 */
+
+  /* USER CODE END TIM13_Init 0 */
+
+  /* USER CODE BEGIN TIM13_Init 1 */
+
+  /* USER CODE END TIM13_Init 1 */
+  htim13.Instance = TIM13;
+  htim13.Init.Prescaler = 0;
+  htim13.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim13.Init.Period = 799;
+  htim13.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim13.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim13) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM13_Init 2 */
+
+  /* USER CODE END TIM13_Init 2 */
 
 }
 
@@ -918,6 +971,59 @@ void StartIdle(void const * argument)
   /* USER CODE END StartIdle */
 }
 
+/* USER CODE BEGIN Header_startStatusTask */
+/**
+* @brief Function implementing the statusTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_startStatusTask */
+void startStatusTask(void const * argument)
+{
+  /* USER CODE BEGIN startStatusTask */
+  TaskStatus_t *pxTaskStatusArray;
+	volatile UBaseType_t uxArraySize, x;
+	uint32_t ulTotalRunTime;
+	float runtime_percent;
+
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(10000);
+
+		uxArraySize = uxTaskGetNumberOfTasks();
+		pxTaskStatusArray = pvPortMalloc(uxArraySize * sizeof(TaskStatus_t)); // a little bit scary!
+
+		if (pxTaskStatusArray != NULL) {
+			uxArraySize = uxTaskGetSystemState(pxTaskStatusArray, uxArraySize, &ulTotalRunTime);
+
+			printf("Task count = %lu\n", uxArraySize);
+			printf("No      Name          S Usage   HW\n");
+
+			for (x = 0; x < uxArraySize; x++) {
+
+				runtime_percent = (float) (100
+						* (float) pxTaskStatusArray[x].ulRunTimeCounter
+						/ (float) ulTotalRunTime);
+
+
+				printf("Task %lu: %-12s %2d %7.4f%% %4i\n", x,
+						pxTaskStatusArray[x].pcTaskName,
+						pxTaskStatusArray[x].eCurrentState, runtime_percent,
+						pxTaskStatusArray[x].usStackHighWaterMark);
+
+			}
+
+			vPortFree(pxTaskStatusArray);
+
+		} else {
+			printf("Unable to allocate stack space");
+		}
+
+	}
+  /* USER CODE END startStatusTask */
+}
+
 /**
   * @brief  Period elapsed callback in non blocking mode
   * @note   This function is called  when TIM6 interrupt took place, inside
@@ -938,6 +1044,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim->Instance == TIM10)
   {
     // DAQ_TimerCallback(htim);
+  }
+
+  if (htim->Instance == TIM13)
+  {
+    ulHighFrequencyTimerTicks++;
   }
   /* USER CODE END Callback 1 */
 }

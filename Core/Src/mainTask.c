@@ -29,6 +29,8 @@ extern Bms_S 				gBms;
 
 extern LeakyBucket_S asciCommsLeakyBucket;
 
+extern volatile uint32_t ulHighFrequencyTimerTicks;
+
 
 
 /* ==================================================================== */
@@ -106,23 +108,23 @@ void runMain()
 				initBatteryPack(numBmbs);
 			}
 			// Clear console
-			printf("\e[1;1H\e[2J");
+			// printf("\e[1;1H\e[2J");
 
-			if(balancingEnabled)
-			{
-				printf("Balancing Enabled: TRUE\n");
-			}
-			else
-			{
-				printf("Balancing Enabled: FALSE\n");
-			}
-			balancePack(numBmbs, balancingEnabled);
+			// if(balancingEnabled)
+			// {
+			// 	printf("Balancing Enabled: TRUE\n");
+			// }
+			// else
+			// {
+			// 	printf("Balancing Enabled: FALSE\n");
+			// }
+			// balancePack(numBmbs, balancingEnabled);
 			// balancePackToVoltage(numBmbs, 3.7f);
 
-			printCellVoltages();
-			printCellTemperatures();
-			printBoardTemperatures();
-			printf("Leaky bucket filled: %d\n", leakyBucketFilled(&asciCommsLeakyBucket));
+			// printCellVoltages();
+			// printCellTemperatures();
+			// printBoardTemperatures();
+			// printf("Leaky bucket filled: %d\n", leakyBucketFilled(&asciCommsLeakyBucket));
 
 			// Update lastUpdate
 			lastUpdateMain = HAL_GetTick();
