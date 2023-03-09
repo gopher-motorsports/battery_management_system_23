@@ -556,6 +556,7 @@ void resetASCI()
 */
 bool initASCI()
 {
+	Debug("Initializing ASCI connection...\n");
 	resetASCI();
 	csOff();
 	bool successfulConfig = true;

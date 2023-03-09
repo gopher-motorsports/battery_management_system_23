@@ -4,6 +4,8 @@
 #include "cmsis_os.h"
 #include "bms.h"
 #include "bmb.h"
+#include "bmbInterface.h"
+#include "debug.h"
 #include "GopherCAN.h"
 
 
@@ -40,7 +42,7 @@ void initBmsGopherCan(CAN_HandleTypeDef* hcan)
 	// initialize CAN
 	if (init_can(GCAN0, hcan, BMS_ID, BXTYPE_MASTER))
 	{
-		gBms.bmsHwState = BMS_GSNS_INIT_FAILURE;
+		gBms.bmsHwState = BMS_GSNS_FAILURE;
 	}
 }
 
@@ -48,17 +50,34 @@ void initBmsGopherCan(CAN_HandleTypeDef* hcan)
   @brief   Initialization function for the battery pack
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
-void initBatteryPack(uint32_t numBmbs)
+bool initBatteryPack(uint32_t* numBmbs)
 {
 	Bms_S* pBms = &gBms;
 
-	pBms->numBmbs = NUM_BMBS_PER_PACK;
+	if (!initASCI())
+	{
+		return false;
+	}
 
-	memset (pBms, 0, sizeof(Bms_S));
+	if (!helloAll(numBmbs))
+	{
+		return false;
+	}
 
-	initBmbs(numBmbs);
+	if (*numBmbs != NUM_BMBS_PER_PACK)
+	{
+		Debug("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", *numBmbs, NUM_BMBS_PER_PACK);
+		return false;
+	}
 
-	pBms->numBmbs = numBmbs;
+	if (!initBmbs(*numBmbs))
+	{
+		return false;
+	}
+
+	pBms->numBmbs = *numBmbs;
+	pBms->bmsHwState = BMS_NOMINAL;
+	return true;
 }
 
 void updatePackData(uint32_t numBmbs)

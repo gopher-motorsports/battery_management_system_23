@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+void initMain();
+
 void runMain();
 
 

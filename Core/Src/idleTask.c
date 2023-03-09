@@ -32,7 +32,7 @@ void runIdle()
         HAL_GPIO_WritePin(MCU_FAULT_GPIO_Port, MCU_FAULT_Pin, GPIO_PIN_RESET);
         break;
       }
-      case BMS_GSNS_INIT_FAILURE:
+      case BMS_GSNS_FAILURE:
       {
         // Single blink
         if (HAL_GetTick() - lastBlink > BLINK_DELAY)
@@ -42,7 +42,7 @@ void runIdle()
         }
         break;
       }
-      case BMS_BMB_INIT_FAILURE:
+      case BMS_BMB_FAILURE:
       {
         // Double blink
         if (HAL_GetTick() - lastBlink > BLINK_DELAY)
@@ -53,7 +53,6 @@ void runIdle()
         break;
       }
     }
-
     if (remainingBlinks > 0 && HAL_GetTick() - lastBlink > 2*BLINK_DURATION)
     {
       // Start a new blink sequence
@@ -63,6 +62,6 @@ void runIdle()
     }
     if (HAL_GetTick() - lastBlink > BLINK_DURATION)
     {
-      HAL_GPIO_WritePin(MCU_FAULT_GPIO_Port, MCU_FAULT_Pin, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(MCU_FAULT_GPIO_Port, MCU_FAULT_Pin, GPIO_PIN_RESET);
     }
 }

@@ -144,7 +144,7 @@ typedef struct
   @param   numBmbs - The expected number of BMBs in the daisy chain
   @return  True if successful initialization, false otherwise
 */
-void initBmbs(uint32_t numBmbs);
+bool initBmbs(uint32_t numBmbs);
 
 /*!
   @brief   Update BMB voltages and temperature data. Once new data gathered start new

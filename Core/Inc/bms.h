@@ -33,8 +33,8 @@
 typedef enum
 {
 	BMS_NOMINAL = 0,
-	BMS_GSNS_INIT_FAILURE,
-	BMS_BMB_INIT_FAILURE
+	BMS_GSNS_FAILURE,
+	BMS_BMB_FAILURE
 } Bms_Hardware_State_E;
 
 /* ==================================================================== */
@@ -90,7 +90,7 @@ typedef struct
   @brief   Initialization function for the battery pack
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
-void initBatteryPack(uint32_t numBmbs);
+bool initBatteryPack(uint32_t* numBmbs);
 
 void initBmsGopherCan(CAN_HandleTypeDef* hcan);
 

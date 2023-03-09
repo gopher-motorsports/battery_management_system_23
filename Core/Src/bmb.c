@@ -92,7 +92,7 @@ void updateBmbBalanceSwitches(Bmb_S* bmb)
   @return  True if successful initialization, false otherwise
 */
 //TODO make this return bool
-void initBmbs(uint32_t numBmbs)
+bool initBmbs(uint32_t numBmbs)
 {
 	// TODO - do we want to read the register contents back and verify values?
 	// Enable alive counter byte
@@ -115,10 +115,13 @@ void initBmbs(uint32_t numBmbs)
 	if(!writeAll(SCANCTRL, (SCANCTRL_START_SCAN | SCANCTRL_32_OVERSAMPLES | SCANCTRL_ENABLE_AUTOBALSWDIS), numBmbs))
 	{
 		Debug("Failed to start initial scan!\n");
+		return false;
 	}
 
 	// Set brickOV voltage alert threshold
 	// Set brickUV voltage alert threshold
+
+	return true;
 }
 
 /*!
