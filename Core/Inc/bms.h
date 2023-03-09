@@ -37,6 +37,13 @@ typedef enum
 	BMS_BMB_FAILURE
 } Bms_Hardware_State_E;
 
+typedef enum
+{
+	SNA = 0,	// Value on startup
+	GOOD,		// Data nominal
+	MIA			// Data wasn't aquired
+} Sensor_Status_E;
+
 /* ==================================================================== */
 /* ============================== STRUCTS============================== */
 /* ==================================================================== */
@@ -59,6 +66,10 @@ typedef struct
 	float avgBoardTemp;
 
 	IMD_State_E imdState;
+
+	Sensor_Status_E currentSensorStatusHI;
+	Sensor_Status_E currentSensorStatusLO;
+	float tractiveSystemCurrent;
 
 	bool bspdFault;
 	bool imdFault;
