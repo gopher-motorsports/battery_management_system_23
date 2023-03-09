@@ -125,13 +125,11 @@ static void waitBusyRelease()
 {
     if(HAL_GPIO_ReadPin(BUSY_GPIO_Port, BUSY_Pin) == 1)
     {
-		
         xSemaphoreTake(epdBusySemHandle, 0); // Guarantee epapBusySemHandle set to 0 
         if (!(xSemaphoreTake(epdBusySemHandle, 5000) == pdTRUE))
-            {
-                Debug("AAAInterrupt failed to occur during SPI transmit\n");
-            }
-        Debug("e-Paper busy release\r\n");
+		{
+			Debug("Interrupt failed to occur during Epapere SPI transmit\n");
+		}
     }
 }
 

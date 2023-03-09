@@ -84,7 +84,7 @@ void runMain()
 	}
 	else if(initialized)
 	{
-
+		
 		updateBmbData(gBms.bmb, numBmbs);
 
 		aggregatePackData(numBmbs);

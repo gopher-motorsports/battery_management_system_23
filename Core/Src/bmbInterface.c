@@ -196,6 +196,7 @@ static void csOff()
 static void sendAsciSpi(uint8_t value)
 {
 	csOn();
+	xSemaphoreTake(asciSpiSemHandle, 0);
 	HAL_SPI_Transmit_IT(&hspi1, (uint8_t *)&value, 1);
 	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 	{
@@ -215,6 +216,7 @@ static uint8_t readRegister(uint8_t registerAddress)
 	// Since reading add 1 to address
 	const uint8_t sendBuffer[2] = {registerAddress + 1};
 	uint8_t recvBuffer[2] = {0};
+	xSemaphoreTake(asciSpiSemHandle, 0);
 	HAL_SPI_TransmitReceive_IT(&hspi1, (uint8_t *)&sendBuffer, (uint8_t *)&recvBuffer, 2);
 	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 	{
@@ -233,6 +235,7 @@ static void writeRegister(uint8_t registerAddress, uint8_t value)
 {
 	csOn();
 	uint8_t sendBuffer[2] = {registerAddress, value};
+	xSemaphoreTake(asciSpiSemHandle, 0);
 	HAL_SPI_Transmit_IT(&hspi1, (uint8_t *)&sendBuffer, 2);
 	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 	{
@@ -258,6 +261,7 @@ static bool writeAndVerifyRegister(uint8_t registerAddress, uint8_t value)
 			// Data verified - exit
 			return true;
 		}
+		// Debug("Expected: %x\tReceived: %x\n", value, readValue);
 	}
 	Debug("Failed to write and verify register\n");
 	return false;
@@ -390,6 +394,7 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 
 		// Write queue
 		csOn();
+		xSemaphoreTake(asciSpiSemHandle, 0);
 		HAL_SPI_Transmit_IT(&hspi1, data_p, numBytes);
 		if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 		{
@@ -402,6 +407,7 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 		// Read queue
 		sendBuffer[0] = data_p[0] + 1;	// Read address is one greater than the write address
 		csOn();
+		xSemaphoreTake(asciSpiSemHandle, 0);
 		HAL_SPI_TransmitReceive_IT(&hspi1, sendBuffer, recvBuffer, numBytes);
 		if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 		{
@@ -439,6 +445,7 @@ static bool readNextSpiMessage(uint8_t** data_p, uint32_t numBytesToRead)
 	// Read numBytesToRead + 1 since we also need to send CMD_RD_NXT_MSG
 	sendBuffer[0] = CMD_RD_NXT_MSG;
 	csOn();
+	xSemaphoreTake(asciSpiSemHandle, 0);
 	HAL_SPI_TransmitReceive_IT(	&hspi1, sendBuffer, *data_p, arraySize);
 	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 	{
@@ -482,7 +489,7 @@ static bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, co
 	{
 		return false;
 	}
-
+	xSemaphoreTake(asciSemHandle, 0);
 	sendAsciSpi(CMD_WR_NXT_LD_Q_L0);
 	// Wait for ASCI interrupt to occur
 	if (xSemaphoreTake(asciSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
@@ -553,6 +560,9 @@ bool initASCI()
 	csOff();
 	bool successfulConfig = true;
 	// dummy transaction since this chip sucks
+	readRegister(R_CONFIG_3);
+	readRegister(R_CONFIG_3);
+	readRegister(R_CONFIG_3);
 	readRegister(R_CONFIG_3);
 
 	// Set Keep_Alive to 0x05 = 160us

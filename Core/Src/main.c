@@ -259,8 +259,8 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
-  initBmsGopherCan(&hcan2);
-  gsense_init(&hcan2, &hadc1, 0, 0, &htim10, MCU_GSENSE_GPIO_Port, MCU_GSENSE_Pin);
+  // initBmsGopherCan(&hcan2);
+  // gsense_init(&hcan2, &hadc1, 0, 0, &htim10, MCU_GSENSE_GPIO_Port, MCU_GSENSE_Pin);
   
   // Start IMD timer capture
   HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2);   // Main channel
@@ -291,8 +291,8 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   // Set semaphore count to 0 for proper ISR function
-  xSemaphoreTake(asciSpiSemHandle, 1);
-  xSemaphoreTake(asciSemHandle, 1);
+  xSemaphoreTake(asciSpiSemHandle, 0);
+  xSemaphoreTake(asciSemHandle, 0);
 
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
@@ -320,7 +320,7 @@ int main(void)
   mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
 
   /* definition and creation of ePaper */
-  osThreadDef(ePaper, StartEPaper, osPriorityBelowNormal, 0, 256);
+  osThreadDef(ePaper, StartEPaper, osPriorityLow, 0, 256);
   ePaperHandle = osThreadCreate(osThread(ePaper), NULL);
 
   /* definition and creation of idle */
@@ -551,7 +551,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -893,7 +893,7 @@ void StartEPaper(void const * argument)
   for(;;)
   {
     runEpaperTask();
-    osDelay(1);
+    osDelay(500);
   }
   /* USER CODE END StartEPaper */
 }
@@ -937,7 +937,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 1 */
   if (htim->Instance == TIM10)
   {
-    DAQ_TimerCallback(htim);
+    // DAQ_TimerCallback(htim);
   }
   /* USER CODE END Callback 1 */
 }
