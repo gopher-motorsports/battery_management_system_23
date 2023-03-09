@@ -546,8 +546,9 @@ void disableASCI()
 void resetASCI()
 {
 	disableASCI();
-	vTaskDelay(10);
+	vTaskDelay(50);
 	enableASCI();
+	vTaskDelay(10);
 }
 
 /*!
@@ -573,6 +574,9 @@ bool initASCI()
 	successfulConfig &= writeAndVerifyRegister(R_RX_INTERRUPT_ENABLE, 0xA8);
 
 	clearRxBuffer();
+
+	// Ensure that asciSemHandle is set to 0
+	xSemaphoreTake(asciSemHandle, 0);
 
 	// Enable TX_Preambles mode
 	successfulConfig &= writeAndVerifyRegister(R_CONFIG_2, 0x30);
