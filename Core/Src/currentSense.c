@@ -35,20 +35,20 @@ void getTractiveSystemCurrent(Bms_S* bms)
     
     if(fabs(currLO) < CURRENT_LOW_RAIL_THRESHOLD)
     {
-        bms->currentSensorStatusLO = SENSE_GOOD;
+        bms->currentSensorStatusLO = GOOD;
     }
     else
     {
-        // Debug("Current sensor low channel has railed!\n");
-        bms->currentSensorStatusLO = SENSE_MIA;
+        Debug("Current sensor low channel has railed!");
+        bms->currentSensorStatusLO = MIA;
     }
 
     // To use the HI current sensor channel, it must be working AND (it must exceed the measuring range of the low channel OR the low channel must be faulty)
-    if ((bms->currentSensorStatusHI == SENSE_GOOD) && ((fabs(currLO) > CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD) || (bms->currentSensorStatusLO != SENSE_GOOD)))
+    if ((bms->currentSensorStatusHI == GOOD) && ((currHI > CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD) || (bms->currentSensorStatusLO != GOOD)))
     {
         bms->tractiveSystemCurrent = currHI;
     }
-    else if (bms->currentSensorStatusLO == SENSE_GOOD) // If the above condition is not satisfied, the LO channel must be working in order to use its data
+    else if (bms->currentSensorStatusLO == GOOD) // If the above condition is not satisfied, the LO channel must be working in order to use its data
     {
         bms->tractiveSystemCurrent = currLO;
     }
