@@ -317,7 +317,7 @@ void updateInternalResistance()
 		lastResistanceUpdate = HAL_GetTick();
 
 		// Right shift both FIFO buffers 
-		for(int32_t i = INTERNAL_RESISTANCE_BUFFER_SIZE - 1; i >= 0; i--)
+		for(int32_t i = INTERNAL_RESISTANCE_BUFFER_SIZE - 1; i > 0; i--)
 		{
 			currentBuffer[i] = currentBuffer[i-1];
 			voltageBuffer[i] = voltageBuffer[i-1];
