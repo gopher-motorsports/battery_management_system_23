@@ -361,12 +361,12 @@ void updateInternalResistance()
 
 		// Calculate greatest dI and dV contained in buffer
 		float deltaCurrent = currentBuffer[maxCurrentIndex] - currentBuffer[minCurrentIndex];
-		float deltaVoltage = voltageBuffer[maxCurrentIndex] - voltageBuffer[minCurrentIndex];
 
 		// If deltaI threshold is met, internal resistance can be calulated and updated
 		// If deltaI exceeds 1000, it is because the buffer is filled with -1000.0f blanket data, and the calculation should be skipped
-		if((deltaCurrent >= INTERNAL_RESISTANCE_MIN_CURRENT_DELTA) && (deltaCurrent < 1000))
+		if(deltaCurrent >= INTERNAL_RESISTANCE_MIN_CURRENT_DELTA)
 		{
+			float deltaVoltage = voltageBuffer[maxCurrentIndex] - voltageBuffer[minCurrentIndex];
 			gBms.packResistance = deltaVoltage / deltaCurrent;
 		}
 	}
