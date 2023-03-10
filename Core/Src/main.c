@@ -936,6 +936,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
+  if (htim->Instance == TIM10)
+  {
+    // DAQ_TimerCallback(htim);
+  }
   /* USER CODE END Callback 1 */
 }
 
