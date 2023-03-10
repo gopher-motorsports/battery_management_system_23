@@ -68,12 +68,14 @@ void initMain()
 		}
 	}
 	Debug("Failed to initialize BMS\n");
+	gBms.bmsHwState = BMS_BMB_FAILURE;
 }
 
 void runMain()
 {
 	if (gBms.bmsHwState == BMS_BMB_FAILURE)
 	{
+		// Retry initializing the BMBs
 		initBatteryPack(&numBmbs);
 	}
 	else

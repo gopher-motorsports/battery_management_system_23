@@ -894,7 +894,7 @@ void StartEPaper(void const * argument)
   for(;;)
   {
     runEpaperTask();
-    osDelay(500);
+    osDelay(100);
   }
   /* USER CODE END StartEPaper */
 }
@@ -914,7 +914,7 @@ void StartIdle(void const * argument)
   {
     // Update heartbeat and fault leds
     runIdle();
-    osDelay(1);
+    osDelay(10);
   }
   /* USER CODE END StartIdle */
 }

@@ -91,7 +91,6 @@ void updateBmbBalanceSwitches(Bmb_S* bmb)
   @param   numBmbs - The expected number of BMBs in the daisy chain
   @return  True if successful initialization, false otherwise
 */
-//TODO make this return bool
 bool initBmbs(uint32_t numBmbs)
 {
 	// TODO - do we want to read the register contents back and verify values?
