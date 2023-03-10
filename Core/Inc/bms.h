@@ -26,6 +26,16 @@
 #define MAX_CELL_TEMP_CHARGING_ALLOWED_C	50.0f
 
 
+// The delay between consecutive attempted internal resistance calcs in millis
+#define INTERNAL_RESISTANCE_UPDATE_PERIOD_MS 	100
+// The amount of time voltage and current data can be considered for an internal resistance calc;
+#define INTERNAL_RESISTANCE_TIME_BUFFER_MS 		10000
+// The number of elements in the data buffer array
+#define INTERNAL_RESISTANCE_BUFFER_SIZE			INTERNAL_RESISTANCE_TIME_BUFFER_MS / INTERNAL_RESISTANCE_UPDATE_PERIOD_MS
+
+// The minimum difference in current data points to calculate internal resistance in Amps
+#define INTERNAL_RESISTANCE_MIN_CURRENT_DELTA	20
+
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
 /* ==================================================================== */
@@ -70,6 +80,8 @@ typedef struct
 	Sensor_Status_E currentSensorStatusHI;
 	Sensor_Status_E currentSensorStatusLO;
 	float tractiveSystemCurrent;
+
+	float packResistance;
 
 	bool bspdFault;
 	bool imdFault;
@@ -141,5 +153,10 @@ void updateEpaper();
   @brief   Update the tractive system current
 */
 void updateTractiveCurrent();
+
+/*!
+  @brief   Calculate the internal resistance of the battery pack
+*/
+void updateInternalResistance();
 
 #endif /* INC_BMS_H_ */

@@ -7,6 +7,7 @@
 #include "bmbInterface.h"
 #include "debug.h"
 #include "GopherCAN.h"
+#include "debug.h"
 #include "currentSense.h"
 
 
@@ -292,4 +293,67 @@ void updateTractiveCurrent()
 		getTractiveSystemCurrent(&gBms);
 	}
 	
+}
+
+void updateInternalResistance()
+{
+	// FIFO buffers to hold a number of seconds worth of pack current and voltage data
+	static float currentBuffer[INTERNAL_RESISTANCE_BUFFER_SIZE] = {[0 ... INTERNAL_RESISTANCE_BUFFER_SIZE-1] = -1000.0f};
+	static float voltageBuffer[INTERNAL_RESISTANCE_BUFFER_SIZE] = {[0 ... INTERNAL_RESISTANCE_BUFFER_SIZE-1] = -1000.0f};
+
+	static uint32_t lastResistanceUpdate = 0;
+	if((HAL_GetTick() - lastResistanceUpdate) > INTERNAL_RESISTANCE_UPDATE_PERIOD_MS)
+	{
+		lastResistanceUpdate = HAL_GetTick();
+
+		// TODO add bmb sensor status check
+		if((gBms.currentSensorStatusLO == SENSE_GOOD) && (gBms.currentSensorStatusHI == SENSE_GOOD))
+		{
+			for(int32_t i = INTERNAL_RESISTANCE_BUFFER_SIZE - 1; i >= 0; i--)
+			{
+				currentBuffer[i] = currentBuffer[i-1];
+				voltageBuffer[i] = voltageBuffer[i-1];
+			}
+
+			currentBuffer[0] = gBms.tractiveSystemCurrent;
+			voltageBuffer[0] = gBms.avgBrickV * NUM_BMBS_PER_PACK * NUM_BRICKS_PER_BMB; // Change this??
+
+			float maxCurrent = currentBuffer[0];
+			float minCurrent = currentBuffer[0];
+			uint32_t maxCurrentIndex = 0;
+			uint32_t minCurrentIndex = 0;
+
+			for(int32_t i = 1; i < INTERNAL_RESISTANCE_BUFFER_SIZE; i++)
+			{
+				if(currentBuffer[i] < -900.0f)
+				{
+					break;
+				}
+				if(currentBuffer[i] > maxCurrent)
+				{
+					maxCurrent = currentBuffer[i];
+					maxCurrentIndex = i;
+				}
+				if(currentBuffer[i] < minCurrent)
+				{
+					minCurrent = currentBuffer[i];
+					minCurrentIndex = i;
+				}
+			}
+
+			float deltaCurrent = currentBuffer[maxCurrentIndex] - currentBuffer[minCurrentIndex];
+			float deltaVoltage = voltageBuffer[maxCurrentIndex] - voltageBuffer[minCurrentIndex];
+
+			if(deltaCurrent >= INTERNAL_RESISTANCE_MIN_CURRENT_DELTA)
+			{
+				gBms.packResistance = deltaVoltage / deltaCurrent;
+			}
+		}
+		else
+		{
+			Debug("Failed to calculate internal resistance");
+			memset(currentBuffer, -1000.0f, INTERNAL_RESISTANCE_BUFFER_SIZE * sizeof(float));
+			memset(voltageBuffer, -1000.0f, INTERNAL_RESISTANCE_BUFFER_SIZE * sizeof(float));
+		}
+	}
 }
