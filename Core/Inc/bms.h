@@ -39,9 +39,9 @@ typedef enum
 
 typedef enum
 {
-	SNA = 0,	// Value on startup
-	GOOD,		// Data nominal
-	MIA			// Data wasn't aquired
+	SENSE_SNA = 0,	// Value on startup
+	SENSE_GOOD,		// Data nominal
+	SENSE_MIA			// Data wasn't aquired
 } Sensor_Status_E;
 
 /* ==================================================================== */
