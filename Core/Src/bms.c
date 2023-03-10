@@ -292,11 +292,11 @@ void updateEpaper()
 
 void updateTractiveCurrent()
 {
-	static lastcurrentUpdate = 0;
-	if((HAL_GetTick() - lastcurrentUpdate) > 50)
+	static uint32_t lastCurrentUpdate = 0;
+	if((HAL_GetTick() - lastCurrentUpdate) > 50)
 	{
+		lastCurrentUpdate = HAL_GetTick();
 		getTractiveSystemCurrent(&gBms);
-		lastcurrentUpdate = HAL_GetTick();
 	}
 	
 }
