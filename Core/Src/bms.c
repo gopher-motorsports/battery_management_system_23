@@ -305,62 +305,69 @@ void updateTractiveCurrent()
 void updateInternalResistance()
 {
 	// FIFO buffers to hold a number of seconds worth of pack current and voltage data
+	// Current Buffer is initialized to value not returnable by the current sensor
 	static float currentBuffer[INTERNAL_RESISTANCE_BUFFER_SIZE] = {[0 ... INTERNAL_RESISTANCE_BUFFER_SIZE-1] = -1000.0f};
-	static float voltageBuffer[INTERNAL_RESISTANCE_BUFFER_SIZE] = {[0 ... INTERNAL_RESISTANCE_BUFFER_SIZE-1] = -1000.0f};
+	static float voltageBuffer[INTERNAL_RESISTANCE_BUFFER_SIZE]; // Static arrays auto initialize to 0.0f
 
+	// Static variable to hold last update
 	static uint32_t lastResistanceUpdate = 0;
 	if((HAL_GetTick() - lastResistanceUpdate) > INTERNAL_RESISTANCE_UPDATE_PERIOD_MS)
 	{
+		// Update static period variable
 		lastResistanceUpdate = HAL_GetTick();
 
+		// Right shift both FIFO buffers 
+		for(int32_t i = INTERNAL_RESISTANCE_BUFFER_SIZE - 1; i >= 0; i--)
+		{
+			currentBuffer[i] = currentBuffer[i-1];
+			voltageBuffer[i] = voltageBuffer[i-1];
+		}
+
 		// TODO add bmb sensor status check
+		// If sensor data good, update buffers with current and voltage data
 		if((gBms.currentSensorStatusLO == SENSE_GOOD) && (gBms.currentSensorStatusHI == SENSE_GOOD))
 		{
-			for(int32_t i = INTERNAL_RESISTANCE_BUFFER_SIZE - 1; i >= 0; i--)
-			{
-				currentBuffer[i] = currentBuffer[i-1];
-				voltageBuffer[i] = voltageBuffer[i-1];
-			}
-
 			currentBuffer[0] = gBms.tractiveSystemCurrent;
 			voltageBuffer[0] = gBms.avgBrickV * NUM_BMBS_PER_PACK * NUM_BRICKS_PER_BMB; // Change this??
+		}
+		else // If sensor data bad, update current buffers with default value;
+		{
+			Debug("Failed to update internal resistance calculation buffer");
+			currentBuffer[0] = -1000.0f;
+		}
 
-			float maxCurrent = currentBuffer[0];
-			float minCurrent = currentBuffer[0];
-			uint32_t maxCurrentIndex = 0;
-			uint32_t minCurrentIndex = 0;
+		float maxCurrent = -1000.0f;
+		float minCurrent = 1000.0f;
+		uint32_t maxCurrentIndex = 0;
+		uint32_t minCurrentIndex = 0;
 
-			for(int32_t i = 1; i < INTERNAL_RESISTANCE_BUFFER_SIZE; i++)
+		// Calculate max and min currents in buffer
+		for(int32_t i = 0; i < INTERNAL_RESISTANCE_BUFFER_SIZE; i++)
+		{
+			if(currentBuffer[i] > -900.0f)
 			{
-				if(currentBuffer[i] < -900.0f)
-				{
-					break;
-				}
 				if(currentBuffer[i] > maxCurrent)
 				{
 					maxCurrent = currentBuffer[i];
 					maxCurrentIndex = i;
 				}
-				if(currentBuffer[i] < minCurrent)
+				else if(currentBuffer[i] < minCurrent)
 				{
 					minCurrent = currentBuffer[i];
 					minCurrentIndex = i;
 				}
 			}
-
-			float deltaCurrent = currentBuffer[maxCurrentIndex] - currentBuffer[minCurrentIndex];
-			float deltaVoltage = voltageBuffer[maxCurrentIndex] - voltageBuffer[minCurrentIndex];
-
-			if(deltaCurrent >= INTERNAL_RESISTANCE_MIN_CURRENT_DELTA)
-			{
-				gBms.packResistance = deltaVoltage / deltaCurrent;
-			}
 		}
-		else
+
+		// Calculate greatest dI and dV contained in buffer
+		float deltaCurrent = currentBuffer[maxCurrentIndex] - currentBuffer[minCurrentIndex];
+		float deltaVoltage = voltageBuffer[maxCurrentIndex] - voltageBuffer[minCurrentIndex];
+
+		// If deltaI threshold is met, internal resistance can be calulated and updated
+		// If deltaI exceeds 1000, it is because the buffer is filled with -1000.0f blanket data, and the calculation should be skipped
+		if((deltaCurrent >= INTERNAL_RESISTANCE_MIN_CURRENT_DELTA) && (deltaCurrent < 1000))
 		{
-			Debug("Failed to calculate internal resistance");
-			memset(currentBuffer, -1000.0f, INTERNAL_RESISTANCE_BUFFER_SIZE * sizeof(float));
-			memset(voltageBuffer, -1000.0f, INTERNAL_RESISTANCE_BUFFER_SIZE * sizeof(float));
+			gBms.packResistance = deltaVoltage / deltaCurrent;
 		}
 	}
 }
