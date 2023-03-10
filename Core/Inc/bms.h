@@ -137,4 +137,9 @@ void updateSdcStatus();
 */
 void updateEpaper();
 
+/*!
+  @brief   Update the tractive system current
+*/
+void updateTractiveCurrent();
+
 #endif /* INC_BMS_H_ */

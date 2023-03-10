@@ -91,6 +91,8 @@ void runMain()
 
 		updateEpaper();
 
+		updateTractiveCurrent();
+
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{
 			if (leakyBucketFilled(&asciCommsLeakyBucket))
@@ -114,7 +116,9 @@ void runMain()
 			printCellVoltages();
 			printCellTemperatures();
 			printBoardTemperatures();
-			printf("Leaky bucket filled: %d\n", leakyBucketFilled(&asciCommsLeakyBucket));
+			printf("Leaky bucket filled: %d\n\n", leakyBucketFilled(&asciCommsLeakyBucket));
+
+			printf("Tractive Current: %6.3f\n", gBms.tractiveSystemCurrent);
 
 			// Update lastUpdate
 			lastUpdateMain = HAL_GetTick();

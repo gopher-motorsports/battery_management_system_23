@@ -11,9 +11,9 @@
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
 
-#define CURRENT_HIGH_RAIL_THRESHOLD             420
-#define CURRENT_LOW_RAIL_THRESHOLD              36
-#define CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD    30
+#define CURRENT_HIGH_RAIL_THRESHOLD             590//420
+#define CURRENT_LOW_RAIL_THRESHOLD              87//36
+#define CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD    75//30
 
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */

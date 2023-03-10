@@ -7,6 +7,7 @@
 #include "bmbInterface.h"
 #include "debug.h"
 #include "GopherCAN.h"
+#include "currentSense.h"
 
 
 /* ==================================================================== */
@@ -280,4 +281,15 @@ void updateEpaper()
 
 		xQueueOverwrite(epaperQueueHandle, &epapData);
 	}
+}
+
+void updateTractiveCurrent()
+{
+	static lastcurrentUpdate = 0;
+	if((HAL_GetTick() - lastcurrentUpdate) > 50)
+	{
+		getTractiveSystemCurrent(&gBms);
+		lastcurrentUpdate = HAL_GetTick();
+	}
+	
 }
