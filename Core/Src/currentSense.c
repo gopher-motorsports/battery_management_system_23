@@ -1,20 +1,20 @@
 /* ==================================================================== */
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
+
 #include "currentSense.h"
 #include "GopherCAN.h"
 #include <math.h>
 #include "debug.h"
 
 /* ==================================================================== */
-/* ======================= EXTERNAL VARIABLES ========================= */
-/* ==================================================================== */
-
-
-/* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
 /* ==================================================================== */
 
+/*!
+  @brief   Update the bms tractive system current data and sensor status from gophercan
+  @param   bms - BMS data struct
+*/
 void getTractiveSystemCurrent(Bms_S* bms)
 {
     // Fetch current sensor data from gophercan
@@ -57,4 +57,3 @@ void getTractiveSystemCurrent(Bms_S* bms)
         Debug("Failed to read data from current sensor");
     }
 }
-
