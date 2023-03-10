@@ -289,14 +289,3 @@ void updateEpaper()
 		xQueueOverwrite(epaperQueueHandle, &epapData);
 	}
 }
-
-void updateTractiveCurrent()
-{
-	static uint32_t lastCurrentUpdate = 0;
-	if((HAL_GetTick() - lastCurrentUpdate) > 50)
-	{
-		lastCurrentUpdate = HAL_GetTick();
-		getTractiveSystemCurrent(&gBms);
-	}
-	
-}
