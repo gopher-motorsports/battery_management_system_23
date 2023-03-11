@@ -35,42 +35,62 @@ void getInternalResistance(Bms_S* bms)
     {
         lastDataUpdate = HAL_GetTick();
 
-        // Update discrete data buffers with current bms data
-        currentDiscreteBuffer[discreteBufferIndex] = (bms->tractiveSystemCurrent / 25.0f);
-        for(int32_t i = 0; i < NUM_BMBS_PER_PACK; i++)
+        static bool dataGood = true;
+        if(bms->currentSensorStatusLO == SENSE_GOOD)
         {
-            for(int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
-            {
-                voltageDiscreteBuffer[i][j][discreteBufferIndex] = bms->bmb[i].brickV[j];
-            }    
-        }
-
-        if((bms->currentSensorStatusLO == SENSE_GOOD) && (++discreteBufferIndex >= 10))
-        {
-            discreteBufferIndex = 0;
-
-            // Update avg data buffers with discrete data buffers
-            float currentDiscreteSum = 0;
-            for(int32_t i = 0; i < 10; i++)
-            {
-                currentDiscreteSum += currentDiscreteBuffer[i];
-            }
-            currentAvgBuffer[avgBufferIndex] = currentDiscreteSum / 10;
-
+            // Update discrete data buffers with current bms data
+            currentDiscreteBuffer[discreteBufferIndex] = (bms->tractiveSystemCurrent / 25.0f);
             for(int32_t i = 0; i < NUM_BMBS_PER_PACK; i++)
             {
                 for(int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
                 {
-                    float voltageDiscreteSum = 0;
-                    for(int32_t k = 0; k < 10; k++)
-                    {
-                        voltageDiscreteSum += voltageDiscreteBuffer[i][j][k];
-                    }
-                    voltageAvgBuffer[i][j][avgBufferIndex] = voltageDiscreteSum / 10;
+                    voltageDiscreteBuffer[i][j][discreteBufferIndex] = bms->bmb[i].brickV[j];
                 }    
             }
+        }
+        else
+        {
+            dataGood = false;
+        }
 
-            if (++avgBufferIndex >= 10)
+        discreteBufferIndex++;
+
+        if((discreteBufferIndex >= 10))
+        {
+            discreteBufferIndex = 0;
+
+            if(dataGood)
+            {
+                // Update avg data buffers with discrete data buffers
+                float currentDiscreteSum = 0;
+                for(int32_t i = 0; i < 10; i++)
+                {
+                    currentDiscreteSum += currentDiscreteBuffer[i];
+                }
+                currentAvgBuffer[avgBufferIndex] = currentDiscreteSum / 10;
+
+                for(int32_t i = 0; i < NUM_BMBS_PER_PACK; i++)
+                {
+                    for(int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
+                    {
+                        float voltageDiscreteSum = 0;
+                        for(int32_t k = 0; k < 10; k++)
+                        {
+                            voltageDiscreteSum += voltageDiscreteBuffer[i][j][k];
+                        }
+                        voltageAvgBuffer[i][j][avgBufferIndex] = voltageDiscreteSum / 10;
+                    }    
+                }
+            }
+            else
+            {
+                currentAvgBuffer[avgBufferIndex] = -1000.0f;
+                dataGood = true;
+            }
+
+            avgBufferIndex++;
+
+            if (avgBufferIndex >= 10)
             {
                 avgBufferIndex = 0;
             }
