@@ -316,7 +316,7 @@ int main(void)
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of mainTask */
-  osThreadDef(mainTask, StartMainTask, osPriorityNormal, 0, 256);
+  osThreadDef(mainTask, StartMainTask, osPriorityHigh, 0, 256);
   mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
 
   /* definition and creation of ePaper */
@@ -936,10 +936,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-  if (htim->Instance == TIM10)
-  {
-    DAQ_TimerCallback(htim);
-  }
   /* USER CODE END Callback 1 */
 }
 
