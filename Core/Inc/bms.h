@@ -81,7 +81,7 @@ typedef struct
 	Sensor_Status_E currentSensorStatusLO;
 	float tractiveSystemCurrent;
 
-	float packResistance;
+	float brickResistance[NUM_BMBS_PER_PACK][NUM_BRICKS_PER_BMB];
 
 	bool bspdFault;
 	bool imdFault;
@@ -153,10 +153,5 @@ void updateEpaper();
   @brief   Update the tractive system current
 */
 void updateTractiveCurrent();
-
-/*!
-  @brief   Calculate the internal resistance of the battery pack
-*/
-void updateInternalResistance();
 
 #endif /* INC_BMS_H_ */
