@@ -3,6 +3,7 @@
 /* ==================================================================== */
 
 #include "internalResistance.h"
+#include "math.h"
 
 /* ==================================================================== */
 /* ========================= LOCAL VARIABLES ========================== */
@@ -69,13 +70,18 @@ void getInternalResistance(Bms_S* bms)
                 }    
             }
 
+            if (++avgBufferIndex >= 10)
+            {
+                avgBufferIndex = 0;
+            }
+
             float maxCurrent = -1000.0f;
             float minCurrent = 1000.0f;
             uint32_t maxCurrentIndex = 0;
             uint32_t minCurrentIndex = 0;
 
             // Calculate max and min currents in buffer
-            for(int32_t i = 0; i < INTERNAL_RESISTANCE_BUFFER_SIZE; i++)
+            for(int32_t i = 0; i < 10; i++)
             {
                 if(currentAvgBuffer[i] > -900.0f)
                 {
@@ -94,7 +100,7 @@ void getInternalResistance(Bms_S* bms)
             float deltaCurrent = currentAvgBuffer[maxCurrentIndex] - currentAvgBuffer[minCurrentIndex];
 
             // If delta current threshold is met, internal resistance can be calulated and updated
-            if((deltaCurrent >= 1) && (deltaCurrent <= 75))
+            if((fabs(deltaCurrent) >= 1) && (fabs(deltaCurrent) <= 75))
             {
                 for(int32_t i = 0; i < NUM_BMBS_PER_PACK; i++)
                 {
