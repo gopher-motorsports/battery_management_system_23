@@ -81,7 +81,7 @@ void runMain()
 	else
 	{
 		
-		updateBmbData(gBms.bmb, numBmbs);
+		updatePackData(numBmbs);
 
 		aggregatePackData(numBmbs);
 
@@ -92,8 +92,6 @@ void runMain()
 		updateEpaper();
 
 		updateTractiveCurrent();
-
-		getInternalResistance(&gBms);
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{

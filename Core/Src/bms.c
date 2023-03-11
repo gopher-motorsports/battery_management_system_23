@@ -9,6 +9,7 @@
 #include "GopherCAN.h"
 #include "debug.h"
 #include "currentSense.h"
+#include "internalResistance.h"
 
 
 /* ==================================================================== */
@@ -92,7 +93,8 @@ initializationError:
 
 void updatePackData(uint32_t numBmbs)
 {
-	// TODO - call underlying bmb.c functions
+	updateBmbData(gBms.bmb, numBmbs);
+	putVoltageBuffer(&gBms);
 }
 
 /*!
@@ -294,10 +296,10 @@ void updateEpaper()
 void updateTractiveCurrent()
 {
 	static uint32_t lastCurrentUpdate = 0;
-	if((HAL_GetTick() - lastCurrentUpdate) > 50)
+	if((HAL_GetTick() - lastCurrentUpdate) > CURRENT_SENSOR_UPDATE_PERIOD_MS)
 	{
 		lastCurrentUpdate = HAL_GetTick();
 		getTractiveSystemCurrent(&gBms);
-	}
-	
+		putCurrentBuffer(&gBms);
+	}	
 }

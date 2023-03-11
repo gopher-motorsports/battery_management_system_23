@@ -14,6 +14,8 @@
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
 
+#define BMB_DATA_REFRESH_DELAY_MS 50
+
 #define VERSION			0x00
 #define ADDRESS			0x01
 #define STATUS			0x02
