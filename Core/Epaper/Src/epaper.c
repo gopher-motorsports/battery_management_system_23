@@ -22,7 +22,7 @@
 	{ \
 		HAL_StatusTypeDef status = fn(hspi, __VA_ARGS__); \
 		if (status == HAL_OK) { break; } \
-		Debug("Failed SPI transmission - Retrying!\n"); \
+		Debug("Failed ePaper SPI transmission - Retrying!\n"); \
 		HAL_SPI_Abort(hspi); \
 	}
 
@@ -144,7 +144,7 @@ static void waitBusyRelease()
         xSemaphoreTake(epdBusySemHandle, 0); // Guarantee epapBusySemHandle set to 0 
         if (!(xSemaphoreTake(epdBusySemHandle, 5000) == pdTRUE))
 		{
-			Debug("Interrupt failed to occur during Epapere SPI transmit\n");
+			Debug("Interrupt failed to occur during ePaper SPI transmit\n");
 		}
     }
 }

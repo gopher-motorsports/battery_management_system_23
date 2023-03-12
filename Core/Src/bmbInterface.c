@@ -21,7 +21,7 @@
 	{ \
 		HAL_StatusTypeDef status = fn(hspi, __VA_ARGS__); \
 		if (status == HAL_OK) { break; } \
-		Debug("Failed SPI transmission - Retrying!\n"); \
+		Debug("Failed ASCI SPI transmission - Retrying!\n"); \
 		HAL_SPI_Abort(hspi); \
 	}
 

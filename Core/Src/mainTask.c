@@ -37,7 +37,6 @@ extern LeakyBucket_S asciCommsLeakyBucket;
 /* ==================================================================== */
 
 uint32_t numBmbs = 0;
-static bool initialized = false;
 static uint32_t initRetries = 5;
 static uint32_t lastUpdateMain = 0;
 
@@ -68,7 +67,6 @@ void initMain()
 		}
 	}
 	Debug("Failed to initialize BMS\n");
-	gBms.bmsHwState = BMS_BMB_FAILURE;
 }
 
 void runMain()

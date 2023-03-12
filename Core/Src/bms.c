@@ -57,28 +57,33 @@ bool initBatteryPack(uint32_t* numBmbs)
 
 	if (!initASCI())
 	{
-		return false;
+		goto initializationError;
 	}
 
 	if (!helloAll(numBmbs))
 	{
-		return false;
+		goto initializationError;
 	}
 
 	if (*numBmbs != NUM_BMBS_IN_ACCUMULATOR)
 	{
 		Debug("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", *numBmbs, NUM_BMBS_IN_ACCUMULATOR);
-		return false;
+		goto initializationError;
 	}
 
 	if (!initBmbs(*numBmbs))
 	{
-		return false;
+		goto initializationError;
 	}
 
 	pBms->numBmbs = *numBmbs;
 	pBms->bmsHwState = BMS_NOMINAL;
 	return true;
+
+// Routine if initialization error ocurs
+initializationError:
+	pBms->bmsHwState = BMS_BMB_FAILURE;
+	return false;
 }
 
 void updatePackData(uint32_t numBmbs)
