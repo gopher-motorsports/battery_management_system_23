@@ -64,7 +64,7 @@
 // TODO add description
 typedef enum
 {
-	SNA = 0,	// Value on startup
+	UNINITIALIZED = 0,	// Value on startup
 	GOOD,		// Data nominal
 	MIA			// Data wasn't aquired
 } Bmb_Sensor_Status_E;
@@ -92,7 +92,7 @@ typedef struct
 {
 	const uint32_t bmbIdx;
 	uint32_t numBricks;
-	// TODO - set initial status value to SNA
+	// TODO - set initial status value to UNINITIALIZED
 	// The status of all the brick sensors
 	Bmb_Sensor_Status_E brickVStatus[NUM_BRICKS_PER_BMB];
 	// The brick voltages for the bmb

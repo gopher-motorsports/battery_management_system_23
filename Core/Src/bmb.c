@@ -396,7 +396,7 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		float maxBoardTemp = MIN_TEMP_SENSOR_VALUE_C;
 		float minBoardTemp = MAX_TEMP_SENSOR_VALUE_C;
 		float boardTempSum = 0.0f;
-		// TODO If SNA do not count
+		// TODO If UNINITIALIZED do not count
 		// Aggregate brick voltage and temperature data
 		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
