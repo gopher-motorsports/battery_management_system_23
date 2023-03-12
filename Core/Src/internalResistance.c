@@ -126,7 +126,7 @@ static void calculateInternalResistance(Bms_S* bms)
 
     // If delta current threshold is met, internal resistance can be calulated and updated
     // This threshold should always exceed 0, so if avg buffer is saturated with -1000.0f, operation will be skipped
-    if((fabs(deltaCurrent) >= IR_CALC_MIN_CURRENT_DELTA) && (fabs(deltaCurrent) <= CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD))
+    if(fabs(deltaCurrent) >= IR_CALC_MIN_CURRENT_DELTA)
     {
         // Cycle through every BMB and every brick in the accumulator
         for(int32_t i = 0; i < NUM_BMBS_PER_PACK; i++)
