@@ -137,7 +137,7 @@ static void calculateInternalResistance(Bms_S* bms)
                 if((voltageAvgBuffer[i][j][maxCurrentIndex] > -900.0f) && (voltageAvgBuffer[i][j][minCurrentIndex] > -900.0f))
                 {
                     float deltaVoltage = voltageAvgBuffer[i][j][maxCurrentIndex] - voltageAvgBuffer[i][j][minCurrentIndex];
-                    bms->brickResistance[i][j] = deltaVoltage / deltaCurrent;
+                    bms->bmb[i].brickResistance[j] = deltaVoltage / deltaCurrent;
                 }
             }    
         }

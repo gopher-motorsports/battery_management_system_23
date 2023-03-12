@@ -74,8 +74,6 @@ typedef struct
 	Sensor_Status_E currentSensorStatusLO;
 	float tractiveSystemCurrent;
 
-	float brickResistance[NUM_BMBS_PER_PACK][NUM_BRICKS_PER_BMB];
-
 	bool bspdFault;
 	bool imdFault;
 	bool amsFault;

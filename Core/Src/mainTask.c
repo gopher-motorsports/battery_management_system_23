@@ -190,7 +190,7 @@ void printInternalResistances()
 		printf("|    %02ld   |", i + 1);
 		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
-			printf("%5.1fmOhm|", gBms.brickResistance[i][j] * 1000.0f);
+			printf("%5.1fmOhm|", gBms.bmb[i].brickResistance[j] * 1000.0f);
 		}
 		printf("\n");
 	}
