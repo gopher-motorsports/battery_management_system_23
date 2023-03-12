@@ -41,7 +41,7 @@ static bool initialized = false;
 static uint32_t initRetries = 5;
 static uint32_t lastUpdateMain = 0;
 
-bool balancingEnabled = true;
+bool balancingEnabled = false;
 uint32_t lastBalancingUpdate = 0;
 
 /* ==================================================================== */

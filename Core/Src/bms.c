@@ -14,12 +14,12 @@
 /* ==================================================================== */
 #define INIT_BMS_BMB_ARRAY \
 { \
-    [0 ... NUM_BMBS_PER_PACK-1] = {.bmbIdx = __COUNTER__} \
+    [0 ... NUM_BMBS_IN_ACCUMULATOR-1] = {.bmbIdx = __COUNTER__} \
 }
 
 Bms_S gBms = 
 {
-    .numBmbs = NUM_BMBS_PER_PACK,
+    .numBmbs = NUM_BMBS_IN_ACCUMULATOR,
     .bmb = INIT_BMS_BMB_ARRAY
 };
 
@@ -65,9 +65,9 @@ bool initBatteryPack(uint32_t* numBmbs)
 		return false;
 	}
 
-	if (*numBmbs != NUM_BMBS_PER_PACK)
+	if (*numBmbs != NUM_BMBS_IN_ACCUMULATOR)
 	{
-		Debug("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", *numBmbs, NUM_BMBS_PER_PACK);
+		Debug("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", *numBmbs, NUM_BMBS_IN_ACCUMULATOR);
 		return false;
 	}
 
@@ -197,13 +197,13 @@ void aggregatePackData(uint32_t numBmbs)
 	}
 	pBms->maxBrickV = maxBrickV;
 	pBms->minBrickV = minBrickV;
-	pBms->avgBrickV = avgBrickVSum / NUM_BMBS_PER_PACK;
+	pBms->avgBrickV = avgBrickVSum / NUM_BMBS_IN_ACCUMULATOR;
 	pBms->maxBrickTemp = maxBrickTemp;
 	pBms->minBrickTemp = minBrickTemp;
-	pBms->avgBrickTemp = avgBrickTempSum / NUM_BMBS_PER_PACK;
+	pBms->avgBrickTemp = avgBrickTempSum / NUM_BMBS_IN_ACCUMULATOR;
 	pBms->maxBoardTemp = maxBoardTemp;
 	pBms->minBoardTemp = minBoardTemp;
-	pBms->avgBoardTemp = avgBoardTempSum / NUM_BMBS_PER_PACK;
+	pBms->avgBoardTemp = avgBoardTempSum / NUM_BMBS_IN_ACCUMULATOR;
 }
 
 void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)

@@ -18,8 +18,8 @@
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
 
-// The number of BMBs per battery pack
-#define NUM_BMBS_PER_PACK			1
+// The number of BMBs in the accumulator
+#define NUM_BMBS_IN_ACCUMULATOR		1
 // Max allowable voltage difference between bricks for balancing
 #define BALANCE_THRESHOLD_V			0.002f
 // The maximum cell temperature where charging is allowed
@@ -44,7 +44,7 @@ typedef enum
 typedef struct
 {
 	uint32_t numBmbs;
-	Bmb_S bmb[NUM_BMBS_PER_PACK];
+	Bmb_S bmb[NUM_BMBS_IN_ACCUMULATOR];
 
 	float maxBrickV;
 	float minBrickV;
