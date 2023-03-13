@@ -11,9 +11,40 @@
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
 
-#define CURRENT_HIGH_RAIL_THRESHOLD             590//420
-#define CURRENT_LOW_RAIL_THRESHOLD              87//36
-#define CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD    75//30
+// Define the current sensor in use
+#define DHAB_S_133
+// #define DHAB_S_118
+
+
+// Rail thresholds are defined such that the highest and lowest readings of the 
+// Current sensor will never reach the rail threshold, but a 0V or 5V signal on the
+// analog channel will result in a value that exceeds the threshold
+
+// Low to high thresholds are defined at the highest range of the low channel current sensor
+
+#if defined(DHAB_S_133)
+
+#define CURRENT_HIGH_RAIL_THRESHOLD             590
+#define CURRENT_LOW_RAIL_THRESHOLD              87
+#define CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD    75
+
+#elif defined(DHAB_S_118)
+
+#define CURRENT_HIGH_RAIL_THRESHOLD             420
+#define CURRENT_LOW_RAIL_THRESHOLD              36
+#define CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD    30
+
+#else
+
+#define CURRENT_HIGH_RAIL_THRESHOLD             0
+#define CURRENT_LOW_RAIL_THRESHOLD              0
+#define CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD    0
+
+#endif //DHAB_S_133
+
+// The size in Amps across which current from channel 1 is blended with channel 2
+#define CHANNEL_FILTERING_WIDTH 4
+
 
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */

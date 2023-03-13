@@ -22,6 +22,8 @@
 
 #define IR_CALC_MIN_CURRENT_DELTA   1
 
+#define IR_BAD_DATA -1000.0f
+
 
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */
