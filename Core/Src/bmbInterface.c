@@ -578,9 +578,6 @@ bool initASCI()
 	bool successfulConfig = true;
 	// dummy transaction since this chip sucks
 	readRegister(R_CONFIG_3);
-	readRegister(R_CONFIG_3);
-	readRegister(R_CONFIG_3);
-	readRegister(R_CONFIG_3);
 
 	// Set Keep_Alive to 0x05 = 160us
 	successfulConfig &= writeAndVerifyRegister(R_CONFIG_3, 0x05);
