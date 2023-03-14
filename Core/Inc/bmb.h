@@ -32,6 +32,7 @@
 #define WATCHDOG		0x18
 #define ACQCFG			0x19
 #define BALSWEN			0x1A
+#define DEVCFG2			0x1B
 #define CELLn			0x20
 #define VBLOCK			0x2C
 #define AIN1			0x2D
@@ -183,6 +184,14 @@ void setMux(uint32_t numBmbs, uint8_t muxSetting);
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
 void aggregateBmbData(Bmb_S* bmb,uint32_t numBmbs);
+
+/*!
+  @brief   Determine where a BMB daisy chain break has occured
+  @param   bmb - The array containing BMB data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+  @returns Lower index of the break with 0 corresponding to the BMS -> 1st BMB connection
+*/
+uint32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs);
 
 /*!
   @brief   Determine if a power-on reset (POR) occurred and if so properly reset the device

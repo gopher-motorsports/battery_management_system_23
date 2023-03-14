@@ -26,6 +26,7 @@
 #define ACQCFG_THRM_ON					0x0300
 #define ACQCFG_MAX_SETTLING_TIME		0x003F
 #define AUTOBALSWDIS_5MS_RECOVERY_TIME	0x0034
+#define DEVCFG2_LASTLOOP				0x8000
 #define SCANCTRL_START_SCAN				0x0001
 #define SCANCTRL_32_OVERSAMPLES			0x0040
 #define SCANCTRL_ENABLE_AUTOBALSWDIS	0x0800
@@ -50,7 +51,9 @@ extern LookupTable_S zenerTable;
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
 /* ==================================================================== */
 
-void updateBmbBalanceSwitches(Bmb_S* bmb);
+static void updateBmbBalanceSwitches(Bmb_S* bmb);
+
+static bool setBmbInternalLoopback(uint32_t bmbIdx, bool enabled);
 
 
 /* ==================================================================== */
@@ -61,7 +64,7 @@ void updateBmbBalanceSwitches(Bmb_S* bmb);
   @brief   Enable the hardware bleed switches if balSwEnabled set in BMB struct
   @param   bmb - pointer to bmb that needs to be updated
 */
-void updateBmbBalanceSwitches(Bmb_S* bmb)
+static void updateBmbBalanceSwitches(Bmb_S* bmb)
 {
 	// TODO - should the watchdog be set in this function? For example if we want to ensure that all
 	// bleeding is ended we would call this update function but there would be no need to update the watchdog
@@ -80,6 +83,27 @@ void updateBmbBalanceSwitches(Bmb_S* bmb)
 	// Update the balance switches on the relevant BMB
 	writeDevice(BALSWEN, balanceSwEnabled, bmb->bmbIdx);
 }
+
+static bool setBmbInternalLoopback(uint32_t bmbIdx, bool enabled)
+{
+	for (int i = 0; i < NUM_DATA_CHECKS; i++)
+	{
+		clearRxBuffer();
+		// Set internal loopback mode for a given BMB
+		writeDevice(DEVCFG2, enabled ? DEVCFG2_LASTLOOP : 0, bmbIdx);
+		clearRxBuffer();
+		// Verify that the internal loopback mode was enabled successfully
+		readDevice(DEVCFG1, recvBuffer, bmbIdx);
+		uint16_t registerValue = (recvBuffer[4] << 8) | recvBuffer[3];
+		if ((registerValue & DEVCFG2_LASTLOOP) == enabled)
+		{
+			// Successfully wrote to LASTLOOP bit
+			return true;
+		}
+	}
+	return false;
+}
+
 
 
 /* ==================================================================== */
@@ -455,6 +479,41 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		pBmb->avgBoardTemp = boardTempSum / NUM_BOARD_TEMP_PER_BMB;
 	}
 }
+
+
+/*!
+  @brief   Determine where a BMB daisy chain break has occured
+  @param   bmb - The array containing BMB data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+  @returns Upper index of the break. For BMS -> 1st BMB break will return 1
+*/
+uint32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs)
+{
+	// Iterate through BMB indexes and determine if a daisy chain break exists
+	for (int bmbIdx = 1; bmbIdx <= numBmbs; bmbIdx++)
+	{
+		if (!setBmbInternalLoopback(bmbIdx, true)) { return 0;}
+
+		// Determine if loopback communication is restored
+		readAll(VERSION, recvBuffer, bmbIdx);
+
+		for (uint32_t i = 0; i < bmbIdx; i++)
+		{
+			// Read model number in [15:4]
+			uint32_t versionRegister = ((recvBuffer[4 + 2*i] << 8) | recvBuffer[3 + 2*i]) >> 4;
+			if (versionRegister != 0x843)
+			{
+				// Broken link detected
+				return bmbIdx;
+			}
+		}
+
+		// No issue detected yet. Disable internal loopback and continue looking
+		if (!setBmbInternalLoopback(bmbIdx, false)) { return 0; }
+	}
+	return 0;
+}
+
 
 /*!
   @brief   Determine if a power-on reset (POR) occurred and if so properly reset the device

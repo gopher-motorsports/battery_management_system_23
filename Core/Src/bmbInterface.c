@@ -100,16 +100,6 @@ static bool writeAndVerifyRegister(uint8_t registerAddress, uint8_t value);
 static uint8_t calcCrc(uint8_t* byteArr, uint32_t numBytes);
 
 /*!
-  @brief   Clears the RX buffer on the ASCI
-*/
-static void clearRxBuffer();
-
-/*!
-  @brief   Clears the TX buffer on the ASCI
-*/
-static void clearTxBuffer();
-
-/*!
   @brief   Clears RX interrupt flags
   @return  True if success, false otherwise
 */
@@ -304,22 +294,6 @@ static uint8_t calcCrc(uint8_t* byteArr, uint32_t numBytes)
 		}
 	}
 	return crc;
-}
-
-/*!
-  @brief   Clears the RX buffer on the ASCI
-*/
-static void clearRxBuffer()
-{
-	sendAsciSpi(CMD_CLR_RX_BUF);
-}
-
-/*!
-  @brief   Clears the TX buffer on the ASCI
-*/
-static void clearTxBuffer()
-{
-	sendAsciSpi(CMD_CLR_TX_BUF);
 }
 
 /*!
@@ -564,6 +538,22 @@ void resetASCI()
 	vTaskDelay(50);
 	enableASCI();
 	vTaskDelay(10);
+}
+
+/*!
+  @brief   Clears the RX buffer on the ASCI
+*/
+void clearRxBuffer()
+{
+	sendAsciSpi(CMD_CLR_RX_BUF);
+}
+
+/*!
+  @brief   Clears the TX buffer on the ASCI
+*/
+void clearTxBuffer()
+{
+	sendAsciSpi(CMD_CLR_TX_BUF);
 }
 
 /*!

@@ -93,6 +93,16 @@ void disableASCI();
 void resetASCI();
 
 /*!
+  @brief   Clears the RX buffer on the ASCI
+*/
+void clearRxBuffer();
+
+/*!
+  @brief   Clears the TX buffer on the ASCI
+*/
+void clearTxBuffer();
+
+/*!
   @brief   Initialize ASCI and BMB daisy chain. Enumerate BMBs
   @param   numBmbs - Updated with number of enumerated BMBs from HELLOALL command
   @return  True if successful initialization, false otherwise
