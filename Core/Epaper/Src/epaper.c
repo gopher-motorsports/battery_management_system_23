@@ -10,6 +10,22 @@
 #include "epaperUtils.h"
 #include "bms.h"
 
+
+/* ==================================================================== */
+/* ============================= DEFINES ============================== */
+/* ==================================================================== */
+
+#define SPI_TIMEOUT 	10
+// Macro that retries a SPI TX/RX if it fails
+#define SPIRTRY(fn, hspi, ...) \
+	for (int i = 0; i < 2; i++) \
+	{ \
+		HAL_StatusTypeDef status = fn(hspi, __VA_ARGS__); \
+		if (status == HAL_OK) { break; } \
+		Debug("Failed ePaper SPI transmission - Retrying!\n"); \
+		HAL_SPI_Abort(hspi); \
+	}
+
 /* ==================================================================== */
 /* ========================= LOCAL VARIABLES ========================== */
 /* ==================================================================== */
@@ -125,13 +141,11 @@ static void waitBusyRelease()
 {
     if(HAL_GPIO_ReadPin(BUSY_GPIO_Port, BUSY_Pin) == 1)
     {
-		
         xSemaphoreTake(epdBusySemHandle, 0); // Guarantee epapBusySemHandle set to 0 
         if (!(xSemaphoreTake(epdBusySemHandle, 5000) == pdTRUE))
-            {
-                Debug("AAAInterrupt failed to occur during SPI transmit\n");
-            }
-        Debug("e-Paper busy release\r\n");
+		{
+			Debug("Interrupt failed to occur during ePaper SPI transmit\n");
+		}
     }
 }
 
@@ -147,9 +161,9 @@ static void sendCommand(uint8_t command)
     csOn();
 
 	// Write command to spi 
-    HAL_SPI_Transmit_IT(&hspi2, (uint8_t *)&command, 1);
-	// Wait for spi interupt signaling data transfer complete - timeout 10ms
-    if (!(xSemaphoreTake(epdSpiSemHandle, 10) == pdTRUE))
+    SPIRTRY(HAL_SPI_Transmit_IT, &hspi2, (uint8_t *)&command, 1);
+	// Wait for spi interupt signaling data transfer complete
+    if (!(xSemaphoreTake(epdSpiSemHandle, SPI_TIMEOUT) == pdTRUE))
 	{
 		Debug("Interrupt failed to occur during SPI transmit\n");
 	}
@@ -172,9 +186,9 @@ static void sendMessage(uint8_t command, uint8_t* data, uint16_t numBytes)
 		csOn();
 
 		// Write command to spi 
-		HAL_SPI_Transmit_IT(&hspi2, (uint8_t *)&command, 1);
-		// Wait for spi interupt signaling data transfer complete - timeout 10ms
-		if (!(xSemaphoreTake(epdSpiSemHandle, 10) == pdTRUE))
+		SPIRTRY(HAL_SPI_Transmit_IT, &hspi2, (uint8_t *)&command, 1);
+		// Wait for spi interupt signaling data transfer complete
+		if (!(xSemaphoreTake(epdSpiSemHandle, SPI_TIMEOUT) == pdTRUE))
 		{
 			Debug("Interrupt failed to occur during SPI transmit\n");
 		}
@@ -183,8 +197,8 @@ static void sendMessage(uint8_t command, uint8_t* data, uint16_t numBytes)
 		setDataMode();
 
 		// Write command to spi
-		HAL_SPI_Transmit_IT(&hspi2, data, numBytes);
-		// Wait for spi interupt signaling data transfer complete - timout 50ms
+		SPIRTRY(HAL_SPI_Transmit_IT, &hspi2, data, numBytes);
+		// Wait for spi interupt signaling data transfer complete - timeout 1000ms
 		if (!(xSemaphoreTake(epdSpiSemHandle, 1000) == pdTRUE))
 		{
 			Debug("Interrupt failed to occur during SPI transmit\n");

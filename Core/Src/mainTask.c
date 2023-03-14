@@ -11,6 +11,7 @@
 #include "bmb.h"
 #include "epaper.h"
 #include "epaperUtils.h"
+#include "debug.h"
 #include <stdlib.h>
 #include "GopherCAN_network.h"
 
@@ -36,7 +37,6 @@ extern LeakyBucket_S asciCommsLeakyBucket;
 /* ==================================================================== */
 
 uint32_t numBmbs = 0;
-static bool initialized = false;
 static uint32_t initRetries = 5;
 static uint32_t lastUpdateMain = 0;
 
@@ -46,7 +46,6 @@ uint32_t lastBalancingUpdate = 0;
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
 /* ==================================================================== */
-
 void printCellVoltages();
 void printCellTemperatures();
 void printBoardTemperatures();
@@ -56,35 +55,30 @@ void printBoardTemperatures();
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
 /* ==================================================================== */
 
+void initMain()
+{
+	for (int i = 0; i < initRetries; i++)
+	{
+		// Try to initialize the BMS HW
+		if (initBatteryPack(&numBmbs))
+		{
+			// Successfully initialized
+			return;
+		}
+	}
+	Debug("Failed to initialize BMS\n");
+}
+
 void runMain()
 {
-	// float value = bmsTractiveSystemCurrentLow_A.data;
-	// float value2 = bmsTractiveSystemCurrentHigh_A.data;
-	// printf("CSNS: %f\n", value);
-	// printf("CSNS: %f\n", value*2);
-
-	if (!initialized && initRetries > 0)
+	if (gBms.bmsHwState == BMS_BMB_FAILURE)
 	{
-		initialized = true;
-		printf("Initializing ASCI connection...\n");
-		resetASCI();
-		initialized &= initASCI();
-		initialized &= helloAll(&numBmbs);
-		// initialized = initASCI(&numBmbs);
-		if (numBmbs != NUM_BMBS_PER_PACK)
-		{
-			printf("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", numBmbs, NUM_BMBS_PER_PACK);
-			initialized = false;
-		}
-
-		initBatteryPack(numBmbs);
-		printf("Number of BMBs detected: %lu\n", numBmbs);
-
-		initRetries--;
+		// Retry initializing the BMBs
+		initBatteryPack(&numBmbs);
 	}
-	else if(initialized)
+	else
 	{
-
+		
 		updateBmbData(gBms.bmb, numBmbs);
 
 		aggregatePackData(numBmbs);
@@ -99,11 +93,7 @@ void runMain()
 		{
 			if (leakyBucketFilled(&asciCommsLeakyBucket))
 			{
-				// Try to reset the asci to re-establish comms
-				resetASCI();
-				initASCI();
-				helloAll(&numBmbs);
-				initBatteryPack(numBmbs);
+				gBms.bmsHwState = BMS_BMB_FAILURE;
 			}
 			// Clear console
 			printf("\e[1;1H\e[2J");
@@ -128,10 +118,6 @@ void runMain()
 			lastUpdateMain = HAL_GetTick();
 		}
 
-	}
-	else
-	{
-		printf("Failed to initialize\n");
 	}
 
 	// New functions to add UpdateBrickVoltages() - reads in all brick voltages

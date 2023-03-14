@@ -32,6 +32,7 @@
 #define WATCHDOG		0x18
 #define ACQCFG			0x19
 #define BALSWEN			0x1A
+#define DEVCFG2			0x1B
 #define CELLn			0x20
 #define VBLOCK			0x2C
 #define AIN1			0x2D
@@ -64,7 +65,7 @@
 // TODO add description
 typedef enum
 {
-	SNA = 0,	// Value on startup
+	UNINITIALIZED = 0,	// Value on startup
 	GOOD,		// Data nominal
 	MIA			// Data wasn't aquired
 } Bmb_Sensor_Status_E;
@@ -92,7 +93,7 @@ typedef struct
 {
 	const uint32_t bmbIdx;
 	uint32_t numBricks;
-	// TODO - set initial status value to SNA
+	// TODO - set initial status value to UNINITIALIZED
 	// The status of all the brick sensors
 	Bmb_Sensor_Status_E brickVStatus[NUM_BRICKS_PER_BMB];
 	// The brick voltages for the bmb
@@ -144,7 +145,7 @@ typedef struct
   @param   numBmbs - The expected number of BMBs in the daisy chain
   @return  True if successful initialization, false otherwise
 */
-void initBmbs(uint32_t numBmbs);
+bool initBmbs(uint32_t numBmbs);
 
 /*!
   @brief   Update BMB voltages and temperature data. Once new data gathered start new
@@ -183,6 +184,14 @@ void setMux(uint32_t numBmbs, uint8_t muxSetting);
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
 void aggregateBmbData(Bmb_S* bmb,uint32_t numBmbs);
+
+/*!
+  @brief   Determine where a BMB daisy chain break has occured
+  @param   bmb - The array containing BMB data
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+  @returns Lower index of the break with 0 corresponding to the BMS -> 1st BMB connection
+*/
+uint32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs);
 
 /*!
   @brief   Determine if a power-on reset (POR) occurred and if so properly reset the device

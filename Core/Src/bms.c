@@ -4,6 +4,8 @@
 #include "cmsis_os.h"
 #include "bms.h"
 #include "bmb.h"
+#include "bmbInterface.h"
+#include "debug.h"
 #include "GopherCAN.h"
 
 
@@ -12,12 +14,12 @@
 /* ==================================================================== */
 #define INIT_BMS_BMB_ARRAY \
 { \
-    [0 ... NUM_BMBS_PER_PACK-1] = {.bmbIdx = __COUNTER__} \
+    [0 ... NUM_BMBS_IN_ACCUMULATOR-1] = {.bmbIdx = __COUNTER__} \
 }
 
 Bms_S gBms = 
 {
-    .numBmbs = NUM_BMBS_PER_PACK,
+    .numBmbs = NUM_BMBS_IN_ACCUMULATOR,
     .bmb = INIT_BMS_BMB_ARRAY
 };
 
@@ -40,25 +42,50 @@ void initBmsGopherCan(CAN_HandleTypeDef* hcan)
 	// initialize CAN
 	if (init_can(GCAN0, hcan, BMS_ID, BXTYPE_MASTER))
 	{
-		gBms.bmsHwState = BMS_GSNS_INIT_FAILURE;
+		gBms.bmsHwState = BMS_GSNS_FAILURE;
 	}
 }
 
 /*!
   @brief   Initialization function for the battery pack
   @param   numBmbs - The expected number of BMBs in the daisy chain
+  @returns bool True if initialization successful, false otherwise
 */
-void initBatteryPack(uint32_t numBmbs)
+bool initBatteryPack(uint32_t* numBmbs)
 {
 	Bms_S* pBms = &gBms;
 
-	pBms->numBmbs = NUM_BMBS_PER_PACK;
+	if (!initASCI())
+	{
+		goto initializationError;
+	}
 
-	memset (pBms, 0, sizeof(Bms_S));
+	if (!helloAll(numBmbs))
+	{
+		goto initializationError;
+	}
 
-	initBmbs(numBmbs);
+	if (*numBmbs != NUM_BMBS_IN_ACCUMULATOR)
+	{
+		Debug("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", *numBmbs, NUM_BMBS_IN_ACCUMULATOR);
+		uint32_t breakLocation = detectBmbDaisyChainBreak(pBms->bmb, NUM_BMBS_IN_ACCUMULATOR);
+		Debug("BMB Chain Break detected between BMB %lu and BMB %lu\n", breakLocation -1, breakLocation);
+		goto initializationError;
+	}
 
-	pBms->numBmbs = numBmbs;
+	if (!initBmbs(*numBmbs))
+	{
+		goto initializationError;
+	}
+
+	pBms->numBmbs = *numBmbs;
+	pBms->bmsHwState = BMS_NOMINAL;
+	return true;
+
+// Routine if initialization error ocurs
+initializationError:
+	pBms->bmsHwState = BMS_BMB_FAILURE;
+	return false;
 }
 
 void updatePackData(uint32_t numBmbs)
@@ -177,13 +204,13 @@ void aggregatePackData(uint32_t numBmbs)
 	}
 	pBms->maxBrickV = maxBrickV;
 	pBms->minBrickV = minBrickV;
-	pBms->avgBrickV = avgBrickVSum / NUM_BMBS_PER_PACK;
+	pBms->avgBrickV = avgBrickVSum / NUM_BMBS_IN_ACCUMULATOR;
 	pBms->maxBrickTemp = maxBrickTemp;
 	pBms->minBrickTemp = minBrickTemp;
-	pBms->avgBrickTemp = avgBrickTempSum / NUM_BMBS_PER_PACK;
+	pBms->avgBrickTemp = avgBrickTempSum / NUM_BMBS_IN_ACCUMULATOR;
 	pBms->maxBoardTemp = maxBoardTemp;
 	pBms->minBoardTemp = minBoardTemp;
-	pBms->avgBoardTemp = avgBoardTempSum / NUM_BMBS_PER_PACK;
+	pBms->avgBoardTemp = avgBoardTempSum / NUM_BMBS_IN_ACCUMULATOR;
 }
 
 void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)

@@ -18,8 +18,8 @@
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
 
-// The number of BMBs per battery pack
-#define NUM_BMBS_PER_PACK			1
+// The number of BMBs in the accumulator
+#define NUM_BMBS_IN_ACCUMULATOR		1
 // Max allowable voltage difference between bricks for balancing
 #define BALANCE_THRESHOLD_V			0.002f
 // The maximum cell temperature where charging is allowed
@@ -33,8 +33,8 @@
 typedef enum
 {
 	BMS_NOMINAL = 0,
-	BMS_GSNS_INIT_FAILURE,
-	BMS_BMB_INIT_FAILURE
+	BMS_GSNS_FAILURE,
+	BMS_BMB_FAILURE
 } Bms_Hardware_State_E;
 
 /* ==================================================================== */
@@ -44,7 +44,7 @@ typedef enum
 typedef struct
 {
 	uint32_t numBmbs;
-	Bmb_S bmb[NUM_BMBS_PER_PACK];
+	Bmb_S bmb[NUM_BMBS_IN_ACCUMULATOR];
 
 	float maxBrickV;
 	float minBrickV;
@@ -89,8 +89,9 @@ typedef struct
 /*!
   @brief   Initialization function for the battery pack
   @param   numBmbs - The expected number of BMBs in the daisy chain
+  @returns bool True if initialization successful, false otherwise
 */
-void initBatteryPack(uint32_t numBmbs);
+bool initBatteryPack(uint32_t* numBmbs);
 
 void initBmsGopherCan(CAN_HandleTypeDef* hcan);
 

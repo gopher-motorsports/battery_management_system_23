@@ -15,6 +15,15 @@
 
 #define BYTES_PER_BMB_REGISTER 2
 #define READ_CMD_LENGTH 	   1
+// Macro that retries a SPI TX/RX if it fails
+#define SPIRTRY(fn, hspi, ...) \
+	for (int i = 0; i < 2; i++) \
+	{ \
+		HAL_StatusTypeDef status = fn(hspi, __VA_ARGS__); \
+		if (status == HAL_OK) { break; } \
+		Debug("Failed ASCI SPI transmission - Retrying!\n"); \
+		HAL_SPI_Abort(hspi); \
+	}
 
 
 /* ==================================================================== */
@@ -89,16 +98,6 @@ static bool writeAndVerifyRegister(uint8_t registerAddress, uint8_t value);
   @return  uint8_t 	calculated CRC
 */
 static uint8_t calcCrc(uint8_t* byteArr, uint32_t numBytes);
-
-/*!
-  @brief   Clears the RX buffer on the ASCI
-*/
-static void clearRxBuffer();
-
-/*!
-  @brief   Clears the TX buffer on the ASCI
-*/
-static void clearTxBuffer();
 
 /*!
   @brief   Clears RX interrupt flags
@@ -196,7 +195,9 @@ static void csOff()
 static void sendAsciSpi(uint8_t value)
 {
 	csOn();
-	HAL_SPI_Transmit_IT(&hspi1, (uint8_t *)&value, 1);
+	// Ensure semaphore set to 0
+	xSemaphoreTake(asciSpiSemHandle, 0);
+	SPIRTRY(HAL_SPI_Transmit_IT, &hspi1, (uint8_t *)&value, 1);
 	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 	{
 		Debug("Interrupt failed to occur during ASCI SPI transmit\n");
@@ -215,7 +216,9 @@ static uint8_t readRegister(uint8_t registerAddress)
 	// Since reading add 1 to address
 	const uint8_t sendBuffer[2] = {registerAddress + 1};
 	uint8_t recvBuffer[2] = {0};
-	HAL_SPI_TransmitReceive_IT(&hspi1, (uint8_t *)&sendBuffer, (uint8_t *)&recvBuffer, 2);
+	// Ensure semaphore set to 0
+	xSemaphoreTake(asciSpiSemHandle, 0);
+	SPIRTRY(HAL_SPI_TransmitReceive_IT, &hspi1, (uint8_t *)&sendBuffer, (uint8_t *)&recvBuffer, 2);
 	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 	{
 		Debug("Interrupt failed to occur during readRegister operation\n");
@@ -233,7 +236,9 @@ static void writeRegister(uint8_t registerAddress, uint8_t value)
 {
 	csOn();
 	uint8_t sendBuffer[2] = {registerAddress, value};
-	HAL_SPI_Transmit_IT(&hspi1, (uint8_t *)&sendBuffer, 2);
+	// Ensure semaphore set to 0
+	xSemaphoreTake(asciSpiSemHandle, 0);
+	SPIRTRY(HAL_SPI_Transmit_IT, &hspi1, (uint8_t *)&sendBuffer, 2);
 	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 	{
 		Debug("Interrupt failed to occur during writeRegister operation\n");
@@ -289,22 +294,6 @@ static uint8_t calcCrc(uint8_t* byteArr, uint32_t numBytes)
 		}
 	}
 	return crc;
-}
-
-/*!
-  @brief   Clears the RX buffer on the ASCI
-*/
-static void clearRxBuffer()
-{
-	sendAsciSpi(CMD_CLR_RX_BUF);
-}
-
-/*!
-  @brief   Clears the TX buffer on the ASCI
-*/
-static void clearTxBuffer()
-{
-	sendAsciSpi(CMD_CLR_TX_BUF);
 }
 
 /*!
@@ -390,7 +379,9 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 
 		// Write queue
 		csOn();
-		HAL_SPI_Transmit_IT(&hspi1, data_p, numBytes);
+		// Ensure semaphore set to 0
+		xSemaphoreTake(asciSpiSemHandle, 0);
+		SPIRTRY(HAL_SPI_Transmit_IT, &hspi1, data_p, numBytes);
 		if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 		{
 			Debug("Interrupt failed to occur while loading queue in loadAndVerifyTxQueue\n");
@@ -402,7 +393,9 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 		// Read queue
 		sendBuffer[0] = data_p[0] + 1;	// Read address is one greater than the write address
 		csOn();
-		HAL_SPI_TransmitReceive_IT(&hspi1, sendBuffer, recvBuffer, numBytes);
+		// Ensure semaphore set to 0
+		xSemaphoreTake(asciSpiSemHandle, 0);
+		SPIRTRY(HAL_SPI_TransmitReceive_IT, &hspi1, sendBuffer, recvBuffer, numBytes);
 		if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 		{
 			Debug("Interrupt failed to occur while reading queue contents in loadAndVerifyTxQueue\n");
@@ -439,7 +432,9 @@ static bool readNextSpiMessage(uint8_t** data_p, uint32_t numBytesToRead)
 	// Read numBytesToRead + 1 since we also need to send CMD_RD_NXT_MSG
 	sendBuffer[0] = CMD_RD_NXT_MSG;
 	csOn();
-	HAL_SPI_TransmitReceive_IT(	&hspi1, sendBuffer, *data_p, arraySize);
+	// Ensure semaphore set to 0
+	xSemaphoreTake(asciSpiSemHandle, 0);
+	SPIRTRY(HAL_SPI_TransmitReceive_IT, &hspi1, sendBuffer, *data_p, arraySize);
 	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 	{
 		Debug("Interrupt failed to occur while reading next SPI message\n");
@@ -482,7 +477,8 @@ static bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, co
 	{
 		return false;
 	}
-
+	// Ensure semaphore set to 0
+	xSemaphoreTake(asciSemHandle, 0);
 	sendAsciSpi(CMD_WR_NXT_LD_Q_L0);
 	// Wait for ASCI interrupt to occur
 	if (xSemaphoreTake(asciSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
@@ -539,8 +535,25 @@ void disableASCI()
 void resetASCI()
 {
 	disableASCI();
-	vTaskDelay(10);
+	vTaskDelay(50);
 	enableASCI();
+	vTaskDelay(10);
+}
+
+/*!
+  @brief   Clears the RX buffer on the ASCI
+*/
+void clearRxBuffer()
+{
+	sendAsciSpi(CMD_CLR_RX_BUF);
+}
+
+/*!
+  @brief   Clears the TX buffer on the ASCI
+*/
+void clearTxBuffer()
+{
+	sendAsciSpi(CMD_CLR_TX_BUF);
 }
 
 /*!
@@ -549,6 +562,7 @@ void resetASCI()
 */
 bool initASCI()
 {
+	Debug("Initializing ASCI connection...\n");
 	resetASCI();
 	csOff();
 	bool successfulConfig = true;
@@ -562,6 +576,9 @@ bool initASCI()
 	successfulConfig &= writeAndVerifyRegister(R_RX_INTERRUPT_ENABLE, 0xA8);
 
 	clearRxBuffer();
+
+	// Ensure semaphore set to 0
+	xSemaphoreTake(asciSemHandle, 0);
 
 	// Enable TX_Preambles mode
 	successfulConfig &= writeAndVerifyRegister(R_CONFIG_2, 0x30);
