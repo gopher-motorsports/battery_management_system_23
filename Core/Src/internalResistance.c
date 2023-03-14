@@ -12,12 +12,12 @@
 
 // Discrete buffers hold consecutive sensor readings from the bms
 static float currentDiscreteBuffer[DISCRETE_BUFFER_SIZE];
-static float voltageDiscreteBuffer[NUM_BMBS_PER_PACK][NUM_BRICKS_PER_BMB][DISCRETE_BUFFER_SIZE];
+static float voltageDiscreteBuffer[NUM_BMBS_IN_ACCUMULATOR][NUM_BRICKS_PER_BMB][DISCRETE_BUFFER_SIZE];
 
 // Circular average buffers hold the average of the discrete buffers, updated each time both discrete buffers fill
 // Current buffer is initialized to a placeholder value to indicate data has not been placed in yet
 static float currentAvgBuffer[AVERAGE_BUFFER_SIZE] = {[0 ... AVERAGE_BUFFER_SIZE-1] = IR_BAD_DATA};
-static float voltageAvgBuffer[NUM_BMBS_PER_PACK][NUM_BRICKS_PER_BMB][AVERAGE_BUFFER_SIZE];
+static float voltageAvgBuffer[NUM_BMBS_IN_ACCUMULATOR][NUM_BRICKS_PER_BMB][AVERAGE_BUFFER_SIZE];
 
 // Buffer pointers hold current index of buffers
 static uint32_t discreteBufferIndex = 0;
@@ -25,7 +25,7 @@ static uint32_t avgBufferIndex = 0;
 
 // Data good indicates that all sensor readings in discrete buffers are good
 static bool currentDataGood = true;
-static bool voltageDataGood[NUM_BMBS_PER_PACK][NUM_BRICKS_PER_BMB] = {[0 ... NUM_BMBS_PER_PACK-1] = {[0 ... NUM_BRICKS_PER_BMB-1] = true}};
+static bool voltageDataGood[NUM_BMBS_IN_ACCUMULATOR][NUM_BRICKS_PER_BMB] = {[0 ... NUM_BMBS_IN_ACCUMULATOR-1] = {[0 ... NUM_BRICKS_PER_BMB-1] = true}};
 
 /* ==================================================================== */
 /* ==================== LOCAL FUNCTION DEFINITIONS ==================== */
@@ -45,7 +45,7 @@ static bool putDiscreteBuffers(Bms_S* bms)
     }
 
     // Update discrete data buffers with current bms voltage data
-    for(int32_t i = 0; i < NUM_BMBS_PER_PACK; i++)
+    for(int32_t i = 0; i < NUM_BMBS_IN_ACCUMULATOR; i++)
     {
         for(int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
         {
@@ -88,7 +88,7 @@ static void putAverageBuffers()
         currentAvgBuffer[avgBufferIndex] = currentDiscreteSum / DISCRETE_BUFFER_SIZE;
 
         // Cycle through every BMB and every brick in the accumulator
-        for(int32_t i = 0; i < NUM_BMBS_PER_PACK; i++)
+        for(int32_t i = 0; i < NUM_BMBS_IN_ACCUMULATOR; i++)
         {
             for(int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
             {
@@ -171,7 +171,7 @@ static void calculateInternalResistance(Bms_S* bms)
     if(fabs(deltaCurrent) >= IR_CALC_MIN_CURRENT_DELTA)
     {
         // Cycle through every BMB and every brick in the accumulator
-        for(int32_t i = 0; i < NUM_BMBS_PER_PACK; i++)
+        for(int32_t i = 0; i < NUM_BMBS_IN_ACCUMULATOR; i++)
         {
             for(int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
             {
