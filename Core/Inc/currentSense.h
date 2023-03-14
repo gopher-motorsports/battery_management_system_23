@@ -34,12 +34,6 @@
 #define CURRENT_LOW_RAIL_THRESHOLD              36
 #define CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD    30
 
-#else
-
-#define CURRENT_HIGH_RAIL_THRESHOLD             0
-#define CURRENT_LOW_RAIL_THRESHOLD              0
-#define CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD    0
-
 #endif //DHAB_S_133
 
 // The size in Amps across which current from channel 1 is blended with channel 2

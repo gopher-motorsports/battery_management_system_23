@@ -93,8 +93,13 @@ initializationError:
 
 void updatePackData(uint32_t numBmbs)
 {
-	updateBmbData(gBms.bmb, numBmbs);
-	putVoltageBuffer(&gBms);
+	static uint32_t lastPackUpdate = 0;
+	if(HAL_GetTick() - lastPackUpdate > VOLTAGE_DATA_UPDATE_PERIOD_MS)
+	{
+		updateBmbData(gBms.bmb, numBmbs);
+		aggregatePackData(numBmbs);
+		updateInternalResistanceCalcs(&gBms);
+	}
 }
 
 /*!
@@ -300,6 +305,5 @@ void updateTractiveCurrent()
 	{
 		lastCurrentUpdate = HAL_GetTick();
 		getTractiveSystemCurrent(&gBms);
-		putCurrentBuffer(&gBms);
 	}	
 }

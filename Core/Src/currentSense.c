@@ -30,21 +30,24 @@ void getTractiveSystemCurrent(Bms_S* bms)
     if ((bms->currentSensorStatusHI == SENSE_GOOD) && ((fabs(currLO) > CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD + (CHANNEL_FILTERING_WIDTH / 2)) || (bms->currentSensorStatusLO != SENSE_GOOD)))
     {
         bms->tractiveSystemCurrent = currHI;
+        bms->tractiveSystemCurrentStatus = SENSE_GOOD;
     }
-    else if ((bms->currentSensorStatusHI == SENSE_GOOD) && ((fabs(currLO) > CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD - (CHANNEL_FILTERING_WIDTH / 2))))
+    else if ((bms->currentSensorStatusHI == SENSE_GOOD) && (bms->currentSensorStatusLO == SENSE_GOOD) && ((fabs(currLO) > CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD - (CHANNEL_FILTERING_WIDTH / 2))))
     {
-        float filteredCurrLO = currLO * (currLO - (CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD + (CHANNEL_FILTERING_WIDTH / 2))) / CHANNEL_FILTERING_WIDTH;
-        float filteredCUrrHI = currHI * (currLO - (CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD - (CHANNEL_FILTERING_WIDTH / 2))) / CHANNEL_FILTERING_WIDTH;
-
-        bms->tractiveSystemCurrent = filteredCurrLO + filteredCUrrHI;
+        float interpolationStart    =   CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD  - (CHANNEL_FILTERING_WIDTH / 2);
+        float interpolationRatio    =   (currLO - interpolationStart) / CHANNEL_FILTERING_WIDTH;
+        float filteredCurrent       =   ((1.0f - interpolationRatio) * currLO) + (interpolationRatio * currHI);
+        bms->tractiveSystemCurrent  =   filteredCurrent;
+        bms->tractiveSystemCurrentStatus = SENSE_GOOD;
     }
     else if (bms->currentSensorStatusLO == SENSE_GOOD) // If the above condition is not satisfied, the LO channel must be working in order to use its data
     {
         bms->tractiveSystemCurrent = currLO;
+        bms->tractiveSystemCurrentStatus = SENSE_GOOD;
     }
     else // If both sensors are faulty, no current data can be accurately returned
     {
-        bms->tractiveSystemCurrent = 0;
+        bms->tractiveSystemCurrentStatus = SENSE_MIA;
         Debug("Failed to read data from current sensor\n");
     }
 }

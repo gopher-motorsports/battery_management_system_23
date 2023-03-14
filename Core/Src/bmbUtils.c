@@ -4,14 +4,13 @@
 
 #include <string.h>
 #include "bmbUtils.h"
+#include "bms.h"
 
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
 
-// The max spacing between two floats before they are considered not equal
-#define EPSILON 1e-4f
 // The max number of calls that are allowed in a binary search instance before erroring
 #define MAX_DEPTH 20
 // The number of values contained in a lookup table
@@ -61,20 +60,6 @@ LeakyBucket_S asciCommsLeakyBucket =
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DEFINITIONS ===================== */
 /* ==================================================================== */
-/*!
-    @brief   Compares two float values with a small tolerance defined by EPSILON
-    @param   f1 - The first float to compare
-    @param   f2 - The second float to compare
-    @return  true if the two values are within the tolerance defined by EPSILON, false otherwise
-*/
-static bool equals(float f1, float f2)
-{
-    if (fabs(f1 - f2) < EPSILON)
-    {
-        return true;
-    }
-    return false;
-}
 
 /*!
     @brief   Search in an array of floats for a specific value using binary search
@@ -144,7 +129,7 @@ static uint32_t binarySearch(const float *arr, const float target, int low, int 
 static float interpolate(float x, float x1, float x2, float y1, float y2)
 {
     //if infinite slope, return y2
-    if (equals(x1, x2))
+    if (fequals(x1, x2))
     {
         return y2;
     }
@@ -168,7 +153,7 @@ int32_t brickBinarySearch(Brick_S *arr, int l, int r, float v)
   while (l <= r)
   {
     int32_t m = l + (r - l) / 2;
-    if (equals(arr[m].brickV, v))
+    if (fequals(arr[m].brickV, v))
     {
     	return m;
     }

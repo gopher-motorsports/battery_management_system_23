@@ -80,18 +80,15 @@ void runMain()
 	}
 	else
 	{
+		updateTractiveCurrent();
 		
 		updatePackData(numBmbs);
-
-		aggregatePackData(numBmbs);
 
 		updateImdStatus();
 
 		updateSdcStatus();
 
 		updateEpaper();
-
-		updateTractiveCurrent();
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{

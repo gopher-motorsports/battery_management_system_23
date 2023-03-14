@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <math.h>
 #include "main.h"
 #include "bmb.h"
 #include "imd.h"
@@ -25,9 +26,17 @@
 // The maximum cell temperature where charging is allowed
 #define MAX_CELL_TEMP_CHARGING_ALLOWED_C	50.0f
 
+// The delay between consecutive current sensor updates
+#define CURRENT_SENSOR_UPDATE_PERIOD_MS 	4
 
-// The delay between consecutive attempted internal resistance calcs in millis
-#define CURRENT_SENSOR_UPDATE_PERIOD_MS 	10
+// The dealy between consecutive bmb updates
+#define VOLTAGE_DATA_UPDATE_PERIOD_MS		50
+
+// The max spacing between two floats before they are considered not equal
+#define EPSILON 1e-4f
+
+// Standardized floating point equals macro
+#define fequals(a, b) (fabs(a - b) < EPSILON) ? (true) : (false)
 
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
@@ -72,6 +81,7 @@ typedef struct
 
 	Sensor_Status_E currentSensorStatusHI;
 	Sensor_Status_E currentSensorStatusLO;
+	Sensor_Status_E tractiveSystemCurrentStatus;
 	float tractiveSystemCurrent;
 
 	bool bspdFault;
