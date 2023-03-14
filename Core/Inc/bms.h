@@ -32,12 +32,6 @@
 // The dealy between consecutive bmb updates
 #define VOLTAGE_DATA_UPDATE_PERIOD_MS		50
 
-// The max spacing between two floats before they are considered not equal
-#define EPSILON 1e-4f
-
-// Standardized floating point equals macro
-#define fequals(a, b) (fabs(a - b) < EPSILON) ? (true) : (false)
-
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
 /* ==================================================================== */
