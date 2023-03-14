@@ -9,22 +9,13 @@
 #include "cmsis_os.h"
 #include "epaperUtils.h"
 #include "bms.h"
-
+#include "utils.h"
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
 
 #define SPI_TIMEOUT 	10
-// Macro that retries a SPI TX/RX if it fails
-#define SPIRTRY(fn, hspi, ...) \
-	for (int i = 0; i < 2; i++) \
-	{ \
-		HAL_StatusTypeDef status = fn(hspi, __VA_ARGS__); \
-		if (status == HAL_OK) { break; } \
-		Debug("Failed ePaper SPI transmission - Retrying!\n"); \
-		HAL_SPI_Abort(hspi); \
-	}
 
 /* ==================================================================== */
 /* ========================= LOCAL VARIABLES ========================== */
