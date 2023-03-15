@@ -14,6 +14,8 @@
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
 
+#define BMB_DATA_REFRESH_DELAY_MS 50
+
 #define VERSION			0x00
 #define ADDRESS			0x01
 #define STATUS			0x02
@@ -98,6 +100,9 @@ typedef struct
 	Bmb_Sensor_Status_E brickVStatus[NUM_BRICKS_PER_BMB];
 	// The brick voltages for the bmb
 	float brickV[NUM_BRICKS_PER_BMB];
+	
+	// The resistance of the brick
+	float brickResistance[NUM_BRICKS_PER_BMB];
 
 	// The stack voltage measurement status 
 	Bmb_Sensor_Status_E stackVStatus;

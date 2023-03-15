@@ -14,7 +14,6 @@
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
 
-#define DATA_REFRESH_DELAY_MS 100
 #define WATCHDOG_1S_STEP_SIZE 0x1000
 #define WATCHDOG_TIMER_LOAD_5 0x0500
 #define DEVCFG1_ENABLE_ALIVE_COUNTER	0x0040
@@ -155,7 +154,7 @@ bool initBmbs(uint32_t numBmbs)
 */
 void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 {
-	if((HAL_GetTick() - lastUpdate) >= DATA_REFRESH_DELAY_MS)
+	if((HAL_GetTick() - lastUpdate) >= BMB_DATA_REFRESH_DELAY_MS)
 	{
 		// Update lastUpdate
 		lastUpdate = HAL_GetTick();
@@ -195,6 +194,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 					uint32_t brickVRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
 					float brickV = brickVRaw * CONVERT_14BIT_TO_5V;
 					bmb[j].brickV[i] = brickV;
+					bmb[j].brickVStatus[i] = GOOD;
 				}
 			}
 			else
@@ -301,6 +301,7 @@ void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 				uint32_t brickVRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
 				float brickV = brickVRaw * CONVERT_14BIT_TO_5V;
 				bmb[j].brickV[i] = brickV;
+				bmb[j].brickVStatus[i] = GOOD;
 			}
 		}
 		else

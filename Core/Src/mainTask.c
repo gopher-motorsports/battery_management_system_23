@@ -14,6 +14,7 @@
 #include "debug.h"
 #include <stdlib.h>
 #include "GopherCAN_network.h"
+#include "internalResistance.h"
 
 
 /* ==================================================================== */
@@ -49,6 +50,7 @@ uint32_t lastBalancingUpdate = 0;
 void printCellVoltages();
 void printCellTemperatures();
 void printBoardTemperatures();
+void printInternalResistances();
 
 
 /* ==================================================================== */
@@ -78,10 +80,9 @@ void runMain()
 	}
 	else
 	{
+		updateTractiveCurrent();
 		
-		updateBmbData(gBms.bmb, numBmbs);
-
-		aggregatePackData(numBmbs);
+		updatePackData(numBmbs);
 
 		updateImdStatus();
 
@@ -111,8 +112,11 @@ void runMain()
 
 			printCellVoltages();
 			printCellTemperatures();
+			printInternalResistances();
 			printBoardTemperatures();
-			printf("Leaky bucket filled: %d\n", leakyBucketFilled(&asciCommsLeakyBucket));
+			printf("Leaky bucket filled: %d\n\n", leakyBucketFilled(&asciCommsLeakyBucket));
+
+			printf("Tractive Current: %6.3f\n", gBms.tractiveSystemCurrent);
 
 			// Update lastUpdate
 			lastUpdateMain = HAL_GetTick();
@@ -166,6 +170,22 @@ void printCellTemperatures()
 		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
 			printf(" %5.1fC  |", gBms.bmb[i].brickTemp[j]);
+		}
+		printf("\n");
+	}
+	printf("\n");
+}
+
+void printInternalResistances()
+{
+	printf("Internal Resistance:\n");
+	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    |\n");
+	for (int32_t i = 0; i < numBmbs; i++)
+	{
+		printf("|    %02ld   |", i + 1);
+		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
+		{
+			printf("%5.1fmOhm|", gBms.bmb[i].brickResistance[j] * 1000.0f);
 		}
 		printf("\n");
 	}

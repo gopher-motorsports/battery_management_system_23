@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <math.h>
 #include "main.h"
 #include "bmb.h"
 #include "imd.h"
@@ -25,6 +26,11 @@
 // The maximum cell temperature where charging is allowed
 #define MAX_CELL_TEMP_CHARGING_ALLOWED_C	50.0f
 
+// The delay between consecutive current sensor updates
+#define CURRENT_SENSOR_UPDATE_PERIOD_MS 	4
+
+// The dealy between consecutive bmb updates
+#define VOLTAGE_DATA_UPDATE_PERIOD_MS		50
 
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
@@ -36,6 +42,13 @@ typedef enum
 	BMS_GSNS_FAILURE,
 	BMS_BMB_FAILURE
 } Bms_Hardware_State_E;
+
+typedef enum
+{
+	SENSE_SNA = 0,	// Value on startup
+	SENSE_GOOD,		// Data nominal
+	SENSE_MIA			// Data wasn't aquired
+} Sensor_Status_E;
 
 /* ==================================================================== */
 /* ============================== STRUCTS============================== */
@@ -59,6 +72,11 @@ typedef struct
 	float avgBoardTemp;
 
 	IMD_State_E imdState;
+
+	Sensor_Status_E currentSensorStatusHI;
+	Sensor_Status_E currentSensorStatusLO;
+	Sensor_Status_E tractiveSystemCurrentStatus;
+	float tractiveSystemCurrent;
 
 	bool bspdFault;
 	bool imdFault;
@@ -96,6 +114,12 @@ bool initBatteryPack(uint32_t* numBmbs);
 void initBmsGopherCan(CAN_HandleTypeDef* hcan);
 
 /*!
+  @brief   Updates all BMB data
+  @param   numBmbs - The expected number of BMBs in the daisy chain\
+*/
+void updatePackData(uint32_t numBmbs);
+
+/*!
   @brief   Handles balancing the battery pack
   @param   numBmbs - The expected number of BMBs in the daisy chain
   @param   balanceRequested - True if we want to balance, false otherwise
@@ -125,5 +149,10 @@ void updateSdcStatus();
   @brief   Update the epaper display with current data
 */
 void updateEpaper();
+
+/*!
+  @brief   Update the tractive system current
+*/
+void updateTractiveCurrent();
 
 #endif /* INC_BMS_H_ */

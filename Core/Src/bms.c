@@ -7,6 +7,9 @@
 #include "bmbInterface.h"
 #include "debug.h"
 #include "GopherCAN.h"
+#include "debug.h"
+#include "currentSense.h"
+#include "internalResistance.h"
 
 
 /* ==================================================================== */
@@ -90,7 +93,13 @@ initializationError:
 
 void updatePackData(uint32_t numBmbs)
 {
-	// TODO - call underlying bmb.c functions
+	static uint32_t lastPackUpdate = 0;
+	if(HAL_GetTick() - lastPackUpdate > VOLTAGE_DATA_UPDATE_PERIOD_MS)
+	{
+		updateBmbData(gBms.bmb, numBmbs);
+		aggregatePackData(numBmbs);
+		updateInternalResistanceCalcs(&gBms);
+	}
 }
 
 /*!
@@ -287,4 +296,14 @@ void updateEpaper()
 
 		xQueueOverwrite(epaperQueueHandle, &epapData);
 	}
+}
+
+void updateTractiveCurrent()
+{
+	static uint32_t lastCurrentUpdate = 0;
+	if((HAL_GetTick() - lastCurrentUpdate) > CURRENT_SENSOR_UPDATE_PERIOD_MS)
+	{
+		lastCurrentUpdate = HAL_GetTick();
+		getTractiveSystemCurrent(&gBms);
+	}	
 }

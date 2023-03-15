@@ -259,8 +259,8 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
-  // initBmsGopherCan(&hcan2);
-  // gsense_init(&hcan2, &hadc1, 0, 0, &htim10, MCU_GSENSE_GPIO_Port, MCU_GSENSE_Pin);
+  initBmsGopherCan(&hcan2);
+  gsense_init(&hcan2, &hadc1, 0, 0, &htim10, MCU_GSENSE_GPIO_Port, MCU_GSENSE_Pin);
   
   // Start IMD timer capture
   HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2);   // Main channel
@@ -316,7 +316,7 @@ int main(void)
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of mainTask */
-  osThreadDef(mainTask, StartMainTask, osPriorityNormal, 0, 256);
+  osThreadDef(mainTask, StartMainTask, osPriorityHigh, 0, 256);
   mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
 
   /* definition and creation of ePaper */
