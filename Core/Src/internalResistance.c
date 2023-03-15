@@ -85,7 +85,7 @@ static void putAverageBuffers()
         {
             currentDiscreteSum += currentDiscreteBuffer[i];
         }
-        currentAvgBuffer[avgBufferIndex] = currentDiscreteSum / DISCRETE_BUFFER_SIZE;
+        currentAvgBuffer[avgBufferIndex] = currentDiscreteSum / ((float) DISCRETE_BUFFER_SIZE);
 
         // Cycle through every BMB and every brick in the accumulator
         for(int32_t i = 0; i < NUM_BMBS_IN_ACCUMULATOR; i++)
@@ -102,7 +102,7 @@ static void putAverageBuffers()
                     {
                         voltageDiscreteSum += voltageDiscreteBuffer[i][j][k];
                     }
-                    voltageAvgBuffer[i][j][avgBufferIndex] = voltageDiscreteSum / DISCRETE_BUFFER_SIZE;
+                    voltageAvgBuffer[i][j][avgBufferIndex] = voltageDiscreteSum / ((float) DISCRETE_BUFFER_SIZE);
                 }
                 else
                 {
@@ -152,10 +152,12 @@ static void calculateInternalResistance(Bms_S* bms)
         {
             if(currentAvgBuffer[i] > maxCurrent)
             {
+                maxCurrent = currentAvgBuffer[i];
                 maxCurrentIndex = i;
             }
             else if(currentAvgBuffer[i] < minCurrent)
             {
+                minCurrent = currentAvgBuffer[i];
                 minCurrentIndex = i;
             }
         }
