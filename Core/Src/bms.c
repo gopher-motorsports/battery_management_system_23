@@ -60,19 +60,27 @@ bool initBatteryPack(uint32_t* numBmbs)
 
 	if (!initASCI())
 	{
-		goto initializationError;
+		// goto initializationError;
 	}
 
 	if (!helloAll(numBmbs))
 	{
-		goto initializationError;
+		// goto initializationError;
 	}
 
 	if (*numBmbs != NUM_BMBS_IN_ACCUMULATOR)
 	{
 		Debug("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", *numBmbs, NUM_BMBS_IN_ACCUMULATOR);
 		uint32_t breakLocation = detectBmbDaisyChainBreak(pBms->bmb, NUM_BMBS_IN_ACCUMULATOR);
-		Debug("BMB Chain Break detected between BMB %lu and BMB %lu\n", breakLocation -1, breakLocation);
+		if (breakLocation == 0)
+		{
+			Debug("BMB Chain Break detected between BMS and BMB 1\n");
+		}
+		else
+		{
+			// breakLocation is 0 indexed but we should print 1 indexed bmb values
+			Debug("BMB Chain Break detected between BMB %lu and BMB %lu\n", breakLocation, breakLocation + 1);
+		}
 		goto initializationError;
 	}
 

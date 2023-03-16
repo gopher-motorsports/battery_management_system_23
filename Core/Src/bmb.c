@@ -488,17 +488,18 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
   @param   numBmbs - The expected number of BMBs in the daisy chain
   @returns Upper index of the break. For BMS -> 1st BMB break will return 1
 */
-uint32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs)
+int32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs)
 {
 	// Iterate through BMB indexes and determine if a daisy chain break exists
-	for (int bmbIdx = 1; bmbIdx <= numBmbs; bmbIdx++)
+	for (uint32_t bmbIdx = 0; bmbIdx < numBmbs; bmbIdx++)
 	{
-		if (!setBmbInternalLoopback(bmbIdx, true)) { return 0;}
+		if (!setBmbInternalLoopback(bmbIdx, true)) { }
 
 		// Determine if loopback communication is restored
-		readAll(VERSION, recvBuffer, bmbIdx);
+		memset(recvBuffer, 0, sizeof(recvBuffer));
+		readAll(VERSION, recvBuffer, bmbIdx + 1);
 
-		for (uint32_t i = 0; i < bmbIdx; i++)
+		for (uint32_t i = 0; i < bmbIdx + 1; i++)
 		{
 			// Read model number in [15:4]
 			uint32_t versionRegister = ((recvBuffer[4 + 2*i] << 8) | recvBuffer[3 + 2*i]) >> 4;
@@ -510,9 +511,9 @@ uint32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs)
 		}
 
 		// No issue detected yet. Disable internal loopback and continue looking
-		if (!setBmbInternalLoopback(bmbIdx, false)) { return 0; }
+		if (!setBmbInternalLoopback(bmbIdx, false)) {  }
 	}
-	return 0;
+	return -1;
 }
 
 
