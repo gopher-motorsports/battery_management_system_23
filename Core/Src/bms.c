@@ -60,27 +60,17 @@ bool initBatteryPack(uint32_t* numBmbs)
 
 	if (!initASCI())
 	{
-		// goto initializationError;
+		goto initializationError;
 	}
 
 	if (!helloAll(numBmbs))
 	{
-		// goto initializationError;
+		goto initializationError;
 	}
 
 	if (*numBmbs != NUM_BMBS_IN_ACCUMULATOR)
 	{
 		Debug("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", *numBmbs, NUM_BMBS_IN_ACCUMULATOR);
-		uint32_t breakLocation = detectBmbDaisyChainBreak(pBms->bmb, NUM_BMBS_IN_ACCUMULATOR);
-		if (breakLocation == 0)
-		{
-			Debug("BMB Chain Break detected between BMS and BMB 1\n");
-		}
-		else
-		{
-			// breakLocation is 0 indexed but we should print 1 indexed bmb values
-			Debug("BMB Chain Break detected between BMB %lu and BMB %lu\n", breakLocation, breakLocation + 1);
-		}
 		goto initializationError;
 	}
 
@@ -95,7 +85,36 @@ bool initBatteryPack(uint32_t* numBmbs)
 
 // Routine if initialization error ocurs
 initializationError:
+	// Set hardware error status
 	pBms->bmsHwState = BMS_BMB_FAILURE;
+
+	// Determine if a chain break exists
+	initASCI();	// Ignore return value as it will be bad due to no loopback
+	helloAll(numBmbs);	// Ignore return value as it will be bad due to no loopback
+	uint32_t breakLocation = detectBmbDaisyChainBreak(pBms->bmb, NUM_BMBS_IN_ACCUMULATOR);
+	if (breakLocation == 0)
+	{
+		Debug("BMB Chain Break detected between BMS and BMB 1\n");
+	}
+	else
+	{
+		// breakLocation is 0 indexed but we should print 1 indexed bmb values
+		Debug("BMB Chain Break detected between BMB %lu and BMB %lu\n", breakLocation, breakLocation + 1);
+	}
+	if (breakLocation == NUM_BMBS_IN_ACCUMULATOR - 1)
+	{
+		// Break location is in the external loopback of the final BMB
+		// This is fixable by enabling the internal loopback on the final BMB which is 
+		// done in the detectBmbDaisyChainBreak function
+		if (helloAll(numBmbs))
+		{
+			// helloAll command succeeded - verify that the numBmbs was correctly set
+			if (*numBmbs == NUM_BMBS_IN_ACCUMULATOR)
+			{
+				return true;
+			}
+		}
+	}
 	return false;
 }
 
