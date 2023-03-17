@@ -29,8 +29,12 @@
 // The delay between consecutive current sensor updates
 #define CURRENT_SENSOR_UPDATE_PERIOD_MS 	4
 
-// The dealy between consecutive bmb updates
+// The delay between consecutive bmb updates
 #define VOLTAGE_DATA_UPDATE_PERIOD_MS		50
+
+// Gophercan variable logging frequency. This value will be divided by the number of transactions
+// Frequency cannot exceed HW CONFIG max logging frequency
+#define GOPHER_CAN_LOGGING_FREQUENCY_HZ		1
 
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
@@ -49,6 +53,24 @@ typedef enum
 	SENSE_GOOD,		// Data nominal
 	SENSE_MIA			// Data wasn't aquired
 } Sensor_Status_E;
+
+typedef enum
+{
+	GCAN_SEGMENT_1 = 0,
+	GCAN_SEGMENT_2,
+	GCAN_SEGMENT_3,
+	GCAN_SEGMENT_4,
+	GCAN_SEGMENT_5,
+	GCAN_SEGMENT_6,
+	GCAN_SEGMENT_7,
+	GCAN_CELL_TEMP_STATS,
+	GCAN_BOARD_TEMP_STATS,
+	GCAN_BALSWEN,
+	NUM_GCAN_STATES
+} Gcan_State_E;
+
+// The delay between consecutive additions to gcan logging
+#define GOPHER_CAN_LOGGING_PERIOD_MS		1000 / (GOPHER_CAN_LOGGING_FREQUENCY_HZ * NUM_GCAN_STATES)
 
 /* ==================================================================== */
 /* ============================== STRUCTS============================== */
@@ -154,5 +176,10 @@ void updateEpaper();
   @brief   Update the tractive system current
 */
 void updateTractiveCurrent();
+
+/*!
+  @brief   Log non-ADC gopher can variables
+*/
+void updateGopherCan();
 
 #endif /* INC_BMS_H_ */
