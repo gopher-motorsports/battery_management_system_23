@@ -486,7 +486,8 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
   @brief   Determine where a BMB daisy chain break has occured
   @param   bmb - The array containing BMB data
   @param   numBmbs - The expected number of BMBs in the daisy chain
-  @returns Upper index of the break. For BMS -> 1st BMB break will return 1
+  @returns bmb index of BMB where communication failed (1 indexed)
+		   if no break detected returns 0
 */
 int32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs)
 {
@@ -505,15 +506,16 @@ int32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs)
 			uint32_t versionRegister = ((recvBuffer[4 + 2*i] << 8) | recvBuffer[3 + 2*i]) >> 4;
 			if (versionRegister != 0x843)
 			{
-				// Broken link detected
-				return bmbIdx;
+				// Broken link detected. Convert bmbIdx from 0-indexed to 1-indexed value 
+				return bmbIdx + 1;
 			}
 		}
 
 		// No issue detected yet. Disable internal loopback and continue looking
 		if (!setBmbInternalLoopback(bmbIdx, false)) {  }
 	}
-	return -1;
+	// No errors detected
+	return 0;
 }
 
 
