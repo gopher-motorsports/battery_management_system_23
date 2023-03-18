@@ -84,6 +84,8 @@ void runMain()
 		
 		updatePackData(numBmbs);
 
+		updateGopherCan();
+
 		updateImdStatus();
 
 		updateSdcStatus();

@@ -19,8 +19,24 @@ buckets:
     low_frequency_bms:
         frequency_hz: 2
         parameters:
-            # Segment 1 Voltage Statistics
+            # Battery Management System
+            # Segment 1 Overall
             seg1Voltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1BMBMaxBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1BMBMinBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1BMBAveBoardTemp_C:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
@@ -36,6 +52,42 @@ buckets:
                 samples_buffered: 1
 
             seg1AveCellVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1MaxCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1MinCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1AveCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 1 BMB Board Temps
+            seg1BMBBoardTemp1_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1BMBBoardTemp2_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1BMBBoardTemp3_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1BMBBoardTemp4_C:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
@@ -162,34 +214,86 @@ buckets:
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            # Segment 1 BMB Board Temps
-            seg1BMBBoardTemp1_C:
+            # Segment 1 Balancing
+            seg1Cell1BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg1BMBBoardTemp2_C:
+            seg1Cell2BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg1BMBBoardTemp3_C:
+            seg1Cell3BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg1BMBBoardTemp4_C:
+            seg1Cell4BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            # Segment 2 Voltage Statistics
+            seg1Cell5BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell6BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell7BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell8BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell9BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell10BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell11BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell12BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # END SEGMENT 1
+            
+            # Segment 2 Overall
             seg2Voltage_V:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg2AveCellVoltage_V:
+            seg2BMBMaxBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2BMBMinBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2BMBAveBoardTemp_C:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
@@ -200,6 +304,47 @@ buckets:
                 samples_buffered: 1
 
             seg2MinCellVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2AveCellVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2MaxCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2MinCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2AveCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 2 BMB Board Temps
+            seg2BMBBoardTemp1_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2BMBBoardTemp2_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2BMBBoardTemp3_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2BMBBoardTemp4_C:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
@@ -326,34 +471,86 @@ buckets:
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            # Segment 2 BMB Board Temps
-            seg2BMBBoardTemp1_C:
+            # Segment 2 Balancing
+            seg2Cell1BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg2BMBBoardTemp2_C:
+            seg2Cell2BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg2BMBBoardTemp3_C:
+            seg2Cell3BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg2BMBBoardTemp4_C:
+            seg2Cell4BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
+            seg2Cell5BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell6BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell7BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell8BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell9BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell10BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell11BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell12BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # END SEGMENT 2
+            
             # Segment 3 Overall
             seg3Voltage_V:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg3AveCellVoltage_V:
+            seg3BMBMaxBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3BMBMinBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3BMBAveBoardTemp_C:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
@@ -364,6 +561,47 @@ buckets:
                 samples_buffered: 1
 
             seg3MinCellVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3AveCellVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3MaxCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3MinCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3AveCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 3 BMB Board Temps
+            seg3BMBBoardTemp1_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3BMBBoardTemp2_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3BMBBoardTemp3_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3BMBBoardTemp4_C:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
@@ -490,34 +728,86 @@ buckets:
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            # Segment 3 BMB Board Temps
-            seg3BMBBoardTemp1_C:
+            # Segment 3 Balancing
+            seg3Cell1BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg3BMBBoardTemp2_C:
+            seg3Cell2BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg3BMBBoardTemp3_C:
+            seg3Cell3BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg3BMBBoardTemp4_C:
+            seg3Cell4BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
+            seg3Cell5BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell6BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell7BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell8BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell9BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell10BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell11BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell12BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # END SEGMENT 3
+            
             # Segment 4 Overall
             seg4Voltage_V:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg4AveCellVoltage_V:
+            seg4BMBMaxBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4BMBMinBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4BMBAveBoardTemp_C:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
@@ -528,6 +818,47 @@ buckets:
                 samples_buffered: 1
 
             seg4MinCellVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4AveCellVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4MaxCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4MinCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4AveCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 4 BMB Board Temps
+            seg4BMBBoardTemp1_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4BMBBoardTemp2_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4BMBBoardTemp3_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4BMBBoardTemp4_C:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
@@ -654,37 +985,89 @@ buckets:
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            # Segment 4 BMB Board Temps
-            seg4BMBBoardTemp1_C:
+            # Segment 4 Balancing
+            seg4Cell1BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg4BMBBoardTemp2_C:
+            seg4Cell2BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg4BMBBoardTemp3_C:
+            seg4Cell3BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg4BMBBoardTemp4_C:
+            seg4Cell4BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
+            seg4Cell5BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell6BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell7BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell8BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell9BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell10BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell11BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell12BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # END SEGMENT 4
+            
             # Segment 5 Overall
             seg5Voltage_V:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg5AveCellVoltage_V:
+            seg5BMBMaxBoardTemp_C:
                 ADC: NON_ADC
                 sensor: NON_ADC
-                samples_buffered: 1    
+                samples_buffered: 1
+
+            seg5BMBMinBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5BMBAveBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
 
             seg5MaxCellVoltage_V:
                 ADC: NON_ADC
@@ -692,6 +1075,47 @@ buckets:
                 samples_buffered: 1
 
             seg5MinCellVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5AveCellVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5MaxCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5MinCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5AveCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 5 BMB Board Temps
+            seg5BMBBoardTemp1_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5BMBBoardTemp2_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5BMBBoardTemp3_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5BMBBoardTemp4_C:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
@@ -818,34 +1242,86 @@ buckets:
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            # Segment 5 BMB Board Temps
-            seg5BMBBoardTemp1_C:
+            # Segment 5 Balancing
+            seg5Cell1BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg5BMBBoardTemp2_C:
+            seg5Cell2BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg5BMBBoardTemp3_C:
+            seg5Cell3BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg5BMBBoardTemp4_C:
+            seg5Cell4BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
+            seg5Cell5BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell6BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell7BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell8BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell9BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell10BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell11BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell12BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # END SEGMENT 5
+            
             # Segment 6 Overall
             seg6Voltage_V:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg6AveCellVoltage_V:
+            seg6BMBMaxBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6BMBMinBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6BMBAveBoardTemp_C:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
@@ -856,6 +1332,47 @@ buckets:
                 samples_buffered: 1
 
             seg6MinCellVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6AveCellVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6MaxCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6MinCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6AveCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 6 BMB Board Temps
+            seg6BMBBoardTemp1_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6BMBBoardTemp2_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6BMBBoardTemp3_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6BMBBoardTemp4_C:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
@@ -982,34 +1499,86 @@ buckets:
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            # Segment 6 BMB Board Temps
-            seg6BMBBoardTemp1_C:
+            # Segment 6 Balancing
+            seg6Cell1BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg6BMBBoardTemp2_C:
+            seg6Cell2BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg6BMBBoardTemp3_C:
+            seg6Cell3BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg6BMBBoardTemp4_C:
+            seg6Cell4BalanceEnable_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
+            seg6Cell5BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell6BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell7BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell8BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell9BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell10BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell11BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell12BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # END SEGMENT 6
+            
             # Segment 7 Overall
             seg7Voltage_V:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            seg7AveCellVoltage_V:
+            seg7BMBMaxBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7BMBMinBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7BMBAveBoardTemp_C:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
@@ -1020,6 +1589,47 @@ buckets:
                 samples_buffered: 1
 
             seg7MinCellVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7AveCellVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7MaxCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7MinCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7AveCellTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 7 BMB Board Temps
+            seg7BMBBoardTemp1_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7BMBBoardTemp2_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7BMBBoardTemp3_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7BMBBoardTemp4_C:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
@@ -1146,641 +1756,6 @@ buckets:
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            # Segment 7 BMB Board Temps
-            seg7BMBBoardTemp1_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg7BMBBoardTemp2_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg7BMBBoardTemp3_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg7BMBBoardTemp4_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 1 Cell Temp Stats
-            seg1AveCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg1MaxCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg1MinCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 2 Cell Temp Stats
-            seg2AveCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg2MaxCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg2MinCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 3 Cell Temp Stats
-            seg3AveCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg3MaxCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg3MinCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 4 Cell Temp Stats
-            seg4AveCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg4MaxCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg4MinCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 5 Cell Temp Stats
-            seg5AveCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg5MaxCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg5MinCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 6 Cell Temp Stats
-            seg6AveCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg6MaxCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg6MinCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 7 Cell Temp Stats
-            seg7AveCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-                
-            seg7MaxCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg7MinCellTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 1 Balancing
-            seg1Cell1BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg1Cell2BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg1Cell3BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg1Cell4BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg1Cell5BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg1Cell6BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg1Cell7BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg1Cell8BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg1Cell9BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg1Cell10BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg1Cell11BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg1Cell12BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # AMS Fault Latched State
-            amsFault_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # BSPD Fault Latched State
-            bspdFault_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 1 Board Temp Stats
-            seg1BMBAveBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg1BMBMaxBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg1BMBMinBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 2 Board Temp Stats
-            seg2BMBAveBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg2BMBMaxBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg2BMBMinBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 3 Board Temp Stats
-            seg3BMBAveBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg3BMBMaxBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg3BMBMinBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 4 Board Temp Stats
-            seg4BMBAveBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg4BMBMaxBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg4BMBMinBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 5 Board Temp Stats
-            seg5BMBAveBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg5BMBMaxBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg5BMBMinBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 6 Board Temp Stats
-            seg6BMBAveBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg6BMBMaxBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg6BMBMinBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 7 Board Temp Stats
-            seg7BMBAveBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg7BMBMaxBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg7BMBMinBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 2 Balancing
-            seg2Cell1BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg2Cell2BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg2Cell3BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg2Cell4BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg2Cell5BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg2Cell6BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg2Cell7BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg2Cell8BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg2Cell9BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg2Cell10BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg2Cell11BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg2Cell12BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # IMD Fault Latched State
-            imdFault_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # IMD Fault condition
-            imdFaultInfo_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 3 Balancing
-            seg3Cell1BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg3Cell2BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg3Cell3BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg3Cell4BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg3Cell5BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg3Cell6BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg3Cell7BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg3Cell8BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg3Cell9BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg3Cell10BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg3Cell11BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg3Cell12BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 4 Balancing
-            seg4Cell1BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg4Cell2BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg4Cell3BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg4Cell4BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg4Cell5BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg4Cell6BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg4Cell7BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg4Cell8BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg4Cell9BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg4Cell10BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg4Cell11BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg4Cell12BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 5 Balancing
-            seg5Cell1BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg5Cell2BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg5Cell3BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg5Cell4BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg5Cell5BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg5Cell6BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg5Cell7BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg5Cell8BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg5Cell9BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg5Cell10BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg5Cell11BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg5Cell12BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            # Segment 6 Balancing
-            seg6Cell1BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg6Cell2BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg6Cell3BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg6Cell4BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg6Cell5BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg6Cell6BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg6Cell7BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg6Cell8BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg6Cell9BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg6Cell10BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg6Cell11BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            seg6Cell12BalanceEnable_state:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
             # Segment 7 Balancing
             seg7Cell1BalanceEnable_state:
                 ADC: NON_ADC
@@ -1838,6 +1813,29 @@ buckets:
                 samples_buffered: 1
 
             seg7Cell12BalanceEnable_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # END SEGMENT 7
+            
+            # Error states
+            amsFault_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            imdFault_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bspdFault_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            imdFaultInfo_state:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1

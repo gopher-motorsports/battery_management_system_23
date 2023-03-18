@@ -24,14 +24,14 @@
 
 #if defined(DHAB_S_133)
 
-#define CURRENT_HIGH_RAIL_THRESHOLD             590
+#define CURRENT_HIGH_RAIL_THRESHOLD             852
 #define CURRENT_LOW_RAIL_THRESHOLD              87
 #define CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD    75
 
 #elif defined(DHAB_S_118)
 
-#define CURRENT_HIGH_RAIL_THRESHOLD             420
-#define CURRENT_LOW_RAIL_THRESHOLD              36
+#define CURRENT_HIGH_RAIL_THRESHOLD             410
+#define CURRENT_LOW_RAIL_THRESHOLD              35
 #define CURRENT_LOW_TO_HIGH_SWITCH_THRESHOLD    30
 
 #endif //DHAB_S_133
