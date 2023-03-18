@@ -194,9 +194,10 @@ void aggregateBmbData(Bmb_S* bmb,uint32_t numBmbs);
   @brief   Determine where a BMB daisy chain break has occured
   @param   bmb - The array containing BMB data
   @param   numBmbs - The expected number of BMBs in the daisy chain
-  @returns Lower index of the break with 0 corresponding to the BMS -> 1st BMB connection
+  @returns bmb index of BMB where communication failed (1 indexed)
+		   if no break detected returns 0
 */
-uint32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs);
+int32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs);
 
 /*!
   @brief   Determine if a power-on reset (POR) occurred and if so properly reset the device

@@ -576,7 +576,7 @@ bool initASCI()
 	if (xSemaphoreTake(asciSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
 	{
 		Debug("Interrupt failed to occur while enabling TX_Preambles mode!\n");
-		return false;
+		successfulConfig = false;
 	}
 
 	// Verify interrupt was caused by RX_Busy
@@ -586,7 +586,7 @@ bool initASCI()
 	}
 	else
 	{
-		return false;
+		successfulConfig = false;
 	}
 
 	// Verify RX_Busy_Status and RX_Empty_Status true

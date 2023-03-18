@@ -92,9 +92,9 @@ static bool setBmbInternalLoopback(uint32_t bmbIdx, bool enabled)
 		writeDevice(DEVCFG2, enabled ? DEVCFG2_LASTLOOP : 0, bmbIdx);
 		clearRxBuffer();
 		// Verify that the internal loopback mode was enabled successfully
-		readDevice(DEVCFG1, recvBuffer, bmbIdx);
+		readDevice(DEVCFG2, recvBuffer, bmbIdx);
 		uint16_t registerValue = (recvBuffer[4] << 8) | recvBuffer[3];
-		if ((registerValue & DEVCFG2_LASTLOOP) == enabled)
+		if (registerValue & DEVCFG2_LASTLOOP)
 		{
 			// Successfully wrote to LASTLOOP bit
 			return true;
@@ -486,32 +486,36 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
   @brief   Determine where a BMB daisy chain break has occured
   @param   bmb - The array containing BMB data
   @param   numBmbs - The expected number of BMBs in the daisy chain
-  @returns Upper index of the break. For BMS -> 1st BMB break will return 1
+  @returns bmb index of BMB where communication failed (1 indexed)
+		   if no break detected returns 0
 */
-uint32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs)
+int32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs)
 {
 	// Iterate through BMB indexes and determine if a daisy chain break exists
-	for (int bmbIdx = 1; bmbIdx <= numBmbs; bmbIdx++)
+	for (uint32_t bmbIdx = 0; bmbIdx < numBmbs; bmbIdx++)
 	{
-		if (!setBmbInternalLoopback(bmbIdx, true)) { return 0;}
+		if (!setBmbInternalLoopback(bmbIdx, true)) { return bmbIdx + 1; }
 
 		// Determine if loopback communication is restored
-		readAll(VERSION, recvBuffer, bmbIdx);
+		memset(recvBuffer, 0, sizeof(recvBuffer));
+		readAll(VERSION, recvBuffer, bmbIdx + 1);
 
-		for (uint32_t i = 0; i < bmbIdx; i++)
+		for (uint32_t i = 0; i < bmbIdx + 1; i++)
 		{
 			// Read model number in [15:4]
 			uint32_t versionRegister = ((recvBuffer[4 + 2*i] << 8) | recvBuffer[3 + 2*i]) >> 4;
 			if (versionRegister != 0x843)
 			{
-				// Broken link detected
-				return bmbIdx;
+				// Broken link detected. Convert bmbIdx from 0-indexed to 1-indexed value 
+				return bmbIdx + 1;
 			}
 		}
 
 		// No issue detected yet. Disable internal loopback and continue looking
-		if (!setBmbInternalLoopback(bmbIdx, false)) { return 0; }
+		if (!setBmbInternalLoopback(bmbIdx, false)) { return bmbIdx + 1; }
 	}
+	// No errors detected - enable internal loopback on final BMB
+	if (!setBmbInternalLoopback(numBmbs-1, true)) { return -1; }
 	return 0;
 }
 
