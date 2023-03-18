@@ -92,9 +92,9 @@ static bool setBmbInternalLoopback(uint32_t bmbIdx, bool enabled)
 		writeDevice(DEVCFG2, enabled ? DEVCFG2_LASTLOOP : 0, bmbIdx);
 		clearRxBuffer();
 		// Verify that the internal loopback mode was enabled successfully
-		readDevice(DEVCFG1, recvBuffer, bmbIdx);
+		readDevice(DEVCFG2, recvBuffer, bmbIdx);
 		uint16_t registerValue = (recvBuffer[4] << 8) | recvBuffer[3];
-		if ((registerValue & DEVCFG2_LASTLOOP) == enabled)
+		if (registerValue & DEVCFG2_LASTLOOP)
 		{
 			// Successfully wrote to LASTLOOP bit
 			return true;
@@ -494,7 +494,7 @@ int32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs)
 	// Iterate through BMB indexes and determine if a daisy chain break exists
 	for (uint32_t bmbIdx = 0; bmbIdx < numBmbs; bmbIdx++)
 	{
-		if (!setBmbInternalLoopback(bmbIdx, true)) { }
+		if (!setBmbInternalLoopback(bmbIdx, true)) { return bmbIdx + 1; }
 
 		// Determine if loopback communication is restored
 		memset(recvBuffer, 0, sizeof(recvBuffer));
@@ -512,9 +512,10 @@ int32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs)
 		}
 
 		// No issue detected yet. Disable internal loopback and continue looking
-		if (!setBmbInternalLoopback(bmbIdx, false)) {  }
+		if (!setBmbInternalLoopback(bmbIdx, false)) { return bmbIdx + 1; }
 	}
-	// No errors detected
+	// No errors detected - enable internal loopback on final BMB
+	if (!setBmbInternalLoopback(numBmbs-1, true)) { return -1; }
 	return 0;
 }
 

@@ -92,16 +92,16 @@ initializationError:
 	initASCI();	// Ignore return value as it will be bad due to no loopback
 	helloAll(numBmbs);	// Ignore return value as it will be bad due to no loopback
 	uint32_t breakLocation = detectBmbDaisyChainBreak(pBms->bmb, NUM_BMBS_IN_ACCUMULATOR);
-	if (breakLocation == 0)
+	if (breakLocation == 1)
 	{
 		Debug("BMB Chain Break detected between BMS and BMB 1\n");
 	}
-	else
+	else if (breakLocation != 0)
 	{
 		// breakLocation is 0 indexed but we should print 1 indexed bmb values
 		Debug("BMB Chain Break detected between BMB %lu and BMB %lu\n", breakLocation, breakLocation + 1);
 	}
-	if (breakLocation == NUM_BMBS_IN_ACCUMULATOR - 1)
+	else
 	{
 		// Break location is in the external loopback of the final BMB
 		// This is fixable by enabling the internal loopback on the final BMB which is 
@@ -109,8 +109,13 @@ initializationError:
 		if (helloAll(numBmbs))
 		{
 			// helloAll command succeeded - verify that the numBmbs was correctly set
-			if (*numBmbs == NUM_BMBS_IN_ACCUMULATOR)
+			if (*numBmbs != NUM_BMBS_IN_ACCUMULATOR)
 			{
+				return false;
+			}
+			if (initBmbs(*numBmbs))
+			{
+				gBms.bmsHwState = BMS_NOMINAL;
 				return true;
 			}
 		}
