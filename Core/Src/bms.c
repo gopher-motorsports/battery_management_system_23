@@ -12,7 +12,7 @@
 #include "currentSense.h"
 #include "internalResistance.h"
 #include "gopher_sense.h"
-
+#include "charger.h"
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
@@ -47,11 +47,10 @@ Bms_S gBms =
 /* ==================================================================== */
 
 extern osMessageQId epaperQueueHandle;
-
 extern CAN_HandleTypeDef hcan2;
 
+extern bool newChargerMessage;
 extern LeakyBucket_S asciCommsLeakyBucket;
-
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
@@ -484,7 +483,7 @@ void updateEpaper()
 void updateTractiveCurrent()
 {
 	static uint32_t lastCurrentUpdate = 0;
-	if((HAL_GetTick() - lastCurrentUpdate) > CURRENT_SENSOR_UPDATE_PERIOD_MS)
+	if((HAL_GetTick() - lastCurrentUpdate) >= CURRENT_SENSOR_UPDATE_PERIOD_MS)
 	{
 		lastCurrentUpdate = HAL_GetTick();
 		getTractiveSystemCurrent(&gBms);
@@ -577,7 +576,7 @@ void updateGopherCan()
 
 		// Log gcan variables across the alloted time period in data chunks
 		static uint32_t lastGcanUpdate = 0;
-		if((HAL_GetTick() - lastGcanUpdate) > GOPHER_CAN_LOGGING_PERIOD_MS)
+		if((HAL_GetTick() - lastGcanUpdate) >= GOPHER_CAN_LOGGING_PERIOD_MS)
 		{
 			lastGcanUpdate = HAL_GetTick();
 
@@ -669,9 +668,31 @@ void updateGopherCan()
 			}
 
 			// Cycle Gcan state and wrap to 0 if needed
-			gcanUpdateState = (gcanUpdateState++) % NUM_GCAN_STATES;
+			gcanUpdateState = (++gcanUpdateState) % NUM_GCAN_STATES;
 
 			service_can_tx(&hcan2);
 		}
+	}
+}
+
+/*!
+  @brief   Perform accumulator charge sequence
+*/
+void chargeAccumulator()
+{
+	// If a charger message is recieved, check for charger faults and update the charger status
+	if (newChargerMessage)
+	{
+		validateChargerState(&gBms);
+		newChargerMessage = false;
+	}
+
+	// Periodically send an updated charger request CAN message to the charger
+	// Second condition protects from case in which a new charger message is recieved between this if statement and the last
+	static uint32_t lastChargerUpdate = 0;
+	if (((HAL_GetTick() - lastChargerUpdate) >= CHARGER_UPDATE_PERIOD_MS) && (!newChargerMessage))
+	{
+		lastChargerUpdate = HAL_GetTick();
+		updateChargerState(&gBms);
 	}
 }

@@ -40,6 +40,10 @@
 // Frequency cannot exceed HW CONFIG max logging frequency
 #define GOPHER_CAN_LOGGING_FREQUENCY_HZ		1
 
+// The delay between consecutive charger request CAN messages
+// The ELCON charger expects a message every 1s and will fault if a message is not recieve in 5s
+#define CHARGER_UPDATE_PERIOD_MS			1000
+
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
 /* ==================================================================== */
@@ -66,6 +70,26 @@ typedef enum
 	// GCAN_BALSWEN,
 	NUM_GCAN_STATES
 } Gcan_State_E;
+
+typedef enum
+{
+    CHARGER_DISABLE = 0,
+    CHARGER_ENABLE
+
+} Charger_State_E;
+
+typedef enum
+{
+    CHARGER_GOOD = 0,
+    CHARGER_VOLTAGE_FAULT,
+    CHARGER_CURRENT_FAULT,
+    CHARGER_HARDWARE_FAULT,
+    CHARGER_OVERTEMP_FAULT,
+    CHARGER_INPUT_VOLTAGE_FAULT,
+    CHRAGER_REVERSE_POLARITY_FAULT,
+    CHARGER_COMMUNICATION_FAULT,
+    NUM_CHARGER_FAULTS
+} Charger_Error_E;
 
 // The delay between consecutive additions to gcan logging
 #define GOPHER_CAN_LOGGING_PERIOD_MS	(1000 / (GOPHER_CAN_LOGGING_FREQUENCY_HZ * NUM_GCAN_STATES))
@@ -109,6 +133,9 @@ typedef struct Bms
 	bool amsFaultStatus;
 
 	Bms_Hardware_State_E bmsHwState;
+
+	Charger_State_E chargerState;
+	Charger_Error_E chargerStatus;
 } Bms_S;
 
 
@@ -177,5 +204,9 @@ void updateTractiveCurrent();
 */
 void updateGopherCan();
 
+/*!
+  @brief   Perform accumulator charge sequence
+*/
+void chargeAccumulator();
 
 #endif /* INC_BMS_H_ */
