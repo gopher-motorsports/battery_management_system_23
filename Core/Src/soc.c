@@ -6,9 +6,10 @@
 #define TABLE_LENGTH 101
 
 
-
+// State of charge for VTC6 cells
 float stateOfCharge[TABLE_LENGTH] = 
-{   1.0000f, 0.9900f, 0.9800f, 0.9700f, 0.9600f, 0.9500f, 0.9400f, 0.9300f, 0.9200f, 0.9100f, 0.9000f, 
+{   
+    1.0000f, 0.9900f, 0.9800f, 0.9700f, 0.9600f, 0.9500f, 0.9400f, 0.9300f, 0.9200f, 0.9100f, 0.9000f, 
     0.8900f, 0.8800f, 0.8700f, 0.8600f, 0.8500f, 0.8400f, 0.8300f, 0.8200f, 0.8100f, 0.8000f, 0.7900f, 
     0.7800f, 0.7700f, 0.7600f, 0.7500f, 0.7400f, 0.7300f, 0.7200f, 0.7100f, 0.7000f, 0.6900f, 0.6800f, 
     0.6700f, 0.6600f, 0.6500f, 0.6400f, 0.6300f, 0.6200f, 0.6100f, 0.6000f, 0.5900f, 0.5800f, 0.5700f, 
@@ -20,6 +21,22 @@ float stateOfCharge[TABLE_LENGTH] =
     0.0100f, 0.0000f
 };
 
+// State of energy for VTC6 cells. References SOC table
+float stateOfEnergy[TABLE_LENGTH] = 
+{
+    1.0000f, 0.9886f, 0.9773f, 0.9661f, 0.9548f, 0.9437f, 0.9325f, 0.9213f, 0.9102f, 0.8991f, 0.8880f, 
+    0.8769f, 0.8658f, 0.8547f, 0.8436f, 0.8325f, 0.8215f, 0.8104f, 0.7994f, 0.7884f, 0.7774f, 0.7664f, 
+    0.7555f, 0.7446f, 0.7338f, 0.7229f, 0.7121f, 0.7014f, 0.6907f, 0.6800f, 0.6693f, 0.6587f, 0.6481f, 
+    0.6376f, 0.6270f, 0.6165f, 0.6061f, 0.5956f, 0.5851f, 0.5747f, 0.5643f, 0.5539f, 0.5435f, 0.5332f, 
+    0.5229f, 0.5126f, 0.5023f, 0.4920f, 0.4818f, 0.4716f, 0.4614f, 0.4512f, 0.4411f, 0.4309f, 0.4209f, 
+    0.4108f, 0.4008f, 0.3907f, 0.3808f, 0.3708f, 0.3609f, 0.3510f, 0.3411f, 0.3313f, 0.3215f, 0.3117f, 
+    0.3020f, 0.2923f, 0.2827f, 0.2731f, 0.2635f, 0.2539f, 0.2444f, 0.2348f, 0.2253f, 0.2158f, 0.2064f, 
+    0.1970f, 0.1877f, 0.1784f, 0.1691f, 0.1599f, 0.1508f, 0.1417f, 0.1326f, 0.1237f, 0.1148f, 0.1060f, 
+    0.0972f, 0.0886f, 0.0799f, 0.0714f, 0.0629f, 0.0545f, 0.0462f, 0.0381f, 0.0300f, 0.0221f, 0.0144f, 
+    0.0070f, 0.0000f
+};
+
+// Open cell voltage for VTC6 cells. References SOC table
 float openCellVoltage[TABLE_LENGTH] = 
 {
     4.2000f, 4.1642f, 4.1445f, 4.1298f, 4.1177f, 4.1087f, 4.1006f, 4.0948f, 4.0898f, 4.0855f, 4.0819f, 
@@ -34,5 +51,18 @@ float openCellVoltage[TABLE_LENGTH] =
     2.6490f, 2.4833f
 };
 
-LookupTable_S socByOcvTable =  { .length = TABLE_LENGTH, .x = openCellVoltage, .y = stateOfCharge};
+LookupTable_S socByOcvTable = { .length = TABLE_LENGTH, .x = openCellVoltage, .y = stateOfCharge};
+
+LookupTable_S soeFromSocTable = { .length = TABLE_LENGTH, .x = stateOfCharge, .y = stateOfEnergy};
+
+
+float getSocFromCellVoltage(float cellVoltage)
+{
+    return lookup(cellVoltage, &socByOcvTable);
+}
+
+float getSoeFromSoc(float soc)
+{
+    return lookup(soc, &soeFromSocTable);
+}
 
