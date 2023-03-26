@@ -12,11 +12,17 @@
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
 
-#define OVERVOLTAGE_ALERT_SET_TIME_MS       2000
-#define OVERVOLTAGE_ALERT_CLEAR_TIME_MS     2000
+#define OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS     1000
+#define OVERVOLTAGE_WARNING_ALERT_CLEAR_TIME_MS   1000
 
-#define UNDERVOLTAGE_ALERT_SET_TIME_MS      2000
-#define UNDERVOLTAGE_ALERT_CLEAR_TIME_MS    2000
+#define OVERVOLTAGE_FAULT_ALERT_SET_TIME_MS       2000
+#define OVERVOLTAGE_FAULT_ALERT_CLEAR_TIME_MS     2000
+
+#define UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS    2000
+#define UNDERVOLTAGE_WARNING_ALERT_CLEAR_TIME_MS  2000
+
+#define UNDERVOLTAGE_FAULT_ALERT_SET_TIME_MS      2000
+#define UNDERVOLTAGE_FAULT_ALERT_CLEAR_TIME_MS    2000
 
 #define CELL_IMBALANCE_ALERT_SET_TIME_MS    1000
 #define CELL_IMBALANCE_ALERT_CLEAR_TIME_MS  1000
@@ -41,6 +47,17 @@ typedef enum
     ALERT_SET
 } AlertStatus_E;
 
+// Responses for a specific alert
+typedef enum
+{
+    INFO_ONLY = 0,
+    DISABLE_BALANCING,
+    EMERGENCY_BLEED,
+    STOP_CHARGING,
+    LIMP_MODE,
+    AMS_FAULT
+} AlertResponse_E;
+
 
 /* ==================================================================== */
 /* ============================== STRUCTS============================== */
@@ -54,6 +71,8 @@ typedef struct
     const uint32_t setTime_MS;
     const uint32_t clearTime_MS;
     const AlertConditionPresent alertConditionPresent;
+    const uint32_t numAlertResponse;
+    const AlertResponse_E* alertResponse;
 } Alert_S;
 
 

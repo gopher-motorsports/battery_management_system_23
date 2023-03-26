@@ -134,34 +134,99 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
 /* ========================= GLOBAL VARIABLES ========================= */
 /* ==================================================================== */
 
-Alert_S overvoltageAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERVOLTAGE_ALERT_SET_TIME_MS}, 
-                            .setTime_MS = OVERVOLTAGE_ALERT_SET_TIME_MS, .clearTime_MS = OVERVOLTAGE_ALERT_CLEAR_TIME_MS, 
-                            .alertConditionPresent = overvoltagePresent};
+// Overvoltage Warning Alert
+#define NUM_OVERVOLTAGE_WARNING_ALERT_RESPONSE 1
+const AlertResponse_E overvoltageWarningAlertResponse[NUM_OVERVOLTAGE_WARNING_ALERT_RESPONSE] = { STOP_CHARGING };
+Alert_S overvoltageWarningAlert = 
+{ 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
+    .setTime_MS = OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS, .clearTime_MS = OVERVOLTAGE_WARNING_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = overvoltagePresent, 
+    .numAlertResponse = NUM_OVERVOLTAGE_WARNING_ALERT_RESPONSE, .alertResponse =  overvoltageWarningAlertResponse
+};
 
-Alert_S undervoltageAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, UNDERVOLTAGE_ALERT_SET_TIME_MS}, 
-                             .setTime_MS = UNDERVOLTAGE_ALERT_SET_TIME_MS, .clearTime_MS = UNDERVOLTAGE_ALERT_CLEAR_TIME_MS, 
-                             .alertConditionPresent = undervoltagePresent};
+// Undervoltage Warning Alert
+#define NUM_UNDERVOLTAGE_WARNING_ALERT_RESPONSE 1
+const AlertResponse_E undervoltageWarningAlertResponse[NUM_UNDERVOLTAGE_WARNING_ALERT_RESPONSE] = { LIMP_MODE };
+Alert_S undervoltageWarningAlert = 
+{ 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
+    .setTime_MS = UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS, .clearTime_MS = UNDERVOLTAGE_WARNING_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = undervoltagePresent,
+    .numAlertResponse = NUM_UNDERVOLTAGE_WARNING_ALERT_RESPONSE, .alertResponse = undervoltageWarningAlertResponse
+};
 
-Alert_S cellImbalanceAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, CELL_IMBALANCE_ALERT_SET_TIME_MS}, 
-                              .setTime_MS = CELL_IMBALANCE_ALERT_SET_TIME_MS, .clearTime_MS = CELL_IMBALANCE_ALERT_CLEAR_TIME_MS, 
-                              .alertConditionPresent = cellImbalancePresent};
+// Overvoltage Fault Alert
+#define NUM_OVERVOLTAGE_FAULT_ALERT_RESPONSE 3
+const AlertResponse_E overvoltageFaultAlertResponse[NUM_OVERVOLTAGE_FAULT_ALERT_RESPONSE] = { STOP_CHARGING, EMERGENCY_BLEED, AMS_FAULT};
+Alert_S overvoltageFaultAlert = 
+{ 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
+    .setTime_MS = OVERVOLTAGE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = OVERVOLTAGE_FAULT_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = overvoltagePresent, 
+    .numAlertResponse = NUM_OVERVOLTAGE_FAULT_ALERT_RESPONSE, .alertResponse =  overvoltageFaultAlertResponse
+};
 
-Alert_S overtemperatureWarningAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERTEMPERATURE_WARNING_ALERT_SET_TIME_MS}, 
-                                       .setTime_MS = OVERTEMPERATURE_WARNING_ALERT_SET_TIME_MS, .clearTime_MS = OVERTEMPERATURE_WARNING_ALERT_CLEAR_TIME_MS, 
-                                       .alertConditionPresent = overtemperatureWarningPresent};
+// Undervoltage Fault Alert
+#define NUM_UNDERVOLTAGE_FAULT_ALERT_RESPONSE 1
+const AlertResponse_E undervoltageFaultAlertResponse[NUM_UNDERVOLTAGE_FAULT_ALERT_RESPONSE] = { LIMP_MODE };
+Alert_S undervoltageFaultAlert = 
+{ 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
+    .setTime_MS = UNDERVOLTAGE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = UNDERVOLTAGE_FAULT_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = undervoltagePresent,
+    .numAlertResponse = NUM_UNDERVOLTAGE_FAULT_ALERT_RESPONSE, .alertResponse = undervoltageFaultAlertResponse
+};
 
-Alert_S overtemperatureFaultAlert   = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS}, 
-                                       .setTime_MS = OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = OVERTEMPERATURE_FAULT_ALERT_CLEAR_TIME_MS, 
-                                       .alertConditionPresent = overtemperatureFaultPresent};
+// Cell Imbalance Alert
+#define NUM_CELL_IMBALANCE_ALERT_RESPONSE 3
+const AlertResponse_E cellImbalanceAlertResponse[NUM_CELL_IMBALANCE_ALERT_RESPONSE] = { LIMP_MODE, STOP_CHARGING, DISABLE_BALANCING };
+Alert_S cellImbalanceAlert = 
+{
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, CELL_IMBALANCE_ALERT_SET_TIME_MS}, 
+    .setTime_MS = CELL_IMBALANCE_ALERT_SET_TIME_MS, .clearTime_MS = CELL_IMBALANCE_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = cellImbalancePresent,
+    .numAlertResponse = NUM_CELL_IMBALANCE_ALERT_RESPONSE, .alertResponse = cellImbalanceAlertResponse
+};
 
-Alert_S amsSdcFaultAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
-                            .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
-                            .alertConditionPresent = amsSdcFaultPresent};
+// Overtemperature Warning Alert
+#define NUM_OVERTEMP_WARNING_ALERT_RESPONSE 3
+const AlertResponse_E overtempWarningAlertResponse[NUM_OVERTEMP_WARNING_ALERT_RESPONSE] = { LIMP_MODE, STOP_CHARGING, DISABLE_BALANCING };
+Alert_S overtemperatureWarningAlert = 
+{
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERTEMPERATURE_WARNING_ALERT_SET_TIME_MS}, 
+    .setTime_MS = OVERTEMPERATURE_WARNING_ALERT_SET_TIME_MS, .clearTime_MS = OVERTEMPERATURE_WARNING_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = overtemperatureWarningPresent,
+    .numAlertResponse = NUM_OVERTEMP_WARNING_ALERT_RESPONSE, .alertResponse = overtempWarningAlertResponse
+};
 
-Alert_S bspdSdcFaultAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
-                             .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
-                             .alertConditionPresent = bspdSdcFaultPresent};
+#define NUM_OVERTEMP_FAULT_ALERT_RESPONSE 1
+const AlertResponse_E overtempFaultAlertResponse[NUM_OVERTEMP_FAULT_ALERT_RESPONSE] = { AMS_FAULT };
+Alert_S overtemperatureFaultAlert = 
+{
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS}, 
+    .setTime_MS = OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = OVERTEMPERATURE_FAULT_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = overtemperatureFaultPresent,
+    .numAlertResponse = NUM_OVERTEMP_FAULT_ALERT_RESPONSE, .alertResponse = overtempFaultAlertResponse
+};
 
-Alert_S imdSdcFaultAlert = {.alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
-                            .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
-                            .alertConditionPresent = imdSdcFaultPresent};
+Alert_S amsSdcFaultAlert = 
+{
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
+    .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = amsSdcFaultPresent
+};
+
+Alert_S bspdSdcFaultAlert = 
+{
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
+    .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = bspdSdcFaultPresent
+};
+
+Alert_S imdSdcFaultAlert = 
+{
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
+    .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = imdSdcFaultPresent
+};
