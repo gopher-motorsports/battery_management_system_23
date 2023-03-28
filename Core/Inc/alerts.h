@@ -68,7 +68,9 @@ typedef struct
 {
     AlertStatus_E alertStatus;
     Timer_S alertTimer;
+    // The time in ms required for the alert to be set
     const uint32_t setTime_MS;
+    // The time in ms required for the alert to clear
     const uint32_t clearTime_MS;
     const AlertConditionPresent alertConditionPresent;
     const uint32_t numAlertResponse;
