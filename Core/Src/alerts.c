@@ -4,20 +4,31 @@
 #include "alerts.h"
 #include "cellData.h"
 #include "packData.h"
+#include <stdio.h>
 
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DEFINITIONS ===================== */
 /* ==================================================================== */
 
-static bool overvoltagePresent(Bms_S* bms)
+static bool overvoltageWarningPresent(Bms_S* bms)
 {
-    return (bms->maxBrickV > MAX_BRICK_VOLTAGE);
+    return (bms->maxBrickV > MAX_BRICK_WARNING_VOLTAGE);
 }
 
-static bool undervoltagePresent(Bms_S* bms)
+static bool overvoltageFaultPresent(Bms_S* bms)
 {
-    return (bms->minBrickV < MIN_BRICK_VOLTAGE);
+    return (bms->maxBrickV > MAX_BRICK_FAULT_VOLTAGE);
+}
+
+static bool undervoltageWarningPresent(Bms_S* bms)
+{
+    return (bms->minBrickV < MIN_BRICK_WARNING_VOLTAGE);
+}
+
+static bool undervoltageFaultPresent(Bms_S* bms)
+{
+    return (bms->minBrickV < MIN_BRICK_FAULT_VOLTAGE);
 }
 
 static bool cellImbalancePresent(Bms_S* bms)
@@ -136,51 +147,56 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
 
 // Overvoltage Warning Alert
 #define NUM_OVERVOLTAGE_WARNING_ALERT_RESPONSE 1
-const AlertResponse_E overvoltageWarningAlertResponse[NUM_OVERVOLTAGE_WARNING_ALERT_RESPONSE] = { STOP_CHARGING };
+const AlertResponse_E overvoltageWarningAlertResponse[] = { STOP_CHARGING };
+_Static_assert(sizeof(overvoltageWarningAlertResponse) / sizeof(AlertResponse_E) == NUM_OVERVOLTAGE_WARNING_ALERT_RESPONSE, "Mismatch between expected number of alert responses and array initialization!");
 Alert_S overvoltageWarningAlert = 
 { 
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS, .clearTime_MS = OVERVOLTAGE_WARNING_ALERT_CLEAR_TIME_MS, 
-    .alertConditionPresent = overvoltagePresent, 
+    .alertConditionPresent = overvoltageWarningPresent, 
     .numAlertResponse = NUM_OVERVOLTAGE_WARNING_ALERT_RESPONSE, .alertResponse =  overvoltageWarningAlertResponse
 };
 
 // Undervoltage Warning Alert
 #define NUM_UNDERVOLTAGE_WARNING_ALERT_RESPONSE 1
-const AlertResponse_E undervoltageWarningAlertResponse[NUM_UNDERVOLTAGE_WARNING_ALERT_RESPONSE] = { LIMP_MODE };
+const AlertResponse_E undervoltageWarningAlertResponse[] = { LIMP_MODE };
+_Static_assert(sizeof(undervoltageWarningAlertResponse) / sizeof(AlertResponse_E) == NUM_UNDERVOLTAGE_WARNING_ALERT_RESPONSE, "Mismatch between expected number of alert responses and array initialization!");
 Alert_S undervoltageWarningAlert = 
 { 
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS, .clearTime_MS = UNDERVOLTAGE_WARNING_ALERT_CLEAR_TIME_MS, 
-    .alertConditionPresent = undervoltagePresent,
+    .alertConditionPresent = undervoltageWarningPresent,
     .numAlertResponse = NUM_UNDERVOLTAGE_WARNING_ALERT_RESPONSE, .alertResponse = undervoltageWarningAlertResponse
 };
 
 // Overvoltage Fault Alert
 #define NUM_OVERVOLTAGE_FAULT_ALERT_RESPONSE 3
-const AlertResponse_E overvoltageFaultAlertResponse[NUM_OVERVOLTAGE_FAULT_ALERT_RESPONSE] = { STOP_CHARGING, EMERGENCY_BLEED, AMS_FAULT};
+const AlertResponse_E overvoltageFaultAlertResponse[] = { STOP_CHARGING, EMERGENCY_BLEED, AMS_FAULT};
+_Static_assert(sizeof(overvoltageFaultAlertResponse) / sizeof(AlertResponse_E) == NUM_OVERVOLTAGE_FAULT_ALERT_RESPONSE, "Mismatch between expected number of alert responses and array initialization!");
 Alert_S overvoltageFaultAlert = 
 { 
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = OVERVOLTAGE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = OVERVOLTAGE_FAULT_ALERT_CLEAR_TIME_MS, 
-    .alertConditionPresent = overvoltagePresent, 
+    .alertConditionPresent = overvoltageFaultPresent, 
     .numAlertResponse = NUM_OVERVOLTAGE_FAULT_ALERT_RESPONSE, .alertResponse =  overvoltageFaultAlertResponse
 };
 
 // Undervoltage Fault Alert
 #define NUM_UNDERVOLTAGE_FAULT_ALERT_RESPONSE 1
-const AlertResponse_E undervoltageFaultAlertResponse[NUM_UNDERVOLTAGE_FAULT_ALERT_RESPONSE] = { LIMP_MODE };
+const AlertResponse_E undervoltageFaultAlertResponse[] = { AMS_FAULT };
+_Static_assert(sizeof(undervoltageFaultAlertResponse) / sizeof(AlertResponse_E) == NUM_UNDERVOLTAGE_FAULT_ALERT_RESPONSE, "Mismatch between expected number of alert responses and array initialization!");
 Alert_S undervoltageFaultAlert = 
 { 
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = UNDERVOLTAGE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = UNDERVOLTAGE_FAULT_ALERT_CLEAR_TIME_MS, 
-    .alertConditionPresent = undervoltagePresent,
+    .alertConditionPresent = undervoltageFaultPresent,
     .numAlertResponse = NUM_UNDERVOLTAGE_FAULT_ALERT_RESPONSE, .alertResponse = undervoltageFaultAlertResponse
 };
 
 // Cell Imbalance Alert
 #define NUM_CELL_IMBALANCE_ALERT_RESPONSE 3
-const AlertResponse_E cellImbalanceAlertResponse[NUM_CELL_IMBALANCE_ALERT_RESPONSE] = { LIMP_MODE, STOP_CHARGING, DISABLE_BALANCING };
+const AlertResponse_E cellImbalanceAlertResponse[] = {LIMP_MODE, STOP_CHARGING, DISABLE_BALANCING };
+_Static_assert(sizeof(cellImbalanceAlertResponse) / sizeof(AlertResponse_E) == NUM_CELL_IMBALANCE_ALERT_RESPONSE, "Mismatch between expected number of alert responses and array initialization!");
 Alert_S cellImbalanceAlert = 
 {
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, CELL_IMBALANCE_ALERT_SET_TIME_MS}, 
@@ -191,7 +207,8 @@ Alert_S cellImbalanceAlert =
 
 // Overtemperature Warning Alert
 #define NUM_OVERTEMP_WARNING_ALERT_RESPONSE 3
-const AlertResponse_E overtempWarningAlertResponse[NUM_OVERTEMP_WARNING_ALERT_RESPONSE] = { LIMP_MODE, STOP_CHARGING, DISABLE_BALANCING };
+const AlertResponse_E overtempWarningAlertResponse[] = { LIMP_MODE, STOP_CHARGING, DISABLE_BALANCING };
+_Static_assert(sizeof(overtempWarningAlertResponse) / sizeof(AlertResponse_E) == NUM_OVERTEMP_WARNING_ALERT_RESPONSE, "Mismatch between expected number of alert responses and array initialization!");
 Alert_S overtemperatureWarningAlert = 
 {
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERTEMPERATURE_WARNING_ALERT_SET_TIME_MS}, 
@@ -200,8 +217,10 @@ Alert_S overtemperatureWarningAlert =
     .numAlertResponse = NUM_OVERTEMP_WARNING_ALERT_RESPONSE, .alertResponse = overtempWarningAlertResponse
 };
 
-#define NUM_OVERTEMP_FAULT_ALERT_RESPONSE 1
-const AlertResponse_E overtempFaultAlertResponse[NUM_OVERTEMP_FAULT_ALERT_RESPONSE] = { AMS_FAULT };
+// Oveertemperature Fault Alert
+#define NUM_OVERTEMP_FAULT_ALERT_RESPONSE 3
+const AlertResponse_E overtempFaultAlertResponse[] = { STOP_CHARGING, DISABLE_BALANCING, AMS_FAULT };
+_Static_assert(sizeof(overtempFaultAlertResponse) / sizeof(AlertResponse_E) == NUM_OVERTEMP_FAULT_ALERT_RESPONSE, "Mismatch between expected number of alert responses and array initialization!");
 Alert_S overtemperatureFaultAlert = 
 {
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS}, 
@@ -210,23 +229,38 @@ Alert_S overtemperatureFaultAlert =
     .numAlertResponse = NUM_OVERTEMP_FAULT_ALERT_RESPONSE, .alertResponse = overtempFaultAlertResponse
 };
 
+// AMS Shut Down Circuit Alert
+#define NUM_AMS_SDC_ALERT_RESPONSE 1
+const AlertResponse_E amsSdcAlertResponse[] = { INFO_ONLY };
+_Static_assert(sizeof(amsSdcAlertResponse) / sizeof(AlertResponse_E) == NUM_AMS_SDC_ALERT_RESPONSE, "Mismatch between expected number of alert responses and array initialization!");
 Alert_S amsSdcFaultAlert = 
 {
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
     .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
-    .alertConditionPresent = amsSdcFaultPresent
+    .alertConditionPresent = amsSdcFaultPresent,
+    .numAlertResponse = NUM_AMS_SDC_ALERT_RESPONSE, .alertResponse = amsSdcAlertResponse
 };
 
+// BSPD Shut Down Circuit Alert
+#define NUM_BSPD_SDC_ALERT_RESPONSE 1
+const AlertResponse_E bspdSdcAlertResponse[] = { INFO_ONLY };
+_Static_assert(sizeof(bspdSdcAlertResponse) / sizeof(AlertResponse_E) == NUM_BSPD_SDC_ALERT_RESPONSE, "Mismatch between expected number of alert responses and array initialization!");
 Alert_S bspdSdcFaultAlert = 
 {
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
     .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
-    .alertConditionPresent = bspdSdcFaultPresent
+    .alertConditionPresent = bspdSdcFaultPresent,
+    .numAlertResponse = NUM_BSPD_SDC_ALERT_RESPONSE, .alertResponse = bspdSdcAlertResponse
 };
 
+// IMD Shut Down Circuit Alert
+#define NUM_IMD_SDC_ALERT_RESPONSE 1
+const AlertResponse_E imdSdcAlertResponse[] = { INFO_ONLY };
+_Static_assert(sizeof(imdSdcAlertResponse) / sizeof(AlertResponse_E) == NUM_IMD_SDC_ALERT_RESPONSE, "Mismatch between expected number of alert responses and array initialization!");
 Alert_S imdSdcFaultAlert = 
 {
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
     .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
-    .alertConditionPresent = imdSdcFaultPresent
+    .alertConditionPresent = imdSdcFaultPresent,
+    .numAlertResponse = NUM_IMD_SDC_ALERT_RESPONSE, .alertResponse = imdSdcAlertResponse
 };
