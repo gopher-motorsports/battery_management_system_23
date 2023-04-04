@@ -10,6 +10,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
+#include "alerts.h"
+#include "shared.h"
 #include "main.h"
 #include "bmb.h"
 #include "imd.h"
@@ -76,7 +78,9 @@ typedef enum
 /* ============================== STRUCTS============================== */
 /* ==================================================================== */
 
-typedef struct
+
+
+typedef struct Bms
 {
 	uint32_t numBmbs;
 	Bmb_S bmb[NUM_BMBS_IN_ACCUMULATOR];
@@ -100,27 +104,14 @@ typedef struct
 	Sensor_Status_E tractiveSystemCurrentStatus;
 	float tractiveSystemCurrent;
 
+	AlertResponse_E alertResponseActive;
+
 	bool bspdFault;
 	bool imdFault;
 	bool amsFault;
 
 	Bms_Hardware_State_E bmsHwState;
 } Bms_S;
-
-typedef struct
-{
-	float maxBrickV;
-	float minBrickV;
-	float avgBrickV;
-
-	float maxBrickTemp;
-	float minBrickTemp;
-	float avgBrickTemp;
-
-	float maxBoardTemp;
-	float minBoardTemp;
-	float avgBoardTemp;
-} Epaper_Data_S;
 
 
 /* ==================================================================== */

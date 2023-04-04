@@ -210,7 +210,7 @@ Alert_S overtempWarningAlert =
     .numAlertResponse = NUM_OVERTEMP_WARNING_ALERT_RESPONSE, .alertResponse = overtempWarningAlertResponse
 };
 
-// Oveertemperature Fault Alert
+// Overtemperature Fault Alert
 const AlertResponse_E overtempFaultAlertResponse[] = { STOP_CHARGING, DISABLE_BALANCING, AMS_FAULT };
 #define NUM_OVERTEMP_FAULT_ALERT_RESPONSE sizeof(overtempFaultAlertResponse) / sizeof(AlertResponse_E)
 Alert_S overtempFaultAlert = 
@@ -254,6 +254,17 @@ Alert_S imdSdcFaultAlert =
     .numAlertResponse = NUM_IMD_SDC_ALERT_RESPONSE, .alertResponse = imdSdcAlertResponse
 };
 
+// Alert - bad current sensor
+
+// Alert - lost cell tap
+
+// Alert - lost BMB comms
+
+// Alert - lost more than 60% of temp sensors in a pack
+
+// Alert - TBD stuck open/closed bleed fet
+
+
 Alert_S* alerts[] = 
 {
     &overvoltageWarningAlert,
@@ -267,3 +278,6 @@ Alert_S* alerts[] =
     &bspdSdcFaultAlert,
     &imdSdcFaultAlert
 };
+
+// Number of alerts
+const uint32_t numAlerts = sizeof(alerts) / sizeof(Alert_S*);

@@ -5,6 +5,7 @@
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
 #include "bms.h"
+#include "shared.h"
 #include "timer.h"
 
 
@@ -24,8 +25,8 @@
 #define UNDERVOLTAGE_FAULT_ALERT_SET_TIME_MS      2000
 #define UNDERVOLTAGE_FAULT_ALERT_CLEAR_TIME_MS    2000
 
-#define CELL_IMBALANCE_ALERT_SET_TIME_MS    1000
-#define CELL_IMBALANCE_ALERT_CLEAR_TIME_MS  1000
+#define CELL_IMBALANCE_ALERT_SET_TIME_MS          1000
+#define CELL_IMBALANCE_ALERT_CLEAR_TIME_MS        1000
 
 #define OVERTEMPERATURE_WARNING_ALERT_SET_TIME_MS   500
 #define OVERTEMPERATURE_WARNING_ALERT_CLEAR_TIME_MS 500
@@ -47,21 +48,12 @@ typedef enum
     ALERT_SET
 } AlertStatus_E;
 
-// Responses for a specific alert
-typedef enum
-{
-    INFO_ONLY = 0,
-    DISABLE_BALANCING,
-    EMERGENCY_BLEED,
-    STOP_CHARGING,
-    LIMP_MODE,
-    AMS_FAULT
-} AlertResponse_E;
-
-
 /* ==================================================================== */
 /* ============================== STRUCTS============================== */
 /* ==================================================================== */
+
+// Forward declaration of Bms_S struct
+typedef struct Bms Bms_S;
 
 typedef bool (*AlertConditionPresent)(Bms_S*);
 typedef struct
@@ -82,14 +74,8 @@ typedef struct
 /* ======================= EXTERNAL VARIABLES ========================= */
 /* ==================================================================== */
 // Alert Data
-extern Alert_S overvoltageAlert;
-extern Alert_S undervoltageAlert;
-extern Alert_S cellImbalanceAlert;
-extern Alert_S overtemperatureWarningAlert;
-extern Alert_S overtemperatureFaultAlert;
-extern Alert_S amsSdcFaultAlert;
-extern Alert_S bspdSdcFaultAlert;
-extern Alert_S imdSdcFaultAlert;
+extern const uint32_t numAlerts; 
+extern Alert_S* alerts[];
 
 
 /* ==================================================================== */

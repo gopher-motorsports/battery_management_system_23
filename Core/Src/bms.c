@@ -2,6 +2,7 @@
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
 #include "cmsis_os.h"
+#include "alerts.h"
 #include "bms.h"
 #include "bmb.h"
 #include "bmbInterface.h"
@@ -308,6 +309,70 @@ void updateSdcStatus()
 	pBms->amsFault  = HAL_GPIO_ReadPin(AMS_FAULT_SDC_GPIO_Port, AMS_FAULT_SDC_Pin);
 	pBms->bspdFault = HAL_GPIO_ReadPin(BSPD_FAULT_SDC_GPIO_Port, BSPD_FAULT_SDC_Pin);
 	pBms->imdFault  = HAL_GPIO_ReadPin(IMD_FAULT_SDC_GPIO_Port, IMD_FAULT_SDC_Pin);
+}
+
+void updateAndCheckAlerts()
+{
+	bool alertResponseActive[NUM_ALERT_RESPONSES] = { 0 };
+
+	// Update alert status
+	for (uint32_t i = 0; i < numAlerts; i++)
+	{
+		// Run alert monitor for each alert
+		runAlertMonitor(&gBms, alerts[i]);
+		if (alertStatus(alerts[i]) == ALERT_SET)
+		{
+			// Alert active - Update alert response
+			for (uint32_t j = 0; j < alerts[i]->numAlertResponse; j++)
+			{
+				alertResponseActive[j] = true;
+			}
+
+		}
+	}
+	// Update BMS struct based on active alert responses
+	for (AlertResponse_E alert = 0; alert < NUM_ALERT_RESPONSES; alert++)
+	{
+		switch (alert)
+		{
+			case INFO_ONLY:
+			{
+				break;
+			}
+
+			case DISABLE_BALANCING:
+			{
+				break;
+			}
+			
+			case EMERGENCY_BLEED:
+			{
+				break;
+			}
+
+			case STOP_CHARGING:
+			{
+				break;
+			}
+			
+			case LIMP_MODE:
+			{
+				break;
+			}
+			
+			case AMS_FAULT:
+			{
+				break;
+			}
+			
+			case NUM_ALERT_RESPONSES:
+			default:
+			{
+				Debug("Error while iterating through alert responses!\n");
+				break;
+			}
+		}
+	}
 }
 
 void updateEpaper()
