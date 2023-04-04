@@ -65,9 +65,13 @@ osThreadId ePaperHandle;
 osThreadId idleHandle;
 osMessageQId epaperQueueHandle;
 osSemaphoreId asciSpiSemHandle;
+osStaticSemaphoreDef_t asciSpiSemControlBlock;
 osSemaphoreId asciSemHandle;
+osStaticSemaphoreDef_t asciSemControlBlock;
 osSemaphoreId epdSpiSemHandle;
+osStaticSemaphoreDef_t epdSpiSemControlBlock;
 osSemaphoreId epdBusySemHandle;
+osStaticSemaphoreDef_t epdBusySemControlBlock;
 /* USER CODE BEGIN PV */
 // TODO: Get rid of these 2
 extern bool balancingEnabled;
@@ -162,6 +166,13 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 		xSemaphoreGiveFromISR(asciSpiSemHandle, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
+}
+
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
+{
+  uint32_t error = HAL_SPI_GetError(hspi);
+  printf("fail: %lu\n", error);
+
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
@@ -274,19 +285,19 @@ int main(void)
 
   /* Create the semaphores(s) */
   /* definition and creation of asciSpiSem */
-  osSemaphoreDef(asciSpiSem);
+  osSemaphoreStaticDef(asciSpiSem, &asciSpiSemControlBlock);
   asciSpiSemHandle = osSemaphoreCreate(osSemaphore(asciSpiSem), 1);
 
   /* definition and creation of asciSem */
-  osSemaphoreDef(asciSem);
+  osSemaphoreStaticDef(asciSem, &asciSemControlBlock);
   asciSemHandle = osSemaphoreCreate(osSemaphore(asciSem), 1);
 
   /* definition and creation of epdSpiSem */
-  osSemaphoreDef(epdSpiSem);
+  osSemaphoreStaticDef(epdSpiSem, &epdSpiSemControlBlock);
   epdSpiSemHandle = osSemaphoreCreate(osSemaphore(epdSpiSem), 1);
 
   /* definition and creation of epdBusySem */
-  osSemaphoreDef(epdBusySem);
+  osSemaphoreStaticDef(epdBusySem, &epdBusySemControlBlock);
   epdBusySemHandle = osSemaphoreCreate(osSemaphore(epdBusySem), 1);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -320,7 +331,7 @@ int main(void)
   mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
 
   /* definition and creation of ePaper */
-  osThreadDef(ePaper, StartEPaper, osPriorityLow, 0, 256);
+  osThreadDef(ePaper, StartEPaper, osPriorityIdle, 0, 256);
   ePaperHandle = osThreadCreate(osThread(ePaper), NULL);
 
   /* definition and creation of idle */
