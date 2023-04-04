@@ -133,7 +133,7 @@ static void waitBusyRelease()
     if(HAL_GPIO_ReadPin(BUSY_GPIO_Port, BUSY_Pin) == 1)
     {
         xSemaphoreTake(epdBusySemHandle, 0); // Guarantee epapBusySemHandle set to 0 
-        if (!(xSemaphoreTake(epdBusySemHandle, 5000) == pdTRUE))
+        if (xSemaphoreTake(epdBusySemHandle, 5000) != pdTRUE)
 		{
 			Debug("Interrupt failed to occur during ePaper SPI transmit\n");
 		}
@@ -154,7 +154,7 @@ static void sendCommand(uint8_t command)
 	// Write command to spi 
     SPIRTRY(HAL_SPI_Transmit_IT, &hspi2, (uint8_t *)&command, 1);
 	// Wait for spi interupt signaling data transfer complete
-    if (!(xSemaphoreTake(epdSpiSemHandle, SPI_TIMEOUT) == pdTRUE))
+    if (xSemaphoreTake(epdSpiSemHandle, SPI_TIMEOUT) != pdTRUE)
 	{
 		Debug("Interrupt failed to occur during SPI transmit\n");
 	}
@@ -179,7 +179,7 @@ static void sendMessage(uint8_t command, uint8_t* data, uint16_t numBytes)
 		// Write command to spi 
 		SPIRTRY(HAL_SPI_Transmit_IT, &hspi2, (uint8_t *)&command, 1);
 		// Wait for spi interupt signaling data transfer complete
-		if (!(xSemaphoreTake(epdSpiSemHandle, SPI_TIMEOUT) == pdTRUE))
+		if (xSemaphoreTake(epdSpiSemHandle, SPI_TIMEOUT) != pdTRUE)
 		{
 			Debug("Interrupt failed to occur during SPI transmit\n");
 		}
@@ -190,7 +190,7 @@ static void sendMessage(uint8_t command, uint8_t* data, uint16_t numBytes)
 		// Write command to spi
 		SPIRTRY(HAL_SPI_Transmit_IT, &hspi2, data, numBytes);
 		// Wait for spi interupt signaling data transfer complete - timeout 1000ms
-		if (!(xSemaphoreTake(epdSpiSemHandle, 1000) == pdTRUE))
+		if (xSemaphoreTake(epdSpiSemHandle, 1000) != pdTRUE)
 		{
 			Debug("Interrupt failed to occur during SPI transmit\n");
 		}
