@@ -331,7 +331,7 @@ int main(void)
   mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
 
   /* definition and creation of ePaper */
-  osThreadDef(ePaper, StartEPaper, osPriorityIdle, 0, 256);
+  osThreadDef(ePaper, StartEPaper, osPriorityLow, 0, 256);
   ePaperHandle = osThreadCreate(osThread(ePaper), NULL);
 
   /* definition and creation of idle */
