@@ -32,7 +32,7 @@ static bool undervoltageFaultPresent(Bms_S* bms)
 
 static bool cellImbalancePresent(Bms_S* bms)
 {
-    float maxCellImbalanceV = bms->maxBrickV - bms->minBrickV;
+    const float maxCellImbalanceV = bms->maxBrickV - bms->minBrickV;
 
     return (maxCellImbalanceV > MAX_CELL_IMBALANCE_V);
 }
@@ -62,11 +62,11 @@ static bool imdSdcFaultPresent(Bms_S* bms)
     return HAL_GPIO_ReadPin(IMD_FAULT_SDC_GPIO_Port, IMD_FAULT_SDC_Pin);
 }
 
-// static bool currentSensorErrorPresent(Bms_S* bms)
-// {
-//     // TODO: Implement current sense error check
-//     return false;
-// }
+static bool currentSensorErrorPresent(Bms_S* bms)
+{
+    // TODO: Implement current sense error check
+    return false;
+}
 
 
 /* ==================================================================== */
@@ -254,16 +254,33 @@ Alert_S imdSdcFaultAlert =
     .numAlertResponse = NUM_IMD_SDC_ALERT_RESPONSE, .alertResponse = imdSdcAlertResponse
 };
 
-// Alert - bad current sensor
+// Bad Current Sensor Alert
+const AlertResponse_E currentSensorErrorAlertResponse[] = { DISABLE_CHARGING };
+#define NUM_CURRENT_SENSOR_ERROR_ALERT_RESPONSE sizeof(currentSensorErrorAlertResponse) / sizeof(AlertResponse_E)
+Alert_S currentSensorErrorAlert = 
+{
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, CURRENT_SENSOR_ERROR_ALERT_SET_TIME_MS}, 
+    .setTime_MS = CURRENT_SENSOR_ERROR_ALERT_SET_TIME_MS, .clearTime_MS = CURRENT_SENSOR_ERROR_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = currentSensorErrorPresent,
+    .numAlertResponse = NUM_CURRENT_SENSOR_ERROR_ALERT_RESPONSE, .alertResponse = currentSensorErrorAlertResponse
+};
 
 // Alert - lost cell tap
 
-// Alert - lost BMB comms
+// Lost BMB communications Alert
+const AlertResponse_E bmbCommunicationFailureAlertResponse[] = { DISABLE_BALANCING, DISABLE_CHARGING, AMS_FAULT };
+#define NUM_BMB_COMMUNICATION_FAILURE_ALERT_RESPONSE sizeof(bmbCommunicationFailureAlertResponse) / sizeof(AlertResponse_E)
+Alert_S bmbCommunicationFailureAlert = 
+{
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, BMB_COMMUNICATION_FAILURE_ALERT_SET_TIME_MS}, 
+    .setTime_MS = BMB_COMMUNICATION_FAILURE_ALERT_SET_TIME_MS, .clearTime_MS = BMB_COMMUNICATION_FAILURE_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = currentSensorErrorPresent,
+    .numAlertResponse = NUM_BMB_COMMUNICATION_FAILURE_ALERT_RESPONSE, .alertResponse = bmbCommunicationFailureAlertResponse
+};
 
 // Alert - lost more than 60% of temp sensors in a pack
 
 // Alert - TBD stuck open/closed bleed fet
-
 
 Alert_S* alerts[] = 
 {
@@ -276,7 +293,9 @@ Alert_S* alerts[] =
     &overtempFaultAlert,
     &amsSdcFaultAlert,
     &bspdSdcFaultAlert,
-    &imdSdcFaultAlert
+    &imdSdcFaultAlert,
+    &currentSensorErrorAlert,
+    &bmbCommunicationFailureAlert
 };
 
 // Number of alerts

@@ -68,9 +68,9 @@
 typedef enum
 {
 	UNINITIALIZED = 0,	// Value on startup
-	GOOD,		// Data nominal
-	MIA			// Data wasn't aquired
-} Bmb_Sensor_Status_E;
+	GOOD,				// Data nominal
+	BAD					// Unavailable data or hardware issue
+} Sensor_Status_E;
 
 typedef enum
 {
@@ -97,7 +97,7 @@ typedef struct
 	uint32_t numBricks;
 	// TODO - set initial status value to UNINITIALIZED
 	// The status of all the brick sensors
-	Bmb_Sensor_Status_E brickVStatus[NUM_BRICKS_PER_BMB];
+	Sensor_Status_E brickVStatus[NUM_BRICKS_PER_BMB];
 	// The brick voltages for the bmb
 	float brickV[NUM_BRICKS_PER_BMB];
 	
@@ -105,12 +105,12 @@ typedef struct
 	float brickResistance[NUM_BRICKS_PER_BMB];
 
 	// The stack voltage measurement status 
-	Bmb_Sensor_Status_E stackVStatus;
+	Sensor_Status_E stackVStatus;
 	// The stack voltage measurement is the total BMB voltage (sum of bricks = stack)
 	float stackV;
 
 	// The status of all the temp sensors
-	Bmb_Sensor_Status_E tempStatus[NUM_BRICKS_PER_BMB+NUM_BOARD_TEMP_PER_BMB];
+	Sensor_Status_E tempStatus[NUM_BRICKS_PER_BMB+NUM_BOARD_TEMP_PER_BMB];
 	// The raw voltage measurements from all the temp sensors
 	float tempVoltage[NUM_BRICKS_PER_BMB+NUM_BOARD_TEMP_PER_BMB];
 	// The converted temperatures for all the brick temp sensors

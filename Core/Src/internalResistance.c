@@ -34,7 +34,7 @@ static bool voltageDataGood[NUM_BMBS_IN_ACCUMULATOR][NUM_BRICKS_PER_BMB] = {[0 .
 static bool putDiscreteBuffers(Bms_S* bms)
 {   
     // If any data in the discrete buffer is from a faulty sensor, set that the current data is bad
-    if(bms->currentSensorStatusLO == SENSE_GOOD)
+    if(bms->currentSensorStatusLO == GOOD)
     {
         // Update discrete data buffers with current bms current data
         currentDiscreteBuffer[discreteBufferIndex] = (bms->tractiveSystemCurrent / 25.0f);

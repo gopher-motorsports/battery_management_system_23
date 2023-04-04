@@ -66,10 +66,6 @@ osThreadId ePaperHandle;
 osThreadId idleHandle;
 osMessageQId epaperQueueHandle;
 /* USER CODE BEGIN PV */
-// TODO: Get rid of these 2
-extern bool balancingEnabled;
-extern uint32_t lastBalancingUpdate;
-
 volatile uint32_t imdFrequency;
 volatile uint32_t imdDutyCycle;
 volatile uint32_t imdLastUpdate;

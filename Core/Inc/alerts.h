@@ -37,6 +37,11 @@
 #define SDC_FAULT_ALERT_SET_TIME_MS   0
 #define SDC_FAULT_ALERT_CLEAR_TIME_MS 0
 
+#define CURRENT_SENSOR_ERROR_ALERT_SET_TIME_MS        2000
+#define CURRENT_SENSOR_ERROR_ALERT_CLEAR_TIME_MS      2000
+
+#define BMB_COMMUNICATION_FAILURE_ALERT_SET_TIME_MS   2000
+#define BMB_COMMUNICATION_FAILURE_ALERT_CLEAR_TIME_MS 2000
 
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
@@ -58,14 +63,19 @@ typedef struct Bms Bms_S;
 typedef bool (*AlertConditionPresent)(Bms_S*);
 typedef struct
 {
+    // The current status of the alert
     AlertStatus_E alertStatus;
+    // The timer used for qualifying the alert set/clear condition
     Timer_S alertTimer;
     // The time in ms required for the alert to be set
     const uint32_t setTime_MS;
     // The time in ms required for the alert to clear
     const uint32_t clearTime_MS;
+    // Function pointer used to determine whether the alert is present or not
     const AlertConditionPresent alertConditionPresent;
+    // The number of alert responses for this alert
     const uint32_t numAlertResponse;
+    // Array of alert responses
     const AlertResponse_E* alertResponse;
 } Alert_S;
 
@@ -73,8 +83,9 @@ typedef struct
 /* ==================================================================== */
 /* ======================= EXTERNAL VARIABLES ========================= */
 /* ==================================================================== */
-// Alert Data
+// The total number of alerts
 extern const uint32_t NUM_ALERTS; 
+// Array of all alert structs
 extern Alert_S* alerts[];
 
 

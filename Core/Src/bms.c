@@ -149,6 +149,8 @@ void updatePackData(uint32_t numBmbs)
 */
 void balancePack(uint32_t numBmbs, bool balanceRequested)
 {
+	// TODO: Determine how we want to handle EMERGENCY_BLEED
+
 	// If balancing not requested or balancing disabled ensure all balance switches off
 	if (!balanceRequested || gBms.balancingDisabled)
 	{
@@ -241,6 +243,7 @@ void checkAndHandleAlerts(uint32_t numBmbs)
 void aggregatePackData(uint32_t numBmbs)
 {
 	Bms_S* pBms = &gBms;
+	// Update BMB level stats
 	aggregateBmbData(pBms->bmb, numBmbs);
 
 	float maxBrickV	   = 0.0f;

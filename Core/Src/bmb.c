@@ -201,10 +201,10 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			{
 				Debug("Error during cellReg readAll!\n");
 
-				// Failed to acquire data. Set status to MIA
+				// Failed to acquire data. Set status to  BAD
 				for (int32_t j = 0; j < numBmbs; j++)
 				{
-					bmb[j].brickVStatus[i] = MIA;
+					bmb[j].brickVStatus[i] =BAD;
 				}
 			}
 		}
@@ -224,10 +224,10 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		{
 			Debug("Error during VBLOCK readAll!\n");
 
-			// Failed to acquire data. Set status to MIA
+			// Failed to acquire data. Set status to BAD
 			for (int32_t j = 0; j < numBmbs; j++)
 			{
-				bmb[j].stackVStatus = MIA;
+				bmb[j].stackVStatus =BAD;
 			}
 		}
 
@@ -263,10 +263,10 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			else
 			{
 				Debug("Error during TEMP readAll!\n");
-				// Failed to acquire data. Set status to MIA
+				// Failed to acquire data. Set status to BAD
 				for (int32_t j = 0; j < numBmbs; j++)
 				{
-					bmb[j].tempStatus[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = MIA;
+					bmb[j].tempStatus[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] =BAD;
 				}
 			}
 		}
@@ -313,10 +313,10 @@ void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 		{
 			Debug("Error during cellReg readAll!\n");
 
-			// Failed to acquire data. Set status to MIA
+			// Failed to acquire data. Set status to BAD
 			for (int32_t j = 0; j < numBmbs; j++)
 			{
-				bmb[j].brickVStatus[i] = MIA;
+				bmb[j].brickVStatus[i] = BAD;
 			}
 		}
 	}
@@ -336,10 +336,10 @@ void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
 	{
 		Debug("Error during VBLOCK readAll!\n");
 
-		// Failed to acquire data. Set status to MIA
+		// Failed to acquire data. Set status to BAD
 		for (int32_t j = 0; j < numBmbs; j++)
 		{
-			bmb[j].stackVStatus = MIA;
+			bmb[j].stackVStatus = BAD;
 		}
 	}
 
@@ -389,10 +389,10 @@ void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs)
 			}
 			else
 			{
-				// Failed to acquire data. Set status to MIA
+				// Failed to acquire data. Set status to BAD
 				for (int32_t j = 0; j < numBmbs; j++)
 				{
-					bmb[j].tempStatus[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = MIA;
+					bmb[j].tempStatus[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = BAD;
 				}
 			}
 		}
