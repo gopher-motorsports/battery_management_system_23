@@ -78,8 +78,6 @@ typedef enum
 /* ============================== STRUCTS============================== */
 /* ==================================================================== */
 
-
-
 typedef struct Bms
 {
 	uint32_t numBmbs;
@@ -104,11 +102,15 @@ typedef struct Bms
 	Sensor_Status_E tractiveSystemCurrentStatus;
 	float tractiveSystemCurrent;
 
-	AlertResponse_E alertResponseActive;
+	bool balancingDisabled;
+	bool emergencyBleed;
+	bool chargingDisabled;
+	bool limpModeEnabled;
+	bool amsFaultPresent;
 
-	bool bspdFault;
-	bool imdFault;
-	bool amsFault;
+	bool bspdFaultStatus;
+	bool imdFaultStatus;
+	bool amsFaultStatus;
 
 	Bms_Hardware_State_E bmsHwState;
 } Bms_S;

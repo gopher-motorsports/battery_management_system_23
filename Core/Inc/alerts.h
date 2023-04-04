@@ -74,7 +74,7 @@ typedef struct
 /* ======================= EXTERNAL VARIABLES ========================= */
 /* ==================================================================== */
 // Alert Data
-extern const uint32_t numAlerts; 
+extern const uint32_t NUM_ALERTS; 
 extern Alert_S* alerts[];
 
 
@@ -87,7 +87,7 @@ extern Alert_S* alerts[];
   @param   alert - The alert data structure whose status to read
   @return  The current status of the alert
 */
-AlertStatus_E alertStatus(Alert_S* alert);
+AlertStatus_E getAlertStatus(Alert_S* alert);
 
 /*!
   @brief   Run the alert monitor to update the status of the alert

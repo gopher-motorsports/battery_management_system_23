@@ -60,8 +60,12 @@ void initBmsGopherCan(CAN_HandleTypeDef* hcan)
 */
 bool initBatteryPack(uint32_t* numBmbs)
 {
-	Bms_S* pBms = &gBms;
-
+	gBms.balancingDisabled = true;
+	gBms.emergencyBleed    = false;
+	gBms.chargingDisabled  = true;
+	gBms.limpModeEnabled   = false;
+	gBms.amsFaultPresent   = false;
+	
 	if (!initASCI())
 	{
 		goto initializationError;
@@ -83,19 +87,19 @@ bool initBatteryPack(uint32_t* numBmbs)
 		goto initializationError;
 	}
 
-	pBms->numBmbs = *numBmbs;
-	pBms->bmsHwState = BMS_NOMINAL;
+	gBms.numBmbs = *numBmbs;
+	gBms.bmsHwState = BMS_NOMINAL;
 	return true;
 
 // Routine if initialization error ocurs
 initializationError:
 	// Set hardware error status
-	pBms->bmsHwState = BMS_BMB_FAILURE;
+	gBms.bmsHwState = BMS_BMB_FAILURE;
 
 	// Determine if a chain break exists
 	initASCI();	// Ignore return value as it will be bad due to no loopback
 	helloAll(numBmbs);	// Ignore return value as it will be bad due to no loopback
-	uint32_t breakLocation = detectBmbDaisyChainBreak(pBms->bmb, NUM_BMBS_IN_ACCUMULATOR);
+	uint32_t breakLocation = detectBmbDaisyChainBreak(gBms.bmb, NUM_BMBS_IN_ACCUMULATOR);
 	if (breakLocation == 1)
 	{
 		Debug("BMB Chain Break detected between BMS and BMB 1\n");
@@ -145,50 +149,89 @@ void updatePackData(uint32_t numBmbs)
 */
 void balancePack(uint32_t numBmbs, bool balanceRequested)
 {
-	Bms_S* pBms = &gBms;
+	// If balancing not requested or balancing disabled ensure all balance switches off
+	if (!balanceRequested || gBms.balancingDisabled)
+	{
+		for (int32_t i = 0; i < numBmbs; i++)
+		{
+			disableBmbBalancing(&gBms.bmb[i]);
+		}
+		balanceCells(gBms.bmb, numBmbs);
+		return;
+	}
 
-	if (balanceRequested)
+	// Determine minimum voltage across entire battery pack
+	float bleedTargetVoltage = gBms.minBrickV;
+
+	// Ensure we don't overbleed the cells
+	if (bleedTargetVoltage < MIN_BLEED_TARGET_VOLTAGE_V)
 	{
-		float bleedTargetVoltage = 5.0f;
-		// Determine minimum voltage across entire battery pack
-		for (int32_t i = 0; i < numBmbs; i++)
+		bleedTargetVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
+	}		
+	balancePackToVoltage(numBmbs, bleedTargetVoltage);
+}
+
+void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
+{
+	// Clamp target brick voltage if too low
+	if (targetBrickVoltage < MIN_BLEED_TARGET_VOLTAGE_V)
+	{
+		targetBrickVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
+	}
+
+	// Iterate through all BMBs and set bleed request
+	for (int32_t i = 0; i < numBmbs; i++)
+	{
+		// Iterate through all bricks and determine whether they should be bled or not
+		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
-			if (pBms->bmb[i].minBrickV + BALANCE_THRESHOLD_V < bleedTargetVoltage)
+			if (gBms.bmb[i].brickV[j] > targetBrickVoltage + BALANCE_THRESHOLD_V)
 			{
-				bleedTargetVoltage = pBms->bmb[i].minBrickV + BALANCE_THRESHOLD_V;
+				gBms.bmb[i].balSwRequested[j] = true;
 			}
-		}
-		// Ensure we don't overbleed the cells
-		if (bleedTargetVoltage < MIN_BLEED_TARGET_VOLTAGE_V)
-		{
-			bleedTargetVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
-		}
-		// Set bleed request on cells that have voltage higher than our bleedTargetVoltage
-		for (int32_t i = 0; i < numBmbs; i++)
-		{
-			// Iterate through all bricks and determine whether they should be bled or not
-			for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
+			else
 			{
-				if (pBms->bmb[i].brickV[j] > bleedTargetVoltage)
-				{
-					pBms->bmb[i].balSwRequested[j] = true;
-				}
-				else
-				{
-					pBms->bmb[i].balSwRequested[j] = false;
-				}
+				gBms.bmb[i].balSwRequested[j] = false;
 			}
 		}
 	}
-	else
+	
+	balanceCells(gBms.bmb, numBmbs);
+}
+
+void checkAndHandleAlerts(uint32_t numBmbs)
+{
+	// Run each alert monitor
+	for (uint32_t i = 0; i < NUM_ALERTS; i++)
 	{
-		// If bleeding not requested ensure balancing switches are all off
-		for (int32_t i = 0; i < numBmbs; i++)
+		runAlertMonitor(&gBms, alerts[i]);
+	}
+
+	// Accumulate alert statuses
+	bool responseStatus[NUM_ALERT_RESPONSES] = { false };
+
+	// Check each alert status
+	for (uint32_t i = 0; i < NUM_ALERTS; i++)
+	{
+		Alert_S* alert = alerts[i];
+		if (getAlertStatus(alert) == ALERT_SET)
 		{
-			disableBmbBalancing(&pBms->bmb[i]);
+			// Iterate through all alert responses and set them
+			for (uint32_t i = 0; i < alert->numAlertResponse; i++)
+			{
+				const AlertResponse_E response = alert->alertResponse[i];
+				// Set the alert response to active
+				responseStatus[response] = true;
+			}
 		}
 	}
-	balanceCells(pBms->bmb, numBmbs);
+
+	// Set BMS status based on alert
+	gBms.balancingDisabled = responseStatus[DISABLE_BALANCING];
+	gBms.emergencyBleed	   = responseStatus[EMERGENCY_BLEED];
+	gBms.chargingDisabled  = responseStatus[DISABLE_CHARGING];
+	gBms.limpModeEnabled   = responseStatus[LIMP_MODE];
+	gBms.amsFaultPresent   = responseStatus[AMS_FAULT];
 }
 
 /*!
@@ -258,36 +301,6 @@ void aggregatePackData(uint32_t numBmbs)
 	pBms->avgBoardTemp = avgBoardTempSum / NUM_BMBS_IN_ACCUMULATOR;
 }
 
-void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
-{
-	Bms_S* pBms = &gBms;
-
-	// Clamp target brick voltage if too low
-	if (targetBrickVoltage < MIN_BLEED_TARGET_VOLTAGE_V)
-	{
-		targetBrickVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
-	}
-
-
-	for (int32_t i = 0; i < numBmbs; i++)
-	{
-		// Iterate through all bricks and determine whether they should be bled or not
-		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
-		{
-			if (pBms->bmb[i].brickV[j] > targetBrickVoltage + BALANCE_THRESHOLD_V)
-			{
-				pBms->bmb[i].balSwRequested[j] = true;
-			}
-			else
-			{
-				pBms->bmb[i].balSwRequested[j] = false;
-			}
-		}
-	}
-	
-	balanceCells(pBms->bmb, numBmbs);
-}
-
 /*!
   @brief   Update the IMD status based on measured frequency and duty cycle
 */
@@ -306,73 +319,9 @@ void updateSdcStatus()
 {
 	Bms_S* pBms = &gBms;
 
-	pBms->amsFault  = HAL_GPIO_ReadPin(AMS_FAULT_SDC_GPIO_Port, AMS_FAULT_SDC_Pin);
-	pBms->bspdFault = HAL_GPIO_ReadPin(BSPD_FAULT_SDC_GPIO_Port, BSPD_FAULT_SDC_Pin);
-	pBms->imdFault  = HAL_GPIO_ReadPin(IMD_FAULT_SDC_GPIO_Port, IMD_FAULT_SDC_Pin);
-}
-
-void updateAndCheckAlerts()
-{
-	bool alertResponseActive[NUM_ALERT_RESPONSES] = { 0 };
-
-	// Update alert status
-	for (uint32_t i = 0; i < numAlerts; i++)
-	{
-		// Run alert monitor for each alert
-		runAlertMonitor(&gBms, alerts[i]);
-		if (alertStatus(alerts[i]) == ALERT_SET)
-		{
-			// Alert active - Update alert response
-			for (uint32_t j = 0; j < alerts[i]->numAlertResponse; j++)
-			{
-				alertResponseActive[j] = true;
-			}
-
-		}
-	}
-	// Update BMS struct based on active alert responses
-	for (AlertResponse_E alert = 0; alert < NUM_ALERT_RESPONSES; alert++)
-	{
-		switch (alert)
-		{
-			case INFO_ONLY:
-			{
-				break;
-			}
-
-			case DISABLE_BALANCING:
-			{
-				break;
-			}
-			
-			case EMERGENCY_BLEED:
-			{
-				break;
-			}
-
-			case STOP_CHARGING:
-			{
-				break;
-			}
-			
-			case LIMP_MODE:
-			{
-				break;
-			}
-			
-			case AMS_FAULT:
-			{
-				break;
-			}
-			
-			case NUM_ALERT_RESPONSES:
-			default:
-			{
-				Debug("Error while iterating through alert responses!\n");
-				break;
-			}
-		}
-	}
+	pBms->amsFaultStatus  = HAL_GPIO_ReadPin(AMS_FAULT_SDC_GPIO_Port, AMS_FAULT_SDC_Pin);
+	pBms->bspdFaultStatus = HAL_GPIO_ReadPin(BSPD_FAULT_SDC_GPIO_Port, BSPD_FAULT_SDC_Pin);
+	pBms->imdFaultStatus  = HAL_GPIO_ReadPin(IMD_FAULT_SDC_GPIO_Port, IMD_FAULT_SDC_Pin);
 }
 
 void updateEpaper()

@@ -78,7 +78,7 @@ static bool imdSdcFaultPresent(Bms_S* bms)
   @param   alert - The alert data structure whose status to read
   @return  The current status of the alert
 */
-AlertStatus_E alertStatus(Alert_S* alert)
+AlertStatus_E getAlertStatus(Alert_S* alert)
 {
     return alert->alertStatus;
 }
@@ -145,7 +145,7 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
 /* ==================================================================== */
 
 // Overvoltage Warning Alert
-const AlertResponse_E overvoltageWarningAlertResponse[] = { STOP_CHARGING };
+const AlertResponse_E overvoltageWarningAlertResponse[] = { DISABLE_CHARGING };
 #define NUM_OVERVOLTAGE_WARNING_ALERT_RESPONSE sizeof(overvoltageWarningAlertResponse) / sizeof(AlertResponse_E)
 Alert_S overvoltageWarningAlert =
 { 
@@ -167,7 +167,7 @@ Alert_S undervoltageWarningAlert =
 };
 
 // Overvoltage Fault Alert
-const AlertResponse_E overvoltageFaultAlertResponse[] = { STOP_CHARGING, EMERGENCY_BLEED, AMS_FAULT};
+const AlertResponse_E overvoltageFaultAlertResponse[] = { DISABLE_CHARGING, EMERGENCY_BLEED, AMS_FAULT};
 #define NUM_OVERVOLTAGE_FAULT_ALERT_RESPONSE sizeof(overvoltageFaultAlertResponse) / sizeof(AlertResponse_E)
 Alert_S overvoltageFaultAlert = 
 { 
@@ -189,7 +189,7 @@ Alert_S undervoltageFaultAlert =
 };
 
 // Cell Imbalance Alert
-const AlertResponse_E cellImbalanceAlertResponse[] = {LIMP_MODE, STOP_CHARGING, DISABLE_BALANCING };
+const AlertResponse_E cellImbalanceAlertResponse[] = {LIMP_MODE, DISABLE_CHARGING, DISABLE_BALANCING };
 #define NUM_CELL_IMBALANCE_ALERT_RESPONSE sizeof(cellImbalanceAlertResponse) / sizeof(AlertResponse_E)
 Alert_S cellImbalanceAlert = 
 {
@@ -200,7 +200,7 @@ Alert_S cellImbalanceAlert =
 };
 
 // Overtemperature Warning Alert
-const AlertResponse_E overtempWarningAlertResponse[] = { LIMP_MODE, STOP_CHARGING, DISABLE_BALANCING };
+const AlertResponse_E overtempWarningAlertResponse[] = { LIMP_MODE, DISABLE_CHARGING, DISABLE_BALANCING };
 #define NUM_OVERTEMP_WARNING_ALERT_RESPONSE sizeof(overtempWarningAlertResponse) / sizeof(AlertResponse_E)
 Alert_S overtempWarningAlert = 
 {
@@ -211,7 +211,7 @@ Alert_S overtempWarningAlert =
 };
 
 // Overtemperature Fault Alert
-const AlertResponse_E overtempFaultAlertResponse[] = { STOP_CHARGING, DISABLE_BALANCING, AMS_FAULT };
+const AlertResponse_E overtempFaultAlertResponse[] = { DISABLE_CHARGING, DISABLE_BALANCING, AMS_FAULT };
 #define NUM_OVERTEMP_FAULT_ALERT_RESPONSE sizeof(overtempFaultAlertResponse) / sizeof(AlertResponse_E)
 Alert_S overtempFaultAlert = 
 {
@@ -280,4 +280,4 @@ Alert_S* alerts[] =
 };
 
 // Number of alerts
-const uint32_t numAlerts = sizeof(alerts) / sizeof(Alert_S*);
+const uint32_t NUM_ALERTS = sizeof(alerts) / sizeof(Alert_S*);
