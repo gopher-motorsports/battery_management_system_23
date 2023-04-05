@@ -67,7 +67,7 @@ typedef enum
             Debug("SPI transmission TIMED OUT in %s! - Aborting!\n", #callingFunc); \
             break; \
         } \
-		if (status != SPI_SUCCESS) \
+		if (*status != SPI_SUCCESS) \
 		{ \
 			Debug("SPI transmission error occured in function: %s! - Attempt %lu!\n", #callingFunc, i+1); \
 			continue; \
@@ -81,8 +81,7 @@ typedef enum
   @param    callingFunc Name of the function that called SPI_TRANSMIT for debugging purposes
 */
 #define WAIT_EXT_INT(timeout, callingFunc) \
-	uint32_t notificationValue = 0; \
-	if (xTaskNotifyWait(pdFALSE, ULONG_MAX, &notificationValue, timeout) != pdPASS) \
+	if (xTaskNotifyWait(pdFALSE, ULONG_MAX, NULL, timeout) != pdPASS) \
 	{ \
 		Debug("External interrupt failed to occur in %s!\n", #callingFunc); \
 	} \

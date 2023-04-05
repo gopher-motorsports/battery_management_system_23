@@ -355,7 +355,7 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 		// Read queue
 		sendBuffer[0] = data_p[0] + 1;	// Read address is one greater than the write address
 		csOn();
-		SPI_TRANSMIT(HAL_SPI_Transmit_IT, &hspi1, TIMEOUT_SPI_COMPLETE_MS, &spiStatus, loadAndVerifyTxQueue, data_p, numBytes);
+		SPI_TRANSMIT(HAL_SPI_TransmitReceive_IT, &hspi1, TIMEOUT_SPI_COMPLETE_MS, &spiStatus, loadAndVerifyTxQueue, sendBuffer, recvBuffer, numBytes);
 		if(spiStatus == SPI_TIMEOUT)
 		{
 			csOff();
@@ -436,7 +436,7 @@ static bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, co
 	}
 	
 	sendAsciSpi(CMD_WR_NXT_LD_Q_L0);
-	
+
 	// Wait for ASCI interrupt to occur
 	WAIT_EXT_INT(TIMEOUT_SPI_COMPLETE_MS, sendReceiveMessageAsci);
 

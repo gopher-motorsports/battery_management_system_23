@@ -137,7 +137,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
     xTaskNotifyFromISR(mainTaskHandle, 0x01, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
-	else if (hspi == &hspi2)
+	if (hspi == &hspi2)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 		xTaskNotifyFromISR(ePaperHandle, 0x01, eSetBits, &xHigherPriorityTaskWoken);
@@ -168,7 +168,7 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
     xTaskNotifyFromISR(mainTaskHandle, 0x02, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
-	else if (hspi == &hspi2)
+	if (hspi == &hspi2)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 		xTaskNotifyFromISR(ePaperHandle, 0x02, eSetBits, &xHigherPriorityTaskWoken);
@@ -181,13 +181,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	if (GPIO_Pin == INT_Pin)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    xTaskNotifyFromISR(mainTaskHandle, 0x00, eNoAction, &xHigherPriorityTaskWoken);
+    xTaskNotifyFromISR(mainTaskHandle, 0x01, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 	if (GPIO_Pin == BUSY_Pin)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    xTaskNotifyFromISR(ePaperHandle, 0x00, eNoAction, &xHigherPriorityTaskWoken);
+    xTaskNotifyFromISR(ePaperHandle, 0x01, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 }
@@ -816,7 +816,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(AMS_FAULT_SDC_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 6, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
@@ -873,11 +873,11 @@ void StartMainTask(void const * argument)
 void StartEPaper(void const * argument)
 {
   /* USER CODE BEGIN StartEPaper */
-  initEpaperTask();
+  // initEpaperTask();
   /* Infinite loop */
   for(;;)
   {
-    runEpaperTask();
+    // runEpaperTask();
     osDelay(100);
   }
   /* USER CODE END StartEPaper */

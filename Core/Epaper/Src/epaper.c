@@ -142,7 +142,7 @@ static void sendCommand(uint8_t command)
 {
 	// Set Epaper to command mode
     setCommandMode();
-	
+
 	// Open spi communication
     csOn();
 
