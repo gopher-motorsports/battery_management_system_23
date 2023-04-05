@@ -15,7 +15,8 @@
 /* ==================================================================== */
 
 // Timeouts
-#define TIMEOUT_SPI_COMPLETE_MS 10
+#define TIMEOUT_SPI_COMMAND_MS 10
+#define TIMEOUT_SPI_DATA_MS 1000
 #define TIMEOUT_BUSY_RELEASE_MS 5000
 
 // Display resolution

@@ -21,10 +21,6 @@
 /* ======================= EXTERNAL VARIABLES ========================= */
 /* ==================================================================== */
 
-extern osSemaphoreId 		asciSpiSemHandle;
-extern osSemaphoreId 		asciSemHandle;
-extern osSemaphoreId 		epdSemHandle;
-extern osSemaphoreId		epdBusySemHandle;
 extern SPI_HandleTypeDef 	hspi1;
 extern SPI_HandleTypeDef 	hspi2;
 extern Bms_S 				gBms;
