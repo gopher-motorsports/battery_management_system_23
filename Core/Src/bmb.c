@@ -247,7 +247,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 					// Convert temp voltage registers to temperature readings
 					if(muxState == MUX7 || muxState == MUX8) // NTC/ON-Board Temp Channel
 					{
-						bmb[j].boardTemp[muxState - MUX7 + ((auxChannel == AIN2) ? (NUM_BOARD_TEMP_PER_BMB/2) : 0)] = lookup(auxV, &ntcTable);
+						bmb[j].boardTemp[((muxState == MUX7) ? 1 : 3) + ((auxChannel == AIN1) ? 0 : -1)] = lookup(auxV, &ntcTable);
 					}
 					else // Zener/Brick Temp Channel
 					{

@@ -27,6 +27,7 @@
 #include "idleTask.h"
 #include "bms.h"
 #include "gopher_sense.h"
+#include "utils.h"
 
 /* USER CODE END Includes */
 
@@ -134,13 +135,13 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 	if (hspi == &hspi1)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    xTaskNotifyFromISR(mainTaskHandle, 0x01, eSetBits, &xHigherPriorityTaskWoken);
+    xTaskNotifyFromISR(mainTaskHandle, INTERRUPT_SUCCESS, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 	if (hspi == &hspi2)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xTaskNotifyFromISR(ePaperHandle, 0x01, eSetBits, &xHigherPriorityTaskWoken);
+		xTaskNotifyFromISR(ePaperHandle, INTERRUPT_SUCCESS, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 }
@@ -155,7 +156,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 	if (hspi == &hspi1)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xTaskNotifyFromISR(mainTaskHandle, 0x01, eSetBits, &xHigherPriorityTaskWoken);
+		xTaskNotifyFromISR(mainTaskHandle, INTERRUPT_SUCCESS, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 }
@@ -165,13 +166,13 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
   if (hspi == &hspi1)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    xTaskNotifyFromISR(mainTaskHandle, 0x02, eSetBits, &xHigherPriorityTaskWoken);
+    xTaskNotifyFromISR(mainTaskHandle, INTERRUPT_ERROR, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 	if (hspi == &hspi2)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xTaskNotifyFromISR(ePaperHandle, 0x02, eSetBits, &xHigherPriorityTaskWoken);
+		xTaskNotifyFromISR(ePaperHandle, INTERRUPT_ERROR, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 }
@@ -181,13 +182,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	if (GPIO_Pin == INT_Pin)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    xTaskNotifyFromISR(mainTaskHandle, 0x01, eSetBits, &xHigherPriorityTaskWoken);
+    xTaskNotifyFromISR(mainTaskHandle, INTERRUPT_SUCCESS, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 	if (GPIO_Pin == BUSY_Pin)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    xTaskNotifyFromISR(ePaperHandle, 0x01, eSetBits, &xHigherPriorityTaskWoken);
+    xTaskNotifyFromISR(ePaperHandle, INTERRUPT_SUCCESS, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 }
@@ -304,7 +305,7 @@ int main(void)
   mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
 
   /* definition and creation of ePaper */
-  osThreadDef(ePaper, StartEPaper, osPriorityLow, 0, 256);
+  osThreadDef(ePaper, StartEPaper, osPriorityLow, 0, 512);
   ePaperHandle = osThreadCreate(osThread(ePaper), NULL);
 
   /* definition and creation of idle */
@@ -790,11 +791,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(CS_ASCI_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : INT_Pin */
-  GPIO_InitStruct.Pin = INT_Pin;
+  /*Configure GPIO pins : INT_Pin BUSY_Pin */
+  GPIO_InitStruct.Pin = INT_Pin|BUSY_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(INT_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : RST_Pin CS_EPD_Pin DC_Pin */
   GPIO_InitStruct.Pin = RST_Pin|CS_EPD_Pin|DC_Pin;
@@ -803,12 +804,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : BUSY_Pin */
-  GPIO_InitStruct.Pin = BUSY_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(BUSY_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pin : AMS_FAULT_SDC_Pin */
   GPIO_InitStruct.Pin = AMS_FAULT_SDC_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
@@ -816,7 +811,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(AMS_FAULT_SDC_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 6, 0);
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
@@ -873,11 +868,11 @@ void StartMainTask(void const * argument)
 void StartEPaper(void const * argument)
 {
   /* USER CODE BEGIN StartEPaper */
-  // initEpaperTask();
+  initEpaperTask();
   /* Infinite loop */
   for(;;)
   {
-    // runEpaperTask();
+    runEpaperTask();
     osDelay(100);
   }
   /* USER CODE END StartEPaper */

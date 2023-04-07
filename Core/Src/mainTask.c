@@ -37,7 +37,7 @@ uint32_t numBmbs = 0;
 static uint32_t initRetries = 5;
 static uint32_t lastUpdateMain = 0;
 
-bool balancingEnabled = false;
+bool balancingEnabled = true;
 uint32_t lastBalancingUpdate = 0;
 
 /* ==================================================================== */
@@ -105,8 +105,8 @@ void runMain()
 			{
 				printf("Balancing Enabled: FALSE\n");
 			}
-			balancePack(numBmbs, balancingEnabled);
-			// balancePackToVoltage(numBmbs, 3.7f);
+			// balancePack(numBmbs, balancingEnabled);
+			balancePackToVoltage(numBmbs, 3.9f);
 
 			printCellVoltages();
 			printCellTemperatures();
