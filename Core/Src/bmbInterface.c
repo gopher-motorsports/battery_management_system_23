@@ -337,10 +337,10 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 		INTERRUPT_STATUS_E spiStatus = SPI_TRANSMIT(HAL_SPI_Transmit_IT, &hspi1, TIMEOUT_SPI_COMPLETE_MS, loadAndVerifyTxQueue, data_p, numBytes);
 		
 		// Fail function if SPI transaction fails
-		if((spiStatus & INTERRUPT_SUCCESS) != INTERRUPT_SUCCESS)
+		if(!(spiStatus & INTERRUPT_SUCCESS))
 		{
 			csOff();
-			break;
+			continue;
 		}
 		csOff();
 
@@ -350,10 +350,10 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 		spiStatus = SPI_TRANSMIT(HAL_SPI_TransmitReceive_IT, &hspi1, TIMEOUT_SPI_COMPLETE_MS, loadAndVerifyTxQueue, sendBuffer, recvBuffer, numBytes);
 		
 		// Fail function if SPI transaction fails
-		if((spiStatus & INTERRUPT_SUCCESS) != INTERRUPT_SUCCESS)
+		if(!(spiStatus & INTERRUPT_SUCCESS))
 		{
 			csOff();
-			break;
+			continue;
 		}
 		csOff();
 
@@ -429,7 +429,7 @@ static bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, co
 	INTERRUPT_STATUS_E extIntStatus = WAIT_EXT_INT(TIMEOUT_SPI_COMPLETE_MS, sendReceiveMessageAsci);
 
 	// Verify that interrupt was successful
-	if((extIntStatus & INTERRUPT_SUCCESS) != INTERRUPT_SUCCESS)
+	if(!(extIntStatus & INTERRUPT_SUCCESS))
 	{
 		return false;
 	}
@@ -531,7 +531,7 @@ bool initASCI()
 	INTERRUPT_STATUS_E extIntStatus = WAIT_EXT_INT(TIMEOUT_SPI_COMPLETE_MS, initASCI);
 
 	// Verify that interrupt was successful
-	if((extIntStatus & INTERRUPT_SUCCESS) != INTERRUPT_SUCCESS)
+	if(!(extIntStatus & INTERRUPT_SUCCESS))
 	{
 		successfulConfig = false;
 	}

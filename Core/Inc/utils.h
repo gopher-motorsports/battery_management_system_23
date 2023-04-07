@@ -64,20 +64,20 @@ typedef enum
       /* Attempt to start SPI transaction */ \
       if (fn(hspi, __VA_ARGS__) != HAL_OK) \
       { \
-        /* If SPI fails to start, HAL must abort transaction to not cause hard fault. SPI retries */ \
+        /* If SPI fails to start, HAL must abort transaction. SPI retries */ \
         Debug("SPI transmission failed to start in function: %s! - Attempt %lu!\n", #callingFunc, i+1); \
         HAL_SPI_Abort(hspi); \
         continue; \
       } \
       /* Wait for SPI interrupt to occur. SpiStatus will hold notification value indicating status of transaction */ \
-      if (xTaskNotifyWait(TASK_CLEAR_FLAGS, TASK_CLEAR_FLAGS, &spiStatus, timeout) != pdTRUE) \
+      if (xTaskNotifyWait(TASK_NO_OP, TASK_CLEAR_FLAGS, &spiStatus, timeout) != pdTRUE) \
       { \
         /* If no SPI interrupt occurs in time, transaction is aborted to prevent any longer delay */\
         Debug("SPI transmission TIMED OUT in %s! - Aborting!\n", #callingFunc); \
         break; \
       } \
       /* If SPI SUCCESS bit is not set in notification value, SPI error has occured. SPI retries */ \
-      if ((spiStatus & INTERRUPT_SUCCESS) != INTERRUPT_SUCCESS) \
+      if (!(spiStatus & INTERRUPT_SUCCESS)) \
       { \
         Debug("SPI transmission error occured in function: %s! - Attempt %lu!\n", #callingFunc, i+1); \
         continue; \
@@ -99,7 +99,7 @@ typedef enum
     /* Notification value used for task notification */ \
     uint32_t extIntStatus = 0; \
     /* Block calling task and wait for external interrupt to occur */ \
-    if (xTaskNotifyWait(TASK_CLEAR_FLAGS, TASK_CLEAR_FLAGS, &extIntStatus, timeout) != pdTRUE) \
+    if (xTaskNotifyWait(TASK_NO_OP, TASK_CLEAR_FLAGS, &extIntStatus, timeout) != pdTRUE) \
     { /* External interrupt has failed to occur */ \
       Debug("External interrupt failed to occur in %s!\n", #callingFunc); \
     } \
