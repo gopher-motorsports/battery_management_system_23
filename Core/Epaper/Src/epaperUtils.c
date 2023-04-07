@@ -795,13 +795,13 @@ void Paint_DrawTableData(float data, DATA_TABLE_COL col, DATA_TABLE_ROW row)
     Paint_ClearWindows(startX, startY, startX + Font16.Width * 5, startY + Font16.Height, WHITE);
 
     // Wrap to printable bounds
-    if(data > 9999.0)
+    if(data > 9999.0f)
     {
-        data = 9999;
+        data = 9999.0f;
     }
-    else if(data < -999)
+    else if(data < -999.0f)
     {
-        data = -999;
+        data = -999.0f;
     }
 
     // Data position adjustment variables

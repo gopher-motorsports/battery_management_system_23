@@ -114,7 +114,7 @@ void runMain()
 			printBoardTemperatures();
 			printf("Leaky bucket filled: %d\n\n", leakyBucketFilled(&asciCommsLeakyBucket));
 
-			printf("Tractive Current: %6.3f\n", gBms.tractiveSystemCurrent);
+			printf("Tractive Current: %6.3f\n", (double)gBms.tractiveSystemCurrent);
 
 			// Update lastUpdate
 			lastUpdateMain = HAL_GetTick();
@@ -141,7 +141,7 @@ void printCellVoltages()
 		printf("|    %02ld   |", i + 1);
 		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
-			printf("  %5.3f", gBms.bmb[i].brickV[j]);
+			printf("  %5.3f", (double)gBms.bmb[i].brickV[j]);
 			if(gBms.bmb[i].balSwEnabled[j])
 			{
 				printf("*");
@@ -152,7 +152,7 @@ void printCellVoltages()
 			}
 			printf(" |");
 		}
-		printf("  %5.2f  |", gBms.bmb[i].stackV);
+		printf("  %5.2f  |", (double)gBms.bmb[i].stackV);
 		printf("\n");
 	}
 	printf("\n");
@@ -167,7 +167,7 @@ void printCellTemperatures()
 		printf("|    %02ld   |", i + 1);
 		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
-			printf(" %5.1fC  |", gBms.bmb[i].brickTemp[j]);
+			printf(" %5.1fC  |", (double)gBms.bmb[i].brickTemp[j]);
 		}
 		printf("\n");
 	}
@@ -183,7 +183,7 @@ void printInternalResistances()
 		printf("|    %02ld   |", i + 1);
 		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
-			printf("%5.1fmOhm|", gBms.bmb[i].brickResistance[j] * 1000.0f);
+			printf("%5.1fmOhm|", (double)(gBms.bmb[i].brickResistance[j] * 1000.0f));
 		}
 		printf("\n");
 	}
@@ -199,7 +199,7 @@ void printBoardTemperatures()
 		printf("|    %02ld   |", i + 1);
 		for (int32_t j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
 		{
-			printf(" %5.1fC  |", gBms.bmb[i].boardTemp[j]);
+			printf(" %5.1fC  |", (double)gBms.bmb[i].boardTemp[j]);
 		}
 		printf("\n");
 	}
