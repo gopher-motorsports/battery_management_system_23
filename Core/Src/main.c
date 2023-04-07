@@ -27,6 +27,7 @@
 #include "idleTask.h"
 #include "bms.h"
 #include "gopher_sense.h"
+#include "utils.h"
 
 /* USER CODE END Includes */
 
@@ -64,14 +65,6 @@ osThreadId mainTaskHandle;
 osThreadId ePaperHandle;
 osThreadId idleHandle;
 osMessageQId epaperQueueHandle;
-osSemaphoreId asciSpiSemHandle;
-osStaticSemaphoreDef_t asciSpiSemControlBlock;
-osSemaphoreId asciSemHandle;
-osStaticSemaphoreDef_t asciSemControlBlock;
-osSemaphoreId epdSpiSemHandle;
-osStaticSemaphoreDef_t epdSpiSemControlBlock;
-osSemaphoreId epdBusySemHandle;
-osStaticSemaphoreDef_t epdBusySemControlBlock;
 /* USER CODE BEGIN PV */
 // TODO: Get rid of these 2
 extern bool balancingEnabled;
@@ -142,13 +135,13 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 	if (hspi == &hspi1)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xSemaphoreGiveFromISR(asciSpiSemHandle, &xHigherPriorityTaskWoken);
+    xTaskNotifyFromISR(mainTaskHandle, INTERRUPT_SUCCESS, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 	if (hspi == &hspi2)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xSemaphoreGiveFromISR(epdSpiSemHandle, &xHigherPriorityTaskWoken);
+		xTaskNotifyFromISR(ePaperHandle, INTERRUPT_SUCCESS, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 }
@@ -163,16 +156,25 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi)
 	if (hspi == &hspi1)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xSemaphoreGiveFromISR(asciSpiSemHandle, &xHigherPriorityTaskWoken);
+		xTaskNotifyFromISR(mainTaskHandle, INTERRUPT_SUCCESS, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 }
 
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
 {
-  // TODO Handle better
-  uint32_t error = HAL_SPI_GetError(hspi);
-
+  if (hspi == &hspi1)
+	{
+		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xTaskNotifyFromISR(mainTaskHandle, INTERRUPT_ERROR, eSetBits, &xHigherPriorityTaskWoken);
+		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+	}
+	if (hspi == &hspi2)
+	{
+		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+		xTaskNotifyFromISR(ePaperHandle, INTERRUPT_ERROR, eSetBits, &xHigherPriorityTaskWoken);
+		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+	}
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
@@ -180,21 +182,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	if (GPIO_Pin == INT_Pin)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xSemaphoreGiveFromISR(asciSemHandle, &xHigherPriorityTaskWoken);
+    xTaskNotifyFromISR(mainTaskHandle, INTERRUPT_SUCCESS, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
-	// if (GPIO_Pin == B1_Pin)
-	// {
-	// 	if (HAL_GetTick() - lastBalancingUpdate > 300)
-	// 	{
-	// 		lastBalancingUpdate = HAL_GetTick();
-	// 		balancingEnabled = !balancingEnabled;
-	// 	}
-	// }
 	if (GPIO_Pin == BUSY_Pin)
 	{
 		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xSemaphoreGiveFromISR(epdBusySemHandle, &xHigherPriorityTaskWoken);
+    xTaskNotifyFromISR(ePaperHandle, INTERRUPT_SUCCESS, eSetBits, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 }
@@ -283,27 +277,7 @@ int main(void)
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
-  /* Create the semaphores(s) */
-  /* definition and creation of asciSpiSem */
-  osSemaphoreStaticDef(asciSpiSem, &asciSpiSemControlBlock);
-  asciSpiSemHandle = osSemaphoreCreate(osSemaphore(asciSpiSem), 1);
-
-  /* definition and creation of asciSem */
-  osSemaphoreStaticDef(asciSem, &asciSemControlBlock);
-  asciSemHandle = osSemaphoreCreate(osSemaphore(asciSem), 1);
-
-  /* definition and creation of epdSpiSem */
-  osSemaphoreStaticDef(epdSpiSem, &epdSpiSemControlBlock);
-  epdSpiSemHandle = osSemaphoreCreate(osSemaphore(epdSpiSem), 1);
-
-  /* definition and creation of epdBusySem */
-  osSemaphoreStaticDef(epdBusySem, &epdBusySemControlBlock);
-  epdBusySemHandle = osSemaphoreCreate(osSemaphore(epdBusySem), 1);
-
   /* USER CODE BEGIN RTOS_SEMAPHORES */
-  // Set semaphore count to 0 for proper ISR function
-  xSemaphoreTake(asciSpiSemHandle, 0);
-  xSemaphoreTake(asciSemHandle, 0);
 
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
@@ -331,7 +305,7 @@ int main(void)
   mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
 
   /* definition and creation of ePaper */
-  osThreadDef(ePaper, StartEPaper, osPriorityLow, 0, 256);
+  osThreadDef(ePaper, StartEPaper, osPriorityLow, 0, 512);
   ePaperHandle = osThreadCreate(osThread(ePaper), NULL);
 
   /* definition and creation of idle */
@@ -817,11 +791,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(CS_ASCI_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : INT_Pin */
-  GPIO_InitStruct.Pin = INT_Pin;
+  /*Configure GPIO pins : INT_Pin BUSY_Pin */
+  GPIO_InitStruct.Pin = INT_Pin|BUSY_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(INT_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : RST_Pin CS_EPD_Pin DC_Pin */
   GPIO_InitStruct.Pin = RST_Pin|CS_EPD_Pin|DC_Pin;
@@ -829,12 +803,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : BUSY_Pin */
-  GPIO_InitStruct.Pin = BUSY_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(BUSY_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : AMS_FAULT_SDC_Pin */
   GPIO_InitStruct.Pin = AMS_FAULT_SDC_Pin;

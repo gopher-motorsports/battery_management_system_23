@@ -20,8 +20,6 @@
 /* ======================= EXTERNAL VARIABLES ========================= */
 /* ==================================================================== */
 
-extern osSemaphoreId asciSpiSemHandle;
-extern osSemaphoreId asciSemHandle;
 extern SPI_HandleTypeDef hspi1;
 
 extern LeakyBucket_S asciCommsLeakyBucket;
@@ -148,20 +146,6 @@ static bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, co
 /* ==================================================================== */
 
 /*!
-  @brief   Interrupt when ASCI INT Pin interrupt occurs
-  @param   GPIO Pin causing interrupt
-*/
-//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-//{
-//	if (GPIO_Pin == GPIO_PIN_8)
-//	{
-//		static BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-//		xSemaphoreGiveFromISR(asciSpiSemHandle, &xHigherPriorityTaskWoken);
-//		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-//	}
-//}
-
-/*!
   @brief   Enable ASCI SPI by pulling chip select low
 */
 static void csOn()
@@ -185,13 +169,7 @@ static void csOff()
 static void sendAsciSpi(uint8_t value)
 {
 	csOn();
-	// Ensure semaphore set to 0
-	xSemaphoreTake(asciSpiSemHandle, 0);
-	SPIRTRY(HAL_SPI_Transmit_IT, &hspi1, (uint8_t *)&value, 1);
-	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
-	{
-		Debug("Interrupt failed to occur during ASCI SPI transmit\n");
-	}
+	SPI_TRANSMIT(HAL_SPI_Transmit_IT, &hspi1, TIMEOUT_SPI_COMPLETE_MS, sendAsciSpi, (uint8_t *)&value, 1);
 	csOff();
 }
 
@@ -203,16 +181,9 @@ static void sendAsciSpi(uint8_t value)
 static uint8_t readRegister(uint8_t registerAddress)
 {
 	csOn();
-	// Since reading add 1 to address
-	const uint8_t sendBuffer[2] = {registerAddress + 1};
+	const uint8_t sendBuffer[2] = {registerAddress + 1}; // Since reading add 1 to address
 	uint8_t recvBuffer[2] = {0};
-	// Ensure semaphore set to 0
-	xSemaphoreTake(asciSpiSemHandle, 0);
-	SPIRTRY(HAL_SPI_TransmitReceive_IT, &hspi1, (uint8_t *)&sendBuffer, (uint8_t *)&recvBuffer, 2);
-	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
-	{
-		Debug("Interrupt failed to occur during readRegister operation\n");
-	}
+	SPI_TRANSMIT(HAL_SPI_TransmitReceive_IT, &hspi1, TIMEOUT_SPI_COMPLETE_MS, readRegister, (uint8_t *)&sendBuffer, (uint8_t *)&recvBuffer, 2);
 	csOff();
 	return recvBuffer[1];
 }
@@ -226,13 +197,7 @@ static void writeRegister(uint8_t registerAddress, uint8_t value)
 {
 	csOn();
 	uint8_t sendBuffer[2] = {registerAddress, value};
-	// Ensure semaphore set to 0
-	xSemaphoreTake(asciSpiSemHandle, 0);
-	SPIRTRY(HAL_SPI_Transmit_IT, &hspi1, (uint8_t *)&sendBuffer, 2);
-	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
-	{
-		Debug("Interrupt failed to occur during writeRegister operation\n");
-	}
+	SPI_TRANSMIT(HAL_SPI_Transmit_IT, &hspi1, TIMEOUT_SPI_COMPLETE_MS, writeRegister, (uint8_t *)&sendBuffer, 2);
 	csOff();
 }
 
@@ -369,12 +334,11 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 
 		// Write queue
 		csOn();
-		// Ensure semaphore set to 0
-		xSemaphoreTake(asciSpiSemHandle, 0);
-		SPIRTRY(HAL_SPI_Transmit_IT, &hspi1, data_p, numBytes);
-		if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
+		INTERRUPT_STATUS_E spiStatus = SPI_TRANSMIT(HAL_SPI_Transmit_IT, &hspi1, TIMEOUT_SPI_COMPLETE_MS, loadAndVerifyTxQueue, data_p, numBytes);
+		
+		// Fail function if SPI transaction fails
+		if(!(spiStatus & INTERRUPT_SUCCESS))
 		{
-			Debug("Interrupt failed to occur while loading queue in loadAndVerifyTxQueue\n");
 			csOff();
 			continue;
 		}
@@ -383,12 +347,11 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 		// Read queue
 		sendBuffer[0] = data_p[0] + 1;	// Read address is one greater than the write address
 		csOn();
-		// Ensure semaphore set to 0
-		xSemaphoreTake(asciSpiSemHandle, 0);
-		SPIRTRY(HAL_SPI_TransmitReceive_IT, &hspi1, sendBuffer, recvBuffer, numBytes);
-		if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
+		spiStatus = SPI_TRANSMIT(HAL_SPI_TransmitReceive_IT, &hspi1, TIMEOUT_SPI_COMPLETE_MS, loadAndVerifyTxQueue, sendBuffer, recvBuffer, numBytes);
+		
+		// Fail function if SPI transaction fails
+		if(!(spiStatus & INTERRUPT_SUCCESS))
 		{
-			Debug("Interrupt failed to occur while reading queue contents in loadAndVerifyTxQueue\n");
 			csOff();
 			continue;
 		}
@@ -422,15 +385,7 @@ static bool readNextSpiMessage(uint8_t** data_p, uint32_t numBytesToRead)
 	// Read numBytesToRead + 1 since we also need to send CMD_RD_NXT_MSG
 	sendBuffer[0] = CMD_RD_NXT_MSG;
 	csOn();
-	// Ensure semaphore set to 0
-	xSemaphoreTake(asciSpiSemHandle, 0);
-	SPIRTRY(HAL_SPI_TransmitReceive_IT, &hspi1, sendBuffer, *data_p, arraySize);
-	if (xSemaphoreTake(asciSpiSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
-	{
-		Debug("Interrupt failed to occur while reading next SPI message\n");
-		csOff();
-		return false;
-	}
+	SPI_TRANSMIT(HAL_SPI_TransmitReceive_IT, &hspi1, TIMEOUT_SPI_COMPLETE_MS, readNextSpiMessage,  sendBuffer, *data_p, arraySize);
 	csOff();
 	// Return data should not include the CMD_RD_NXT_MSG
 	(*data_p)++;
@@ -467,13 +422,15 @@ static bool sendReceiveMessageAsci(uint8_t* sendBuffer, uint8_t** recvBuffer, co
 	{
 		return false;
 	}
-	// Ensure semaphore set to 0
-	xSemaphoreTake(asciSemHandle, 0);
+	
 	sendAsciSpi(CMD_WR_NXT_LD_Q_L0);
+
 	// Wait for ASCI interrupt to occur
-	if (xSemaphoreTake(asciSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
+	INTERRUPT_STATUS_E extIntStatus = WAIT_EXT_INT(TIMEOUT_SPI_COMPLETE_MS, sendReceiveMessageAsci);
+
+	// Verify that interrupt was successful
+	if(!(extIntStatus & INTERRUPT_SUCCESS))
 	{
-		Debug("ASCI Interrupt failed to occur during message transaction\n");
 		return false;
 	}
 
@@ -567,15 +524,15 @@ bool initASCI()
 
 	clearRxBuffer();
 
-	// Ensure semaphore set to 0
-	xSemaphoreTake(asciSemHandle, 0);
-
 	// Enable TX_Preambles mode
 	successfulConfig &= writeAndVerifyRegister(R_CONFIG_2, 0x30);
 
-	if (xSemaphoreTake(asciSemHandle, TIMEOUT_SPI_COMPLETE_MS) != pdTRUE)
+	// Wait for ASCI interrupt to occur
+	INTERRUPT_STATUS_E extIntStatus = WAIT_EXT_INT(TIMEOUT_SPI_COMPLETE_MS, initASCI);
+
+	// Verify that interrupt was successful
+	if(!(extIntStatus & INTERRUPT_SUCCESS))
 	{
-		Debug("Interrupt failed to occur while enabling TX_Preambles mode!\n");
 		successfulConfig = false;
 	}
 
