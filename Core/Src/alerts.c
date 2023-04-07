@@ -39,27 +39,16 @@ static bool overtemperatureFaultPresent(Bms_S* bms)
 
 static bool amsSdcFaultPresent(Bms_S* bms)
 {
-<<<<<<< Updated upstream
-    return bms->amsFault;
-=======
     return HAL_GPIO_ReadPin(AMS_FAULT_SDC_GPIO_Port, AMS_FAULT_SDC_Pin);
->>>>>>> Stashed changes
 }
 
 static bool bspdSdcFaultPresent(Bms_S* bms)
 {
-<<<<<<< Updated upstream
-    return bms->bspdFault;
-=======
     return HAL_GPIO_ReadPin(BSPD_FAULT_SDC_GPIO_Port, BSPD_FAULT_SDC_Pin);
->>>>>>> Stashed changes
 }
 
 static bool imdSdcFaultPresent(Bms_S* bms)
 {
-<<<<<<< Updated upstream
-    return bms->imdFault;
-=======
     return HAL_GPIO_ReadPin(IMD_FAULT_SDC_GPIO_Port, IMD_FAULT_SDC_Pin);
 }
 
@@ -67,7 +56,6 @@ static bool currentSensorErrorPresent(Bms_S* bms)
 {
     // TODO: Implement current sense error check
     return false;
->>>>>>> Stashed changes
 }
 
 
