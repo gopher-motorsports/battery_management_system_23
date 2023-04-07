@@ -44,7 +44,7 @@ typedef enum
   @brief   Determine if two floating point values are equal
   @returns True if equal, false if not equal
 */
-#define fequals(a, b) (fabs(a - b) < EPSILON) ? (true) : (false)
+#define fequals(a, b) (fabsf(a - b) < EPSILON) ? (true) : (false)
 
 /*!
   @brief    Carries out a HAL SPI command and blocks the executing task until SPI complete
