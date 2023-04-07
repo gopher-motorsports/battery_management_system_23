@@ -49,12 +49,6 @@ typedef enum
 	BMS_BMB_FAILURE
 } Bms_Hardware_State_E;
 
-typedef enum
-{
-	SENSE_SNA = 0,	// Value on startup
-	SENSE_GOOD,		// Data nominal
-	SENSE_MIA			// Data wasn't aquired
-} Sensor_Status_E;
 
 typedef enum
 {

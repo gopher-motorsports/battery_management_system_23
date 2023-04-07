@@ -47,7 +47,7 @@ void getTractiveSystemCurrent(Bms_S* bms)
     }
     else // If both sensors are faulty, no current data can be accurately returned
     {
-        bms->tractiveSystemCurrentStatus = SENSE_MIA;
+        bms->tractiveSystemCurrentStatus = BAD;
         // Debug("Failed to read data from current sensor\n");
     }
 }

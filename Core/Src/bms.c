@@ -219,9 +219,9 @@ void checkAndHandleAlerts(uint32_t numBmbs)
 		if (getAlertStatus(alert) == ALERT_SET)
 		{
 			// Iterate through all alert responses and set them
-			for (uint32_t i = 0; i < alert->numAlertResponse; i++)
+			for (uint32_t j = 0; j < alert->numAlertResponse; j++)
 			{
-				const AlertResponse_E response = alert->alertResponse[i];
+				const AlertResponse_E response = alert->alertResponse[j];
 				// Set the alert response to active
 				responseStatus[response] = true;
 			}
