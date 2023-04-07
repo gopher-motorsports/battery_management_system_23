@@ -52,11 +52,11 @@ static bool imdSdcFaultPresent(Bms_S* bms)
     return HAL_GPIO_ReadPin(IMD_FAULT_SDC_GPIO_Port, IMD_FAULT_SDC_Pin);
 }
 
-static bool currentSensorErrorPresent(Bms_S* bms)
-{
-    // TODO: Implement current sense error check
-    return false;
-}
+// static bool currentSensorErrorPresent(Bms_S* bms)
+// {
+//     // TODO: Implement current sense error check
+//     return false;
+// }
 
 
 /* ==================================================================== */

@@ -39,7 +39,7 @@ cxxDefinitionsFile:
 asDefinitionsFile:
 
 # Compiler flags
-cFlags: [-Wall, -Wshadow, -Wdouble-promotion, -Wundef, -fno-common, -g3]
+cFlags: [-Wall, -Wshadow, -Wdouble-promotion, -Wfloat-equal, -fno-common, -g3]
 cxxFlags: []
 assemblyFlags: []
 linkerFlags: 
@@ -87,9 +87,9 @@ includeDirectories:
   - Core/Src/**
   - Core/Lib/**
   - Core/Epaper/**
-  - ../gophercan-lib
+  - ../gophercan-lib/**
   - ../Gopher_Sense/lib/**
-  - ../Gopher_Sense/Build
+  - ../Gopher_Sense/Build/**
 
 
 
