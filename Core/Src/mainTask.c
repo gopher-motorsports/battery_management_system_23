@@ -135,7 +135,7 @@ void runMain()
 void printCellVoltages()
 {
 	printf("Cell Voltage:\n");
-	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    | StackV  |\n");
+	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    | SegmentV |\n");
 	for (int32_t i = 0; i < numBmbs; i++)
 	{
 		printf("|    %02ld   |", i + 1);
@@ -152,7 +152,7 @@ void printCellVoltages()
 			}
 			printf(" |");
 		}
-		printf("  %5.2f  |", (double)gBms.bmb[i].stackV);
+		printf("  %5.2f  |", (double)gBms.bmb[i].segmentV);
 		printf("\n");
 	}
 	printf("\n");

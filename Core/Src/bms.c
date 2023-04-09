@@ -462,7 +462,7 @@ void updateGopherCan()
 				// case GCAN_SEGMENT_6:
 				// case GCAN_SEGMENT_7:
 					
-					update_and_queue_param_float(cellVoltageStatsParams[gcanUpdateState][0], gBms.bmb[gcanUpdateState].stackV);
+					update_and_queue_param_float(cellVoltageStatsParams[gcanUpdateState][0], gBms.bmb[gcanUpdateState].segmentV);
 					update_and_queue_param_float(cellVoltageStatsParams[gcanUpdateState][1], gBms.bmb[gcanUpdateState].avgBrickV);
 					update_and_queue_param_float(cellVoltageStatsParams[gcanUpdateState][2], gBms.bmb[gcanUpdateState].maxBrickV);
 					update_and_queue_param_float(cellVoltageStatsParams[gcanUpdateState][3], gBms.bmb[gcanUpdateState].minBrickV);

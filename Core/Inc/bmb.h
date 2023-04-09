@@ -104,17 +104,18 @@ typedef struct
 	// The resistance of the brick
 	float brickResistance[NUM_BRICKS_PER_BMB];
 
-	// The stack voltage measurement status 
-	Sensor_Status_E stackVStatus;
-	// The stack voltage measurement is the total BMB voltage (sum of bricks = stack)
-	float stackV;
+	// The segment voltage measurement status 
+	Sensor_Status_E segmentVStatus;
+	// The segment voltage measurement is the total BMB voltage
+	float segmentV;
 
-	// The status of all the temp sensors
-	Sensor_Status_E tempStatus[NUM_BRICKS_PER_BMB+NUM_BOARD_TEMP_PER_BMB];
-	// The raw voltage measurements from all the temp sensors
-	float tempVoltage[NUM_BRICKS_PER_BMB+NUM_BOARD_TEMP_PER_BMB];
+	// The status of the brick temp sensors
+	Sensor_Status_E brickTempStatus[NUM_BRICKS_PER_BMB];
 	// The converted temperatures for all the brick temp sensors
 	float brickTemp[NUM_BRICKS_PER_BMB];
+	
+	// The status of the board temp sensors
+	Sensor_Status_E boardTempStatus[NUM_BOARD_TEMP_PER_BMB];
 	// The converted temperature for all board temp sensors
 	float boardTemp[NUM_BOARD_TEMP_PER_BMB];
 

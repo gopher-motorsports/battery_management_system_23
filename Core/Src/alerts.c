@@ -282,6 +282,8 @@ Alert_S bmbCommunicationFailureAlert =
 
 // Alert - TBD stuck open/closed bleed fet
 
+// Stack vs segment voltage imbalance
+
 Alert_S* alerts[] = 
 {
     &overvoltageWarningAlert,
