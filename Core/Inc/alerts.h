@@ -43,6 +43,9 @@
 #define BMB_COMMUNICATION_FAILURE_ALERT_SET_TIME_MS   2000
 #define BMB_COMMUNICATION_FAILURE_ALERT_CLEAR_TIME_MS 2000
 
+#define STACK_VS_SEGMENT_IMBALANCE_ALERT_SET_TIME_MS    1000
+#define STACK_VS_SEGMENT_IMBALANCE_ALERT_CLEAR_TIME_MS  1000
+
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
 /* ==================================================================== */

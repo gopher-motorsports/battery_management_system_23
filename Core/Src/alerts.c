@@ -282,7 +282,16 @@ Alert_S bmbCommunicationFailureAlert =
 
 // Alert - TBD stuck open/closed bleed fet
 
-// Stack vs segment voltage imbalance
+// Stack vs Segment Voltage Imbalance Alert
+const AlertResponse_E stackVsSegmentImbalanceAlertResponse[] = { DISABLE_BALANCING, DISABLE_CHARGING };
+#define NUM_STACK_VS_SEGMENT_IMBALANCE_ALERT_RESPONSE sizeof(stackVsSegmentImbalanceAlertResponse) / sizeof(AlertResponse_E)
+Alert_S stackVsSegmentImbalanceAlert = 
+{
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, STACK_VS_SEGMENT_IMBALANCE_ALERT_SET_TIME_MS}, 
+    .setTime_MS = STACK_VS_SEGMENT_IMBALANCE_ALERT_SET_TIME_MS, .clearTime_MS = STACK_VS_SEGMENT_IMBALANCE_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = currentSensorErrorPresent,
+    .numAlertResponse = NUM_STACK_VS_SEGMENT_IMBALANCE_ALERT_RESPONSE, .alertResponse = stackVsSegmentImbalanceAlertResponse
+};
 
 Alert_S* alerts[] = 
 {
@@ -297,7 +306,8 @@ Alert_S* alerts[] =
     &bspdSdcFaultAlert,
     &imdSdcFaultAlert,
     &currentSensorErrorAlert,
-    &bmbCommunicationFailureAlert
+    &bmbCommunicationFailureAlert,
+    &stackVsSegmentImbalanceAlert
 };
 
 // Number of alerts
