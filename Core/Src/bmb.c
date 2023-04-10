@@ -138,7 +138,7 @@ static bool setBmbInternalLoopback(uint32_t bmbIdx, bool enabled)
 */
 static bool startScan(uint32_t numBmbs)
 {
-	const uint16_t scanCtrlData = SCANCTRL_ENABLE_AUTOBALSWDIS & SCANCTRL_32_OVERSAMPLES & SCANCTRL_START_SCAN;
+	const uint16_t scanCtrlData = SCANCTRL_ENABLE_AUTOBALSWDIS | SCANCTRL_32_OVERSAMPLES | SCANCTRL_START_SCAN;
 	if(!writeAll(SCANCTRL, scanCtrlData, numBmbs))
 	{
 		Debug("Failed to start scan!\n");
@@ -251,6 +251,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			if (!allBmbScanDone)
 			{
 				// Do we want to try to restart the scans here?
+				startScan(numBmbs);
 				Debug("All BMB Scans failed to complete in time\n");
 				return;	
 			}

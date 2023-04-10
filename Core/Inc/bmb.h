@@ -55,7 +55,7 @@
 // The minimum voltage that we can bleed to
 #define MIN_BLEED_TARGET_VOLTAGE_V 	3.5f
 // The maximum allowed board temp where bleeding is allowed
-#define MAX_BOARD_TEMP_BALANCING_ALLOWED_C	75.0f
+#define MAX_BOARD_TEMP_BALANCING_ALLOWED_C	90.0f
 // The maximum cell temperature where bleeding is allowed
 #define MAX_CELL_TEMP_BLEEDING_ALLOWED_C	55.0f
 

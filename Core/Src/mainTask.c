@@ -106,7 +106,7 @@ void runMain()
 				printf("Balancing Enabled: FALSE\n");
 			}
 			balancePack(numBmbs, balancingEnabled);
-			// balancePackToVoltage(numBmbs, 3.7f);
+			// balancePackToVoltage(numBmbs, 3.87f);
 
 			printCellVoltages();
 			printCellTemperatures();
@@ -135,7 +135,7 @@ void runMain()
 void printCellVoltages()
 {
 	printf("Cell Voltage:\n");
-	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    | SegmentV |\n");
+	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    | Segment |\n");
 	for (int32_t i = 0; i < numBmbs; i++)
 	{
 		printf("|    %02ld   |", i + 1);
