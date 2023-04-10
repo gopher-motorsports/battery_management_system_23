@@ -47,5 +47,9 @@ void runEpaperTask()
             epdFullRefresh();
             numUpdates = 0;
         }
+        else
+        {
+            epdPartialRefresh();
+        }
     }
 }

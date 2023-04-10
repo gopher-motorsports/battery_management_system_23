@@ -13,6 +13,13 @@
 
 PAINT Paint;
 
+uint32_t waveImage[2] =
+{
+    0b00000001000000000011100000000001,
+    0b00000001110000001111111000000111
+};
+
+
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DEFINITIONS ===================== */
 /* ==================================================================== */
@@ -733,6 +740,14 @@ info:
 static uint8_t calculateIntegerDigits(uint32_t num)
 {
     uint8_t digits = 1;
+    for(int32_t i = 0; i < 12; i++)
+    {
+        num /= 10;
+        if(num > 0)
+        {
+            break;
+        }
+    }
 	while(((num /= 10) > 0) && (digits < 11))
 	{
 		digits++;
@@ -755,28 +770,47 @@ void Paint_InitBmsImage(uint8_t* emptyImage)
 	Paint_Clear(WHITE);
 
 	// Create data table template
-	Paint_DrawRectangle(46, 60, 237, 123, BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
-	Paint_DrawLine(46, 81, 237, 81, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
-	Paint_DrawLine(46, 102, 237, 102, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
-	Paint_DrawLine(110, 60, 110, 123, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
-	Paint_DrawLine(174, 60, 174, 123, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	Paint_DrawRectangle(39, 60, 239, 123, BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
+	Paint_DrawLine(39, 81, 237, 81, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	Paint_DrawLine(39, 102, 237, 102, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	Paint_DrawLine(113, 60, 113, 123, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	Paint_DrawLine(176, 60, 176, 123, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
 
 	// Print table labels for pack voltage, pack temp, and board temp
-	Paint_DrawString_EN(55, 43, "VOLT", &Font16, WHITE, BLACK);
-	Paint_DrawString_EN(120, 43, "TEMP", &Font16, WHITE, BLACK);
-	Paint_DrawString_EN(178, 43, "BLEED", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(54, 43, "VOLT", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(122, 43, "TEMP", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(180, 43, "BLEED", &Font16, WHITE, BLACK);
 	Paint_DrawString_EN(252, 43, "SOC", &Font16, WHITE, BLACK);
-	Paint_DrawString_EN(5, 63, "AVG", &Font16, WHITE, BLACK);
-	Paint_DrawString_EN(5, 84, "MAX", &Font16, WHITE, BLACK);
-	Paint_DrawString_EN(5, 105, "MIN", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(2, 63, "AVG", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(2, 84, "MAX", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(2, 105, "MIN", &Font16, WHITE, BLACK);
 
 	// Print labels for State and Fault indicators
-	Paint_DrawString_EN(5, 5, "STATE:", &Font16, WHITE, BLACK);
-	Paint_DrawString_EN(5, 25, "FAULT:", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(2, 5, "STATE:", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(2, 25, "FAULT:", &Font16, WHITE, BLACK);
 
 	// Print default battery template
 	Paint_DrawRectangle(255, 65, 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
 	Paint_DrawRectangle(263, 60, 275, 65, BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
+}
+
+Paint_DrawCenteredLabeledValue(float data, uint32_t startX, uint32_t startY, uint32_t placeValues, sFONT *font)
+{
+    Paint_ClearWindows(startX, startY, startX + font->Width * placeValues, startY + font->Height, WHITE);
+
+    // Data position adjustment variables
+    uint8_t digits = 0;
+    bool negative = 0;
+
+    // Determine if data is negative and flip sign if neccesary
+    // Minus sign will take up one digit space
+    if(data < 0.0f)
+    {
+        negative = true;
+        data *= -1;
+        digits++;
+    }
+
 }
 
 /*!
@@ -792,7 +826,15 @@ void Paint_DrawTableData(float data, DATA_TABLE_COL col, DATA_TABLE_ROW row)
     uint16_t startY = DATA_START_Y + (row * DATA_SEPERATION_Y);
 
     // Clear data entry space
-    Paint_ClearWindows(startX, startY, startX + Font16.Width * 5, startY + Font16.Height, WHITE);
+    if(col == DATA_VOLTAGE)
+    {
+        Paint_ClearWindows(startX, startY, startX + Font16.Width * 6, startY + Font16.Height, WHITE);
+    }
+    else
+    {
+        startX += Font16.Width;
+        Paint_ClearWindows(startX, startY, startX + Font16.Width * 5, startY + Font16.Height, WHITE);
+    }
 
     // Wrap to printable bounds
     if(data > 9999.0f)
@@ -840,7 +882,7 @@ void Paint_DrawTableData(float data, DATA_TABLE_COL col, DATA_TABLE_ROW row)
     {
         if(col == DATA_VOLTAGE)
         {
-            Paint_DrawNumDecimals(startX, startY, data, &Font16, 2, BLACK, WHITE);
+            Paint_DrawNumDecimals(startX, startY, data, &Font16, 3, BLACK, WHITE);
         }
         else
         {
@@ -855,7 +897,7 @@ void Paint_DrawTableData(float data, DATA_TABLE_COL col, DATA_TABLE_ROW row)
     // Set data label to display
     if(col == DATA_VOLTAGE)
     {
-        Paint_DrawString_EN(startX + (digits * Font16.Width) - (negative ? Font16.Width : 0), startY, "V", &Font16, WHITE, BLACK);
+        Paint_DrawString_EN(startX + ((digits+1) * Font16.Width) - (negative ? Font16.Width : 0), startY, "V", &Font16, WHITE, BLACK);
     }
     else
     {
@@ -896,7 +938,188 @@ void Paint_DrawSOC(uint32_t SOC)
 	Paint_DrawString_EN(246 + startXAdjust + Font16.Width * digits, 105, "%", &Font16, WHITE, BLACK);
 
 	// Adjust the height of the printed battery level based on the SOC as a percentage
-	Paint_DrawRectangle(255, 102 - ((37 * SOC) / 100), 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_FULL);
+    uint16_t startSOCX = 102 - ((31 * SOC) / 100);
+	// Paint_DrawRectangle(255, 102 - ((37 * SOC) / 100), 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_FULL);
+    // Paint_DrawRectangle(255, 93, 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_FULL);
+    Paint_DrawRectangle(255, startSOCX, 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_FULL);
+
+    static int32_t startIndex = 0;
+    uint32_t mask = 1;
+    for(int32_t i = 0; i < (25-startIndex); i++)
+    { 
+        Paint_DrawPoint(257+i+startIndex, startSOCX-2, (waveImage[0] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+        Paint_DrawPoint(257+i+startIndex, startSOCX-3, (waveImage[1] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+        mask <<= 1;
+    }
+    for(int32_t i = 0; i < startIndex; i++)
+    { 
+        Paint_DrawPoint(257+i, startSOCX-2, (waveImage[0] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+        Paint_DrawPoint(257+i, startSOCX-3, (waveImage[1] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+        mask <<= 1;
+    }
+    startIndex += 2;
+
+    if(startIndex >= 25)
+    {
+        startIndex = 0;
+    }
+
+    // Paint_DrawPoint(257, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(258, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(259, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(260, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(261, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(262, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(263, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(264, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(265, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(266, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(267, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(268, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(269, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(270, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(271, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(272, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(273, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(274, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(275, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(276, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(277, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(278, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(279, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(280, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(281, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+
+    // // Paint_DrawPoint(257, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(258, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(259, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(260, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(261, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(262, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(263, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(264, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(265, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(266, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(267, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(268, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(269, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(270, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(271, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(272, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(273, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(274, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(275, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(276, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(277, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(278, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(279, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(280, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(281, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+
+    // // Paint_DrawPoint(257, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(258, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(259, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(260, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(261, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(262, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(263, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(264, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(265, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(266, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(267, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(268, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(269, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(270, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(271, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(272, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(273, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(274, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(275, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(276, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(277, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(278, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(279, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(280, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(281, startSOCX-4, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+
+    // // Paint_DrawPoint(257, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(258, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(259, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(260, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(261, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(262, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(263, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(264, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(265, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(266, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(267, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(268, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(269, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(270, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(271, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(272, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(273, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(274, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(275, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(276, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(277, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(278, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(279, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(280, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(281, startSOCX-5, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+
+    // // Paint_DrawPoint(257, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(258, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(259, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(260, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(261, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(262, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(263, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(264, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(265, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(266, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(267, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(268, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(269, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(270, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(271, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(272, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(273, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(274, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(275, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(276, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(277, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(278, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(279, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(280, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(281, startSOCX-2, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+
+    // // Paint_DrawPoint(257, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(258, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(259, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(260, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(261, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(262, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(263, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(264, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(265, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(266, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(267, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(268, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(269, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(270, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(271, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(272, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(273, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(274, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(275, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(276, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(277, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // Paint_DrawPoint(278, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(279, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(280, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+    // // Paint_DrawPoint(281, startSOCX-3, BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+
 }
 
 /*!
@@ -904,8 +1127,8 @@ void Paint_DrawSOC(uint32_t SOC)
 */
 void Paint_DrawState()
 {
-	Paint_ClearWindows(70, 5, 70 + Font16.Width * 12, 5 + Font16.Height, WHITE);
-	Paint_DrawString_EN(70, 5, "YOUR MOTHER", &Font16, WHITE, BLACK);
+	Paint_ClearWindows(67, 5, 70 + Font16.Width * 12, 5 + Font16.Height, WHITE);
+	Paint_DrawString_EN(67, 5, "YOUR MOTHER", &Font16, WHITE, BLACK);
 }
 
 /*!
@@ -913,6 +1136,6 @@ void Paint_DrawState()
 */
 void Paint_DrawFault()
 {
-    Paint_ClearWindows(70, 25, 70 + Font16.Width * 12, 25 + Font16.Height, WHITE);
-	Paint_DrawString_EN(70, 25, "NO FAULT", &Font16, WHITE, BLACK);
+    Paint_ClearWindows(67, 25, 70 + Font16.Width * 12, 25 + Font16.Height, WHITE);
+	Paint_DrawString_EN(67, 25, "NO FAULT", &Font16, WHITE, BLACK);
 }

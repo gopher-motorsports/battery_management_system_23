@@ -17,7 +17,7 @@
 #define ROTATE_180          180
 #define ROTATE_270          270
 
-#define DATA_START_X        50
+#define DATA_START_X        43
 #define DATA_START_Y        63
 #define DATA_SEPERATION_X   63
 #define DATA_SEPERATION_Y   21
