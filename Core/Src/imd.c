@@ -24,7 +24,7 @@ extern volatile uint32_t imdLastUpdate;
 */
 IMD_State_E getImdStatus()
 {
-    if (imdFrequency > 45)
+	if (imdFrequency > 45)
 	{
 		return IMD_EARTH_FAULT;
 	}

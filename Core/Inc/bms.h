@@ -22,9 +22,11 @@
 /* ==================================================================== */
 
 // The number of BMBs in the accumulator
-#define NUM_BMBS_IN_ACCUMULATOR		1
+#define NUM_BMBS_IN_ACCUMULATOR				1
+
 // Max allowable voltage difference between bricks for balancing
-#define BALANCE_THRESHOLD_V			0.002f
+#define BALANCE_THRESHOLD_V					0.002f
+
 // The maximum cell temperature where charging is allowed
 #define MAX_CELL_TEMP_CHARGING_ALLOWED_C	50.0f
 
@@ -66,7 +68,7 @@ typedef enum
 } Gcan_State_E;
 
 // The delay between consecutive additions to gcan logging
-#define GOPHER_CAN_LOGGING_PERIOD_MS		1000 / (GOPHER_CAN_LOGGING_FREQUENCY_HZ * NUM_GCAN_STATES)
+#define GOPHER_CAN_LOGGING_PERIOD_MS	(1000 / (GOPHER_CAN_LOGGING_FREQUENCY_HZ * NUM_GCAN_STATES))
 
 /* ==================================================================== */
 /* ============================== STRUCTS============================== */

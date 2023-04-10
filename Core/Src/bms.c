@@ -8,7 +8,6 @@
 #include "bmbInterface.h"
 #include "debug.h"
 #include "GopherCAN.h"
-#include "debug.h"
 #include "currentSense.h"
 #include "internalResistance.h"
 #include "gopher_sense.h"
@@ -21,6 +20,14 @@
 { \
     [0 ... NUM_BMBS_IN_ACCUMULATOR-1] = {.bmbIdx = __COUNTER__} \
 }
+
+#define MAX_BRICK_VOLTAGE_READING 5.0f
+#define MIN_BRICK_VOLTAGE_READING 0.0f
+
+#define MAX_TEMP_SENSE_READING 	  120.0f
+#define MIN_TEMP_SENSE_READING	  (-40.0f)
+
+#define EPAP_UPDATE_PERIOD_MS	  2000
 
 Bms_S gBms = 
 {
@@ -246,16 +253,16 @@ void aggregatePackData(uint32_t numBmbs)
 	// Update BMB level stats
 	aggregateBmbData(pBms->bmb, numBmbs);
 
-	float maxBrickV	   = 0.0f;
-	float minBrickV	   = 5.0f;
-	float avgBrickVSum = 0.0f;
+	float maxBrickV	   = MIN_BRICK_VOLTAGE_READING;
+	float minBrickV	   = MAX_BRICK_VOLTAGE_READING;
+	float avgBrickVSum = MIN_BRICK_VOLTAGE_READING;
 
-	float maxBrickTemp    = -200.0f;
-	float minBrickTemp 	  = 200.0f;
-	float avgBrickTempSum = 0.0f;
+	float maxBrickTemp    = MIN_TEMP_SENSE_READING;
+	float minBrickTemp 	  = MAX_TEMP_SENSE_READING;
+	float avgBrickTempSum = MIN_TEMP_SENSE_READING;
 
-	float maxBoardTemp    = -200.0f;
-	float minBoardTemp 	  = 200.0f;
+	float maxBoardTemp    = MIN_TEMP_SENSE_READING;
+	float minBoardTemp 	  = MAX_TEMP_SENSE_READING;
 	float avgBoardTempSum = 0.0f;
 
 	for (int32_t i = 0; i < numBmbs; i++)
@@ -329,7 +336,7 @@ void updateSdcStatus()
 
 void updateEpaper()
 {
-	if((HAL_GetTick() - lastEpapUpdate) > 2000)
+	if((HAL_GetTick() - lastEpapUpdate) > EPAP_UPDATE_PERIOD_MS)
 	{
 		lastEpapUpdate = HAL_GetTick();
 

@@ -13,7 +13,7 @@
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
-
+#define BITS_IN_BYTE					8
 #define RAILED_MARGIN_COUNT	  			5
 #define MAX_12_BIT						0x0FFF
 #define MAX_14_BIT						0x3FFF
@@ -78,7 +78,7 @@ static bool is14BitSensorRailed(uint32_t rawAdcVal);
 */
 static uint16_t getValueFromBuffer(uint8_t* buffer, uint32_t index)
 {
-	return buffer[4 + 2*index] << 8 | buffer[3 + 2*index];
+	return buffer[4 + 2*index] << BITS_IN_BYTE | buffer[3 + 2*index];
 }
 
 /*!
