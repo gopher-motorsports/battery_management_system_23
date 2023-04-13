@@ -43,6 +43,18 @@
 #define BMB_COMMUNICATION_FAILURE_ALERT_SET_TIME_MS   2000
 #define BMB_COMMUNICATION_FAILURE_ALERT_CLEAR_TIME_MS 2000
 
+#define BAD_VOLTAGE_SENSE_STATUS_ALERT_SET_TIME_MS    2000
+#define BAD_VOLTAGE_SENSE_STATUS_ALERT_CLEAR_TIME_MS  2000
+
+#define BAD_BRICK_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS    2000
+#define BAD_BRICK_TEMP_SENSE_STATUS_ALERT_CLEAR_TIME_MS  2000
+
+#define BAD_BOARD_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS    2000
+#define BAD_BOARD_TEMP_SENSE_STATUS_ALERT_CLEAR_TIME_MS  2000
+
+#define INSUFFICIENT_TEMP_SENSOR_ALERT_SET_TIME_MS    2000
+#define INSUFFICIENT_TEMP_SENSOR_ALERT_CLEAR_TIME_MS  2000
+
 #define STACK_VS_SEGMENT_IMBALANCE_ALERT_SET_TIME_MS    1000
 #define STACK_VS_SEGMENT_IMBALANCE_ALERT_CLEAR_TIME_MS  1000
 
@@ -66,6 +78,7 @@ typedef struct Bms Bms_S;
 typedef bool (*AlertConditionPresent)(Bms_S*);
 typedef struct
 {
+    const char* alertName;
     // The current status of the alert
     AlertStatus_E alertStatus;
     // The timer used for qualifying the alert set/clear condition
@@ -109,5 +122,7 @@ AlertStatus_E getAlertStatus(Alert_S* alert);
   @param   alert - The Alert data structure
 */
 void runAlertMonitor(Bms_S* bms, Alert_S* alert);
+
+void checkAndHandleAlerts();
 
 #endif /* INC_ALERTS_H_ */

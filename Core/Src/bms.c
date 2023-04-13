@@ -208,7 +208,7 @@ void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
 	balanceCells(gBms.bmb, numBmbs);
 }
 
-void checkAndHandleAlerts(uint32_t numBmbs)
+void checkAndHandleAlerts()
 {
 	// Run each alert monitor
 	for (uint32_t i = 0; i < NUM_ALERTS; i++)
@@ -241,6 +241,7 @@ void checkAndHandleAlerts(uint32_t numBmbs)
 	gBms.chargingDisabled  = responseStatus[DISABLE_CHARGING];
 	gBms.limpModeEnabled   = responseStatus[LIMP_MODE];
 	gBms.amsFaultPresent   = responseStatus[AMS_FAULT];
+	HAL_GPIO_WritePin(AMS_FAULT_OUT_GPIO_Port, AMS_FAULT_OUT_Pin, gBms.amsFaultPresent ? GPIO_PIN_RESET : GPIO_PIN_SET);
 }
 
 /*!

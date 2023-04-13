@@ -47,6 +47,7 @@ void printCellVoltages();
 void printCellTemperatures();
 void printBoardTemperatures();
 void printInternalResistances();
+void printActiveAlerts();
 
 
 /* ==================================================================== */
@@ -55,6 +56,7 @@ void printInternalResistances();
 
 void initMain()
 {
+	HAL_GPIO_WritePin(AMS_FAULT_OUT_GPIO_Port, AMS_FAULT_OUT_Pin, GPIO_PIN_SET);
 	for (int i = 0; i < initRetries; i++)
 	{
 		// Try to initialize the BMS HW
@@ -88,6 +90,8 @@ void runMain()
 
 		updateEpaper();
 
+		checkAndHandleAlerts();
+
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{
 			if (leakyBucketFilled(&asciCommsLeakyBucket))
@@ -112,6 +116,8 @@ void runMain()
 			printCellTemperatures();
 			printInternalResistances();
 			printBoardTemperatures();
+			printActiveAlerts();
+
 			printf("Leaky bucket filled: %d\n\n", leakyBucketFilled(&asciCommsLeakyBucket));
 
 			printf("Tractive Current: %6.3f\n", (double)gBms.tractiveSystemCurrent);
@@ -202,6 +208,26 @@ void printBoardTemperatures()
 			printf(" %5.1fC  |", (double)gBms.bmb[i].boardTemp[j]);
 		}
 		printf("\n");
+	}
+	printf("\n");
+}
+
+void printActiveAlerts()
+{
+	printf("Alerts Active:\n");
+	uint32_t numActiveAlerts = 0;
+	for (uint32_t i = 0; i < NUM_ALERTS; i++)
+	{
+		Alert_S* alert = alerts[i];
+		if (getAlertStatus(alert) == ALERT_SET)
+		{
+			printf("%s - ACTIVE!\n", alert->alertName);
+			numActiveAlerts++;
+		}
+	}
+	if (numActiveAlerts == 0)
+	{
+		printf("None\n");
 	}
 	printf("\n");
 }

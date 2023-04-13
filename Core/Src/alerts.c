@@ -55,11 +55,32 @@ static bool amsSdcFaultPresent(Bms_S* bms)
 static bool bspdSdcFaultPresent(Bms_S* bms)
 {
     return HAL_GPIO_ReadPin(BSPD_FAULT_SDC_GPIO_Port, BSPD_FAULT_SDC_Pin);
+    
 }
 
 static bool imdSdcFaultPresent(Bms_S* bms)
 {
     return HAL_GPIO_ReadPin(IMD_FAULT_SDC_GPIO_Port, IMD_FAULT_SDC_Pin);
+}
+
+static bool badVoltageSensorStatusPresent(Bms_S* bms)
+{
+    return false;
+}
+
+static bool badBrickTempSensorStatusPresent(Bms_S* bms)
+{
+    return false;
+}
+
+static bool badBoardTempSensorStatusPresent(Bms_S* bms)
+{
+    return false;
+}
+
+static bool insufficientTempSensePresent(Bms_S* bms)
+{
+    return false;
 }
 
 static bool currentSensorErrorPresent(Bms_S* bms)
@@ -105,7 +126,7 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
         }
 
         // Determine if alert was set
-        if (checkTimerExpired(&alert->alertTimer))
+        if (checkTimerExpired(&alert->alertTimer) && !(alert->alertTimer.timThreshold <= 0 && !alert->alertConditionPresent(bms)))
         {
             // Timer expired - Set alert
             alert->alertStatus = ALERT_SET;
@@ -129,7 +150,7 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
         }
 
         // Determine if alert was cleared
-        if (checkTimerExpired(&alert->alertTimer))
+        if (checkTimerExpired(&alert->alertTimer) && !(alert->alertTimer.timThreshold <= 0 && alert->alertConditionPresent(bms)))
         {
             // Timer expired - Clear alert
             alert->alertStatus = ALERT_CLEARED;
@@ -149,6 +170,7 @@ const AlertResponse_E overvoltageWarningAlertResponse[] = { DISABLE_CHARGING };
 #define NUM_OVERVOLTAGE_WARNING_ALERT_RESPONSE sizeof(overvoltageWarningAlertResponse) / sizeof(AlertResponse_E)
 Alert_S overvoltageWarningAlert =
 { 
+    .alertName = "OvervoltageWarning",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS, .clearTime_MS = OVERVOLTAGE_WARNING_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = overvoltageWarningPresent, 
@@ -160,6 +182,7 @@ const AlertResponse_E undervoltageWarningAlertResponse[] = { LIMP_MODE };
 #define NUM_UNDERVOLTAGE_WARNING_ALERT_RESPONSE sizeof(undervoltageWarningAlertResponse) / sizeof(AlertResponse_E)
 Alert_S undervoltageWarningAlert = 
 { 
+    .alertName = "UndervoltageWarning",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS, .clearTime_MS = UNDERVOLTAGE_WARNING_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = undervoltageWarningPresent,
@@ -171,6 +194,7 @@ const AlertResponse_E overvoltageFaultAlertResponse[] = { DISABLE_CHARGING, EMER
 #define NUM_OVERVOLTAGE_FAULT_ALERT_RESPONSE sizeof(overvoltageFaultAlertResponse) / sizeof(AlertResponse_E)
 Alert_S overvoltageFaultAlert = 
 { 
+    .alertName = "OvervoltageFault",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = OVERVOLTAGE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = OVERVOLTAGE_FAULT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = overvoltageFaultPresent, 
@@ -182,6 +206,7 @@ const AlertResponse_E undervoltageFaultAlertResponse[] = { AMS_FAULT };
 #define NUM_UNDERVOLTAGE_FAULT_ALERT_RESPONSE sizeof(undervoltageFaultAlertResponse) / sizeof(AlertResponse_E)
 Alert_S undervoltageFaultAlert = 
 { 
+    .alertName = "UndervoltageFault",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = UNDERVOLTAGE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = UNDERVOLTAGE_FAULT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = undervoltageFaultPresent,
@@ -193,6 +218,7 @@ const AlertResponse_E cellImbalanceAlertResponse[] = {LIMP_MODE, DISABLE_CHARGIN
 #define NUM_CELL_IMBALANCE_ALERT_RESPONSE sizeof(cellImbalanceAlertResponse) / sizeof(AlertResponse_E)
 Alert_S cellImbalanceAlert = 
 {
+    .alertName = "CellImbalance",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, CELL_IMBALANCE_ALERT_SET_TIME_MS}, 
     .setTime_MS = CELL_IMBALANCE_ALERT_SET_TIME_MS, .clearTime_MS = CELL_IMBALANCE_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = cellImbalancePresent,
@@ -204,6 +230,7 @@ const AlertResponse_E overtempWarningAlertResponse[] = { LIMP_MODE, DISABLE_CHAR
 #define NUM_OVERTEMP_WARNING_ALERT_RESPONSE sizeof(overtempWarningAlertResponse) / sizeof(AlertResponse_E)
 Alert_S overtempWarningAlert = 
 {
+    .alertName = "OvertempWarning",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERTEMPERATURE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = OVERTEMPERATURE_WARNING_ALERT_SET_TIME_MS, .clearTime_MS = OVERTEMPERATURE_WARNING_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = overtemperatureWarningPresent,
@@ -215,6 +242,7 @@ const AlertResponse_E overtempFaultAlertResponse[] = { DISABLE_CHARGING, DISABLE
 #define NUM_OVERTEMP_FAULT_ALERT_RESPONSE sizeof(overtempFaultAlertResponse) / sizeof(AlertResponse_E)
 Alert_S overtempFaultAlert = 
 {
+    .alertName = "OvertempFault",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS}, 
     .setTime_MS = OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = OVERTEMPERATURE_FAULT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = overtemperatureFaultPresent,
@@ -226,6 +254,7 @@ const AlertResponse_E amsSdcAlertResponse[] = { INFO_ONLY };
 #define NUM_AMS_SDC_ALERT_RESPONSE sizeof(amsSdcAlertResponse) / sizeof(AlertResponse_E)
 Alert_S amsSdcFaultAlert = 
 {
+    .alertName = "AmsSdcLatched",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
     .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = amsSdcFaultPresent,
@@ -237,6 +266,7 @@ const AlertResponse_E bspdSdcAlertResponse[] = { INFO_ONLY };
 #define NUM_BSPD_SDC_ALERT_RESPONSE sizeof(bspdSdcAlertResponse) / sizeof(AlertResponse_E)
 Alert_S bspdSdcFaultAlert = 
 {
+    .alertName = "BspdSdcLatched",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
     .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = bspdSdcFaultPresent,
@@ -248,6 +278,7 @@ const AlertResponse_E imdSdcAlertResponse[] = { INFO_ONLY };
 #define NUM_IMD_SDC_ALERT_RESPONSE sizeof(imdSdcAlertResponse) / sizeof(AlertResponse_E)
 Alert_S imdSdcFaultAlert = 
 {
+    .alertName = "ImdSdcLatched",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
     .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = imdSdcFaultPresent,
@@ -259,6 +290,7 @@ const AlertResponse_E currentSensorErrorAlertResponse[] = { DISABLE_CHARGING };
 #define NUM_CURRENT_SENSOR_ERROR_ALERT_RESPONSE sizeof(currentSensorErrorAlertResponse) / sizeof(AlertResponse_E)
 Alert_S currentSensorErrorAlert = 
 {
+    .alertName = "BadCurrentSense",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, CURRENT_SENSOR_ERROR_ALERT_SET_TIME_MS}, 
     .setTime_MS = CURRENT_SENSOR_ERROR_ALERT_SET_TIME_MS, .clearTime_MS = CURRENT_SENSOR_ERROR_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = currentSensorErrorPresent,
@@ -272,13 +304,60 @@ const AlertResponse_E bmbCommunicationFailureAlertResponse[] = { DISABLE_BALANCI
 #define NUM_BMB_COMMUNICATION_FAILURE_ALERT_RESPONSE sizeof(bmbCommunicationFailureAlertResponse) / sizeof(AlertResponse_E)
 Alert_S bmbCommunicationFailureAlert = 
 {
+    .alertName = "BmbCommunicationFailure",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, BMB_COMMUNICATION_FAILURE_ALERT_SET_TIME_MS}, 
     .setTime_MS = BMB_COMMUNICATION_FAILURE_ALERT_SET_TIME_MS, .clearTime_MS = BMB_COMMUNICATION_FAILURE_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = currentSensorErrorPresent,
     .numAlertResponse = NUM_BMB_COMMUNICATION_FAILURE_ALERT_RESPONSE, .alertResponse = bmbCommunicationFailureAlertResponse
 };
 
-// Alert - lost more than 60% of temp sensors in a pack
+// Bad voltage sensor status
+const AlertResponse_E badVoltageSenseStatusAlertResponse[] = { DISABLE_BALANCING, DISABLE_CHARGING, AMS_FAULT };
+#define NUM_BAD_VOLTAGE_SENSE_STATUS_ALERT_RESPONSE sizeof(badVoltageSenseStatusAlertResponse) / sizeof(AlertResponse_E)
+Alert_S badVoltageSenseStatusAlert = 
+{
+    .alertName = "BadVoltageSenseStatus",
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, BAD_VOLTAGE_SENSE_STATUS_ALERT_SET_TIME_MS}, 
+    .setTime_MS = BAD_VOLTAGE_SENSE_STATUS_ALERT_SET_TIME_MS, .clearTime_MS = BAD_VOLTAGE_SENSE_STATUS_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = badVoltageSensorStatusPresent,
+    .numAlertResponse = NUM_BAD_VOLTAGE_SENSE_STATUS_ALERT_RESPONSE, .alertResponse = badVoltageSenseStatusAlertResponse
+};
+
+// Bad brick temperature sensor status
+const AlertResponse_E badBrickTempSenseStatusAlertResponse[] = { INFO_ONLY };
+#define NUM_BAD_BRICK_TEMP_SENSE_STATUS_ALERT_RESPONSE sizeof(badBrickTempSenseStatusAlertResponse) / sizeof(AlertResponse_E)
+Alert_S badBrickTempSenseStatusAlert = 
+{
+    .alertName = "BadBrickTempSenseStatus",
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, BAD_BRICK_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS}, 
+    .setTime_MS = BAD_BRICK_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS, .clearTime_MS = BAD_BRICK_TEMP_SENSE_STATUS_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = badBrickTempSensorStatusPresent,
+    .numAlertResponse = NUM_BAD_BRICK_TEMP_SENSE_STATUS_ALERT_RESPONSE, .alertResponse = badBrickTempSenseStatusAlertResponse
+};
+
+// Bad board temperature sensor status
+const AlertResponse_E badBoardTempSenseStatusAlertResponse[] = { INFO_ONLY };
+#define NUM_BAD_BOARD_TEMP_SENSE_STATUS_ALERT_RESPONSE sizeof(badBoardTempSenseStatusAlertResponse) / sizeof(AlertResponse_E)
+Alert_S badBoardTempSenseStatusAlert = 
+{
+    .alertName = "BadBoardTempSenseStatus",
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, BAD_BOARD_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS}, 
+    .setTime_MS = BAD_BOARD_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS, .clearTime_MS = BAD_BOARD_TEMP_SENSE_STATUS_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = badBoardTempSensorStatusPresent,
+    .numAlertResponse = NUM_BAD_BOARD_TEMP_SENSE_STATUS_ALERT_RESPONSE, .alertResponse = badBoardTempSenseStatusAlertResponse
+};
+
+// Lost more than 60% of temp sensors in pack
+const AlertResponse_E insufficientTempSensorsAlertResponse[] = { DISABLE_BALANCING, DISABLE_CHARGING, AMS_FAULT };
+#define NUM_INSUFFICIENT_TEMP_SENSORS_ALERT_RESPONSE sizeof(insufficientTempSensorsAlertResponse) / sizeof(AlertResponse_E)
+Alert_S insufficientTempSensorsAlert = 
+{
+    .alertName = "InsufficientTempSensors",
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, INSUFFICIENT_TEMP_SENSOR_ALERT_SET_TIME_MS}, 
+    .setTime_MS = INSUFFICIENT_TEMP_SENSOR_ALERT_SET_TIME_MS, .clearTime_MS = INSUFFICIENT_TEMP_SENSOR_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = insufficientTempSensePresent,
+    .numAlertResponse = NUM_INSUFFICIENT_TEMP_SENSORS_ALERT_RESPONSE, .alertResponse = insufficientTempSensorsAlertResponse
+};
 
 // Alert - TBD stuck open/closed bleed fet
 
@@ -307,6 +386,10 @@ Alert_S* alerts[] =
     &imdSdcFaultAlert,
     &currentSensorErrorAlert,
     &bmbCommunicationFailureAlert,
+    &badVoltageSenseStatusAlert,
+    &badBrickTempSenseStatusAlert,
+    &badBoardTempSenseStatusAlert,
+    &insufficientTempSensorsAlert,
     &stackVsSegmentImbalanceAlert
 };
 

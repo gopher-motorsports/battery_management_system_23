@@ -406,69 +406,87 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		float maxBrickV = MIN_VOLTAGE_SENSOR_VALUE_V;
 		float minBrickV = MAX_VOLTAGE_SENSOR_VALUE_V;
 		float sumV	= 0.0f;
+		uint32_t numGoodBrickV = 0;
+
 		float maxBrickTemp = MIN_TEMP_SENSOR_VALUE_C;
 		float minBrickTemp = MAX_TEMP_SENSOR_VALUE_C;
 		float brickTempSum = 0.0f;
+		uint32_t numGoodBrickTemp = 0;
+
 		float maxBoardTemp = MIN_TEMP_SENSOR_VALUE_C;
 		float minBoardTemp = MAX_TEMP_SENSOR_VALUE_C;
 		float boardTempSum = 0.0f;
-		// TODO If UNINITIALIZED do not count
+		uint32_t numGoodBoardTemp = 0;
+
 		// Aggregate brick voltage and temperature data
 		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
-			float brickV = pBmb->brickV[j];
-			float brickTemp = pBmb->brickTemp[j];
+			// Only update stats if sense status is good
+			if (pBmb->brickVStatus[j] == GOOD)
+			{
+				float brickV = pBmb->brickV[j];
 
-			if (brickV > maxBrickV)
-			{
-				maxBrickV = brickV;
-			}
-			if (brickV < minBrickV)
-			{
-				minBrickV = brickV;
-			}
-
-			if (brickTemp > maxBrickTemp)
-			{
-				maxBrickTemp = brickTemp;
-			}
-			if (brickTemp < minBrickTemp)
-			{
-				minBrickTemp = brickTemp;
+				if (brickV > maxBrickV)
+				{
+					maxBrickV = brickV;
+				}
+				if (brickV < minBrickV)
+				{
+					minBrickV = brickV;
+				}
+				numGoodBrickV++;
+				sumV += brickV;
 			}
 
-			sumV += brickV;
-			brickTempSum += brickTemp;
+			// Only update stats if sense status is good
+			if (pBmb->brickTempStatus[j] == GOOD)
+			{
+				float brickTemp = pBmb->brickTemp[j];
+
+				if (brickTemp > maxBrickTemp)
+				{
+					maxBrickTemp = brickTemp;
+				}
+				if (brickTemp < minBrickTemp)
+				{
+					minBrickTemp = brickTemp;
+				}
+				numGoodBrickTemp++;
+				brickTempSum += brickTemp;
+			}
 		}
 
 		// Aggregate board temp data
 		for (int32_t j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
 		{
-			float boardTemp = pBmb->boardTemp[j];
-
-			if (boardTemp > maxBoardTemp)
+			if (pBmb->boardTempStatus[j] == GOOD)
 			{
-				maxBoardTemp = boardTemp;
-			}
-			if (boardTemp < minBoardTemp)
-			{
-				minBoardTemp = boardTemp;
-			}
+				float boardTemp = pBmb->boardTemp[j];
 
-			boardTempSum += boardTemp;
+				if (boardTemp > maxBoardTemp)
+				{
+					maxBoardTemp = boardTemp;
+				}
+				if (boardTemp < minBoardTemp)
+				{
+					minBoardTemp = boardTemp;
+				}
+				numGoodBoardTemp++;
+				boardTempSum += boardTemp;
+			}
 		}
 
 		// Update BMB statistics
 		pBmb->maxBrickV = maxBrickV;
 		pBmb->minBrickV = minBrickV;
 		pBmb->sumBrickV	= sumV;
-		pBmb->avgBrickV = sumV / NUM_BRICKS_PER_BMB;
+		pBmb->avgBrickV = (numGoodBrickV == 0) ? pBmb->avgBrickV : sumV / numGoodBrickV;
 		pBmb->maxBrickTemp = maxBrickTemp;
 		pBmb->minBrickTemp = minBrickTemp;
-		pBmb->avgBrickTemp = brickTempSum / NUM_BRICKS_PER_BMB;
+		pBmb->avgBrickTemp = (numGoodBrickTemp == 0) ? pBmb->avgBrickTemp :  brickTempSum / numGoodBrickTemp;
 		pBmb->maxBoardTemp = maxBoardTemp;
 		pBmb->minBoardTemp = minBoardTemp;
-		pBmb->avgBoardTemp = boardTempSum / NUM_BOARD_TEMP_PER_BMB;
+		pBmb->avgBoardTemp = (numGoodBoardTemp == 0) ? pBmb->avgBoardTemp : boardTempSum / numGoodBoardTemp;
 	}
 }
 
