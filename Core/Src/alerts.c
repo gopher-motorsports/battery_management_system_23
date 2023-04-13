@@ -171,7 +171,7 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
         }
 
         // Determine if alert was set
-        if (checkTimerExpired(&alert->alertTimer) && !(alert->alertTimer.timThreshold <= 0 && !alert->alertConditionPresent(bms)))
+        if (checkTimerExpired(&alert->alertTimer) && (!alert->alertTimer.timThreshold <= 0 || alert->alertConditionPresent(bms)))
         {
             // Timer expired - Set alert
             alert->alertStatus = ALERT_SET;
@@ -195,7 +195,7 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
         }
 
         // Determine if alert was cleared
-        if (checkTimerExpired(&alert->alertTimer) && !(alert->alertTimer.timThreshold <= 0 && alert->alertConditionPresent(bms)))
+        if (checkTimerExpired(&alert->alertTimer) && (!alert->alertTimer.timThreshold <= 0 || !alert->alertConditionPresent(bms)))
         {
             // Timer expired - Clear alert
             alert->alertStatus = ALERT_CLEARED;
@@ -341,8 +341,6 @@ Alert_S currentSensorErrorAlert =
     .alertConditionPresent = currentSensorErrorPresent,
     .numAlertResponse = NUM_CURRENT_SENSOR_ERROR_ALERT_RESPONSE, .alertResponse = currentSensorErrorAlertResponse
 };
-
-// Alert - lost cell tap
 
 // Lost BMB communications Alert
 const AlertResponse_E bmbCommunicationFailureAlertResponse[] = { DISABLE_BALANCING, DISABLE_CHARGING, AMS_FAULT };

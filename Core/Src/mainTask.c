@@ -56,7 +56,6 @@ void printActiveAlerts();
 
 void initMain()
 {
-	HAL_GPIO_WritePin(AMS_FAULT_OUT_GPIO_Port, AMS_FAULT_OUT_Pin, GPIO_PIN_SET);
 	for (int i = 0; i < initRetries; i++)
 	{
 		// Try to initialize the BMS HW

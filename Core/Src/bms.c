@@ -28,6 +28,7 @@
 #define MIN_TEMP_SENSE_READING	  (-40.0f)
 
 #define EPAP_UPDATE_PERIOD_MS	  2000
+#define ALERT_MONITOR_PERIOD_MS	  10
 
 Bms_S gBms = 
 {
@@ -64,6 +65,13 @@ static void disableBmbBalancing(Bmb_S* bmb)
 	}
 }
 
+static void setAmsFault(bool set)
+{
+	// AMS fault pin is active low so if set == true then pin should be low
+	HAL_GPIO_WritePin(AMS_FAULT_OUT_GPIO_Port, AMS_FAULT_OUT_Pin, set ? GPIO_PIN_RESET : GPIO_PIN_SET);
+	return;
+}
+
 
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
@@ -85,6 +93,7 @@ void initBmsGopherCan(CAN_HandleTypeDef* hcan)
 */
 bool initBatteryPack(uint32_t* numBmbs)
 {
+	setAmsFault(true);
 	gBms.balancingDisabled = true;
 	gBms.emergencyBleed    = false;
 	gBms.chargingDisabled  = true;
@@ -114,6 +123,7 @@ bool initBatteryPack(uint32_t* numBmbs)
 
 	gBms.numBmbs = *numBmbs;
 	gBms.bmsHwState = BMS_NOMINAL;
+	setAmsFault(false);
 	return true;
 
 // Routine if initialization error ocurs
@@ -252,38 +262,44 @@ void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
 */
 void checkAndHandleAlerts()
 {
-	// Run each alert monitor
-	for (uint32_t i = 0; i < NUM_ALERTS; i++)
-	{
-		runAlertMonitor(&gBms, alerts[i]);
-	}
+	static uint32_t lastAlertMonitorUpdate = 0;
 
-	// Accumulate alert statuses
-	bool responseStatus[NUM_ALERT_RESPONSES] = { false };
-
-	// Check each alert status
-	for (uint32_t i = 0; i < NUM_ALERTS; i++)
+	if (HAL_GetTick() - lastAlertMonitorUpdate > ALERT_MONITOR_PERIOD_MS)
 	{
-		Alert_S* alert = alerts[i];
-		if (getAlertStatus(alert) == ALERT_SET)
+		// Run each alert monitor
+		for (uint32_t i = 0; i < NUM_ALERTS; i++)
 		{
-			// Iterate through all alert responses and set them
-			for (uint32_t j = 0; j < alert->numAlertResponse; j++)
+			runAlertMonitor(&gBms, alerts[i]);
+		}
+
+		// Accumulate alert statuses
+		bool responseStatus[NUM_ALERT_RESPONSES] = { false };
+
+		// Check each alert status
+		for (uint32_t i = 0; i < NUM_ALERTS; i++)
+		{
+			Alert_S* alert = alerts[i];
+			if (getAlertStatus(alert) == ALERT_SET)
 			{
-				const AlertResponse_E response = alert->alertResponse[j];
-				// Set the alert response to active
-				responseStatus[response] = true;
+				// Iterate through all alert responses and set them
+				for (uint32_t j = 0; j < alert->numAlertResponse; j++)
+				{
+					const AlertResponse_E response = alert->alertResponse[j];
+					// Set the alert response to active
+					responseStatus[response] = true;
+				}
 			}
 		}
-	}
 
-	// Set BMS status based on alert
-	gBms.balancingDisabled = responseStatus[DISABLE_BALANCING];
-	gBms.emergencyBleed	   = responseStatus[EMERGENCY_BLEED];
-	gBms.chargingDisabled  = responseStatus[DISABLE_CHARGING];
-	gBms.limpModeEnabled   = responseStatus[LIMP_MODE];
-	gBms.amsFaultPresent   = responseStatus[AMS_FAULT];
-	HAL_GPIO_WritePin(AMS_FAULT_OUT_GPIO_Port, AMS_FAULT_OUT_Pin, gBms.amsFaultPresent ? GPIO_PIN_RESET : GPIO_PIN_SET);
+		// Set BMS status based on alert
+		gBms.balancingDisabled = responseStatus[DISABLE_BALANCING];
+		gBms.emergencyBleed	   = responseStatus[EMERGENCY_BLEED];
+		gBms.chargingDisabled  = responseStatus[DISABLE_CHARGING];
+		gBms.limpModeEnabled   = responseStatus[LIMP_MODE];
+		gBms.amsFaultPresent   = responseStatus[AMS_FAULT];
+		setAmsFault(gBms.amsFaultPresent);
+	}
+	
 }
 
 /*!
