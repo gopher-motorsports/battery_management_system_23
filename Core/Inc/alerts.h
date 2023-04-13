@@ -52,6 +52,8 @@
 #define BAD_BOARD_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS    2000
 #define BAD_BOARD_TEMP_SENSE_STATUS_ALERT_CLEAR_TIME_MS  2000
 
+// The minimum percent of brick temps that must be monitored to pass rules
+#define MIN_PERCENT_BRICK_TEMPS_MONITORED             25
 #define INSUFFICIENT_TEMP_SENSOR_ALERT_SET_TIME_MS    2000
 #define INSUFFICIENT_TEMP_SENSOR_ALERT_CLEAR_TIME_MS  2000
 
@@ -122,7 +124,5 @@ AlertStatus_E getAlertStatus(Alert_S* alert);
   @param   alert - The Alert data structure
 */
 void runAlertMonitor(Bms_S* bms, Alert_S* alert);
-
-void checkAndHandleAlerts();
 
 #endif /* INC_ALERTS_H_ */

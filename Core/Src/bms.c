@@ -35,13 +35,26 @@ Bms_S gBms =
     .bmb = INIT_BMS_BMB_ARRAY
 };
 
+
+/* ==================================================================== */
+/* ======================= EXTERNAL VARIABLES ========================= */
+/* ==================================================================== */
+
 extern osMessageQId epaperQueueHandle;
 
 extern CAN_HandleTypeDef hcan2;
 
-static uint32_t lastEpapUpdate = 0;
+
+/* ==================================================================== */
+/* =================== LOCAL FUNCTION DECLARATIONS ==================== */
+/* ==================================================================== */
 
 static void disableBmbBalancing(Bmb_S* bmb);
+
+
+/* ==================================================================== */
+/* =================== LOCAL FUNCTION DEFINITIONS ===================== */
+/* ==================================================================== */
 
 static void disableBmbBalancing(Bmb_S* bmb)
 {
@@ -50,6 +63,11 @@ static void disableBmbBalancing(Bmb_S* bmb)
 		bmb->balSwRequested[i] = false;
 	}
 }
+
+
+/* ==================================================================== */
+/* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
+/* ==================================================================== */
 
 void initBmsGopherCan(CAN_HandleTypeDef* hcan)
 {
@@ -138,6 +156,10 @@ initializationError:
 	return false;
 }
 
+/*!
+  @brief   Updates all BMB data
+  @param   numBmbs - The expected number of BMBs in the daisy chain\
+*/
 void updatePackData(uint32_t numBmbs)
 {
 	static uint32_t lastPackUpdate = 0;
@@ -180,6 +202,18 @@ void balancePack(uint32_t numBmbs, bool balanceRequested)
 	balancePackToVoltage(numBmbs, bleedTargetVoltage);
 }
 
+/*!
+  @brief   Balance the battery pack to a specified target brick voltage.
+  @param   numBmbs - The number of Battery Management Boards (BMBs) in the pack.
+  @param   targetBrickVoltage - The target voltage for each brick in the pack.
+
+  This function balances the battery pack by setting the bleed request for each brick
+  in every BMB based on the target brick voltage. The target brick voltage is clamped
+  to a minimum value (MIN_BLEED_TARGET_VOLTAGE_V) if it's too low. The function iterates
+  through all BMBs and bricks, checking whether they should be bled or not by comparing
+  the brick voltage to the target voltage plus a balance threshold (BALANCE_THRESHOLD_V).
+  Finally, the balanceCells() function is called to apply the bleed requests to the cells.
+*/
 void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
 {
 	// Clamp target brick voltage if too low
@@ -208,6 +242,14 @@ void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
 	balanceCells(gBms.bmb, numBmbs);
 }
 
+/*!
+  @brief   Check and handle alerts for the BMS by running alert monitors, accumulating alert statuses,
+           and setting BMS status based on the alerts.
+  
+  This function runs each alert monitor, checks the status of each alert, and sets the BMS status
+  based on the alert responses. If an alert is set, it iterates through all alert responses and
+  activates the corresponding response in the BMS. The BMS status is then updated accordingly.
+*/
 void checkAndHandleAlerts()
 {
 	// Run each alert monitor
@@ -256,11 +298,11 @@ void aggregatePackData(uint32_t numBmbs)
 
 	float maxBrickV	   = MIN_BRICK_VOLTAGE_READING;
 	float minBrickV	   = MAX_BRICK_VOLTAGE_READING;
-	float avgBrickVSum = MIN_BRICK_VOLTAGE_READING;
+	float avgBrickVSum = 0.0f;
 
 	float maxBrickTemp    = MIN_TEMP_SENSE_READING;
 	float minBrickTemp 	  = MAX_TEMP_SENSE_READING;
-	float avgBrickTempSum = MIN_TEMP_SENSE_READING;
+	float avgBrickTempSum = 0.0f;
 
 	float maxBoardTemp    = MIN_TEMP_SENSE_READING;
 	float minBoardTemp 	  = MAX_TEMP_SENSE_READING;
@@ -322,21 +364,13 @@ void updateImdStatus()
 	pBms->imdState = getImdStatus();
 }
 
-
 /*!
-  @brief   Update the SDC status
+  @brief   Update the epaper display with current data
 */
-void updateSdcStatus()
-{
-	Bms_S* pBms = &gBms;
-
-	pBms->amsFaultStatus  = HAL_GPIO_ReadPin(AMS_FAULT_SDC_GPIO_Port, AMS_FAULT_SDC_Pin);
-	pBms->bspdFaultStatus = HAL_GPIO_ReadPin(BSPD_FAULT_SDC_GPIO_Port, BSPD_FAULT_SDC_Pin);
-	pBms->imdFaultStatus  = HAL_GPIO_ReadPin(IMD_FAULT_SDC_GPIO_Port, IMD_FAULT_SDC_Pin);
-}
-
 void updateEpaper()
 {
+	static uint32_t lastEpapUpdate = 0;
+
 	if((HAL_GetTick() - lastEpapUpdate) > EPAP_UPDATE_PERIOD_MS)
 	{
 		lastEpapUpdate = HAL_GetTick();
@@ -358,6 +392,9 @@ void updateEpaper()
 	}
 }
 
+/*!
+  @brief   Update the tractive system current
+*/
 void updateTractiveCurrent()
 {
 	static uint32_t lastCurrentUpdate = 0;

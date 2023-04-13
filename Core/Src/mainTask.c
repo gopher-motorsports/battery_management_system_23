@@ -86,8 +86,6 @@ void runMain()
 
 		updateImdStatus();
 
-		updateSdcStatus();
-
 		updateEpaper();
 
 		checkAndHandleAlerts();

@@ -143,18 +143,24 @@ void balancePack(uint32_t numBmbs, bool balanceRequested);
 */
 void aggregatePackData(uint32_t numBmbs);
 
+/*!
+  @brief   Balance the battery pack to a specified target brick voltage.
+  @param   numBmbs - The number of Battery Management Boards (BMBs) in the pack.
+  @param   targetBrickVoltage - The target voltage for each brick in the pack.
+*/
 void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage);
+
+
+/*!
+  @brief   Check and handle alerts for the BMS by running alert monitors, accumulating alert statuses,
+           and setting BMS status based on the alerts.
+*/
+void checkAndHandleAlerts();
 
 /*!
   @brief   Update the IMD status based on measured frequency and duty cycle
 */
 void updateImdStatus();
-
-
-/*!
-  @brief   Update the SDC status
-*/
-void updateSdcStatus();
 
 /*!
   @brief   Update the epaper display with current data
@@ -170,5 +176,6 @@ void updateTractiveCurrent();
   @brief   Log non-ADC gopher can variables
 */
 void updateGopherCan();
+
 
 #endif /* INC_BMS_H_ */

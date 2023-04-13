@@ -65,27 +65,72 @@ static bool imdSdcFaultPresent(Bms_S* bms)
 
 static bool badVoltageSensorStatusPresent(Bms_S* bms)
 {
+    for (uint32_t i = 0; i < bms->numBmbs; i++)
+    {
+        Bmb_S* bmb = &bms->bmb[i];
+        if (bmb->numBadBrickV != 0)
+        {
+            return true;
+        }
+    }
     return false;
 }
 
 static bool badBrickTempSensorStatusPresent(Bms_S* bms)
 {
+    for (uint32_t i = 0; i < bms->numBmbs; i++)
+    {
+        Bmb_S* bmb = &bms->bmb[i];
+        if (bmb->numBadBrickTemp != 0)
+        {
+            return true;
+        }
+    }
     return false;
 }
 
 static bool badBoardTempSensorStatusPresent(Bms_S* bms)
 {
+    for (uint32_t i = 0; i < bms->numBmbs; i++)
+    {
+        Bmb_S* bmb = &bms->bmb[i];
+        if (bmb->numBadBrickTemp != 0)
+        {
+            return true;
+        }
+    }
     return false;
 }
 
 static bool insufficientTempSensePresent(Bms_S* bms)
 {
+    for (uint32_t i = 0; i < bms->numBmbs; i++)
+    {
+        Bmb_S* bmb = &bms->bmb[i];
+        const uint32_t maxNumBadBrickTempAllowed = NUM_BRICKS_PER_BMB * (100 - MIN_PERCENT_BRICK_TEMPS_MONITORED) / 100;
+        if (bmb->numBadBrickTemp > maxNumBadBrickTempAllowed)
+        {
+            return true;
+        }
+    }
     return false;
 }
 
 static bool currentSensorErrorPresent(Bms_S* bms)
 {
     // TODO: Implement current sense error check
+    return false;
+}
+
+static bool bmbCommunicationFailurePresent(Bms_S* bms)
+{
+    // STUB
+    return false;
+}
+
+static bool stackVsSegmentImbalancePresent(Bms_S* bms)
+{
+    // STUB
     return false;
 }
 
@@ -307,7 +352,7 @@ Alert_S bmbCommunicationFailureAlert =
     .alertName = "BmbCommunicationFailure",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, BMB_COMMUNICATION_FAILURE_ALERT_SET_TIME_MS}, 
     .setTime_MS = BMB_COMMUNICATION_FAILURE_ALERT_SET_TIME_MS, .clearTime_MS = BMB_COMMUNICATION_FAILURE_ALERT_CLEAR_TIME_MS, 
-    .alertConditionPresent = currentSensorErrorPresent,
+    .alertConditionPresent = bmbCommunicationFailurePresent,
     .numAlertResponse = NUM_BMB_COMMUNICATION_FAILURE_ALERT_RESPONSE, .alertResponse = bmbCommunicationFailureAlertResponse
 };
 
@@ -368,7 +413,7 @@ Alert_S stackVsSegmentImbalanceAlert =
 {
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, STACK_VS_SEGMENT_IMBALANCE_ALERT_SET_TIME_MS}, 
     .setTime_MS = STACK_VS_SEGMENT_IMBALANCE_ALERT_SET_TIME_MS, .clearTime_MS = STACK_VS_SEGMENT_IMBALANCE_ALERT_CLEAR_TIME_MS, 
-    .alertConditionPresent = currentSensorErrorPresent,
+    .alertConditionPresent = stackVsSegmentImbalancePresent,
     .numAlertResponse = NUM_STACK_VS_SEGMENT_IMBALANCE_ALERT_RESPONSE, .alertResponse = stackVsSegmentImbalanceAlertResponse
 };
 

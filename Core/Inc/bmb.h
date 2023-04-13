@@ -124,14 +124,17 @@ typedef struct
 	float maxBrickV;
 	float minBrickV;
 	float avgBrickV;
+	uint32_t numBadBrickV;
 
 	float maxBrickTemp;
 	float minBrickTemp;
 	float avgBrickTemp;
+	uint32_t numBadBrickTemp;
 
 	float maxBoardTemp;
 	float minBoardTemp;
 	float avgBoardTemp;
+	uint32_t numBadBoardTemp;
 
 	// Indicates that a BMB reinitialization is required
 	bool reinitRequired;

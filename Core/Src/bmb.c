@@ -481,12 +481,17 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		pBmb->minBrickV = minBrickV;
 		pBmb->sumBrickV	= sumV;
 		pBmb->avgBrickV = (numGoodBrickV == 0) ? pBmb->avgBrickV : sumV / numGoodBrickV;
+		pBmb->numBadBrickV = NUM_BRICKS_PER_BMB - numGoodBrickV;
+
 		pBmb->maxBrickTemp = maxBrickTemp;
 		pBmb->minBrickTemp = minBrickTemp;
 		pBmb->avgBrickTemp = (numGoodBrickTemp == 0) ? pBmb->avgBrickTemp :  brickTempSum / numGoodBrickTemp;
+		pBmb->numBadBrickTemp = NUM_BRICKS_PER_BMB - numGoodBrickTemp;
+
 		pBmb->maxBoardTemp = maxBoardTemp;
 		pBmb->minBoardTemp = minBoardTemp;
 		pBmb->avgBoardTemp = (numGoodBoardTemp == 0) ? pBmb->avgBoardTemp : boardTempSum / numGoodBoardTemp;
+		pBmb->numBadBoardTemp = NUM_BOARD_TEMP_PER_BMB - numGoodBoardTemp;
 	}
 }
 
