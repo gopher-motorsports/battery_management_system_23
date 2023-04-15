@@ -72,14 +72,19 @@ typedef enum {
 typedef enum {
     DATA_VOLTAGE = 0,
     DATA_PACK_TEMP,
-    DATA_BOARD_TEMP
+    DATA_BOARD_TEMP,
+    NUM_DATA_TABLE_COL
 }   DATA_TABLE_COL;
 
 typedef enum {
     DATA_AVG = 0,
     DATA_MAX,
-    DATA_MIN
+    DATA_MIN,
+    NUM_DATA_TABLE_ROW
 }   DATA_TABLE_ROW;
+
+#define VOLTAGE_SIG_FIGS 4
+#define TEMPERATURE_SIG_FIGS 3
 
 /* ==================================================================== */
 /* ============================== STRUCTS============================== */
