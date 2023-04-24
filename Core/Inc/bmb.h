@@ -39,21 +39,20 @@
 #define VBLOCK			0x2C
 #define AIN1			0x2D
 #define AIN2			0x2E
-
 #define ALRTRST			0x8000
 
 #define NUM_BRICKS_PER_BMB		12
 #define NUM_BOARD_TEMP_PER_BMB 	4
 
 // 3.3V range & 12 bit reading - 3.3/(2^12) = 805.664 uV/bit
-#define CONVERT_12BIT_TO_3V3	0.000805664f;
+#define CONVERT_12BIT_TO_3V3				0.000805664f;
 // 5V range & 14 bit reading   - 5/(2^14)   = 305.176 uV/bit
-#define CONVERT_14BIT_TO_5V		0.000305176f
-// 60V range & 14 bit ADC 	   - 60/(2^14)  = 3.6621 mV/bit
-#define CONVERT_14BIT_TO_60V	0.0036621f
+#define CONVERT_14BIT_TO_5V					0.000305176f
+// 60V range & 14 bit reading  - 60/(2^14)  = 3.6621 mV/bit
+#define CONVERT_14BIT_TO_60V				0.0036621f
 
 // The minimum voltage that we can bleed to
-#define MIN_BLEED_TARGET_VOLTAGE_V 	3.5f
+#define MIN_BLEED_TARGET_VOLTAGE_V 			3.5f
 // The maximum allowed board temp where bleeding is allowed
 #define MAX_BOARD_TEMP_BALANCING_ALLOWED_C	90.0f
 // The maximum cell temperature where bleeding is allowed
