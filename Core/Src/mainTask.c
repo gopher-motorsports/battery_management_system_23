@@ -7,7 +7,7 @@
 #include "mainTask.h"
 #include "bms.h"
 #include "bmbInterface.h"
-#include "bmbUtils.h"
+#include "leakyBucket.h"
 #include "bmb.h"
 #include "epaper.h"
 #include "epaperUtils.h"
@@ -37,7 +37,7 @@ uint32_t numBmbs = 0;
 static uint32_t initRetries = 5;
 static uint32_t lastUpdateMain = 0;
 
-bool balancingEnabled = false;
+bool balancingEnabled = true;
 uint32_t lastBalancingUpdate = 0;
 
 /* ==================================================================== */
@@ -111,7 +111,7 @@ void runMain()
 
 			printCellVoltages();
 			printCellTemperatures();
-			printInternalResistances();
+			// printInternalResistances();
 			printBoardTemperatures();
 			printActiveAlerts();
 
@@ -138,6 +138,7 @@ void runMain()
 void printCellVoltages()
 {
 	printf("Cell Voltage:\n");
+	printf("Max: %5.3fV\t Min: %5.3fV\t Avg: %5.3fV\n", (double)gBms.maxBrickV, (double)gBms.minBrickV, (double)gBms.avgBrickV);
 	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    | Segment |\n");
 	for (int32_t i = 0; i < numBmbs; i++)
 	{
@@ -164,6 +165,7 @@ void printCellVoltages()
 void printCellTemperatures()
 {
 	printf("Cell Temp:\n");
+	printf("Max: %5.1fC\t Min: %5.1fC\t Avg: %5.1fC\n", (double)gBms.maxBrickTemp, (double)gBms.minBrickTemp, (double)gBms.avgBrickTemp);
 	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    |\n");
 	for (int32_t i = 0; i < numBmbs; i++)
 	{
@@ -196,6 +198,7 @@ void printInternalResistances()
 void printBoardTemperatures()
 {
 	printf("Board Temp:\n");
+	printf("Max: %5.1fC\t Min: %5.1fC\t Avg: %5.1fC\n", (double)gBms.maxBoardTemp, (double)gBms.minBoardTemp, (double)gBms.avgBoardTemp);
 	printf("|   BMB   |    1    |    2    |    3    |    4    |\n");
 	for (int32_t i = 0; i < numBmbs; i++)
 	{

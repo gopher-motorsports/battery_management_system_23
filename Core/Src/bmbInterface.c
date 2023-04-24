@@ -7,6 +7,7 @@
 #include "bmbInterface.h"
 #include "debug.h"
 #include "bmbUtils.h"
+#include "leakyBucket.h"
 #include "utils.h"
 
 /* ==================================================================== */

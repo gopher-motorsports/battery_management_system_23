@@ -62,16 +62,16 @@ TIM_HandleTypeDef htim10;
 UART_HandleTypeDef huart1;
 
 osThreadId defaultTaskHandle;
-uint32_t defaultTaskBuffer[ 128 ];
+uint32_t defaultTaskBuffer[ 512 ];
 osStaticThreadDef_t defaultTaskControlBlock;
 osThreadId mainTaskHandle;
-uint32_t mainTaskBuffer[ 256 ];
+uint32_t mainTaskBuffer[ 1024 ];
 osStaticThreadDef_t mainTaskControlBlock;
 osThreadId ePaperHandle;
-uint32_t ePaperBuffer[ 512 ];
+uint32_t ePaperBuffer[ 1024 ];
 osStaticThreadDef_t ePaperControlBlock;
 osThreadId idleHandle;
-uint32_t idleBuffer[ 128 ];
+uint32_t idleBuffer[ 256 ];
 osStaticThreadDef_t idleControlBlock;
 osMessageQId epaperQueueHandle;
 /* USER CODE BEGIN PV */
@@ -318,19 +318,19 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128, defaultTaskBuffer, &defaultTaskControlBlock);
+  osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 512, defaultTaskBuffer, &defaultTaskControlBlock);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of mainTask */
-  osThreadStaticDef(mainTask, StartMainTask, osPriorityHigh, 0, 256, mainTaskBuffer, &mainTaskControlBlock);
+  osThreadStaticDef(mainTask, StartMainTask, osPriorityHigh, 0, 1024, mainTaskBuffer, &mainTaskControlBlock);
   mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
 
   /* definition and creation of ePaper */
-  osThreadStaticDef(ePaper, StartEPaper, osPriorityLow, 0, 512, ePaperBuffer, &ePaperControlBlock);
+  osThreadStaticDef(ePaper, StartEPaper, osPriorityLow, 0, 1024, ePaperBuffer, &ePaperControlBlock);
   ePaperHandle = osThreadCreate(osThread(ePaper), NULL);
 
   /* definition and creation of idle */
-  osThreadStaticDef(idle, StartIdle, osPriorityLow, 0, 128, idleBuffer, &idleControlBlock);
+  osThreadStaticDef(idle, StartIdle, osPriorityLow, 0, 256, idleBuffer, &idleControlBlock);
   idleHandle = osThreadCreate(osThread(idle), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */

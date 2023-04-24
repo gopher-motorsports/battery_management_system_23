@@ -6,6 +6,7 @@
 #include "bms.h"
 #include "bmb.h"
 #include "bmbInterface.h"
+#include "leakyBucket.h"
 #include "debug.h"
 #include "GopherCAN.h"
 #include "currentSense.h"
@@ -16,11 +17,6 @@
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
-#define INIT_BMS_BMB_ARRAY \
-{ \
-    [0 ... NUM_BMBS_IN_ACCUMULATOR-1] = {.bmbIdx = __COUNTER__} \
-}
-
 #define MAX_BRICK_VOLTAGE_READING 5.0f
 #define MIN_BRICK_VOLTAGE_READING 0.0f
 
@@ -33,7 +29,16 @@
 Bms_S gBms = 
 {
     .numBmbs = NUM_BMBS_IN_ACCUMULATOR,
-    .bmb = INIT_BMS_BMB_ARRAY
+    .bmb = 
+	{
+        [0] = {.bmbIdx = 0},
+        [1] = {.bmbIdx = 1},
+        [2] = {.bmbIdx = 2},
+        [3] = {.bmbIdx = 3},
+        [4] = {.bmbIdx = 4},
+        [5] = {.bmbIdx = 5},
+        [6] = {.bmbIdx = 6}
+    }
 };
 
 
@@ -44,6 +49,8 @@ Bms_S gBms =
 extern osMessageQId epaperQueueHandle;
 
 extern CAN_HandleTypeDef hcan2;
+
+extern LeakyBucket_S asciCommsLeakyBucket;
 
 
 /* ==================================================================== */
@@ -93,7 +100,7 @@ void initBmsGopherCan(CAN_HandleTypeDef* hcan)
 */
 bool initBatteryPack(uint32_t* numBmbs)
 {
-	setAmsFault(true);
+	setAmsFault(false);
 	gBms.balancingDisabled = true;
 	gBms.emergencyBleed    = false;
 	gBms.chargingDisabled  = true;
@@ -158,7 +165,12 @@ initializationError:
 			}
 			if (initBmbs(*numBmbs))
 			{
+				gBms.numBmbs = *numBmbs;
 				gBms.bmsHwState = BMS_NOMINAL;
+				setAmsFault(false);
+				// Leaky bucket was filled due to missing external loopback. Since we successfully initialized using
+				// internal loopback, we can reset the leaky bucket
+				resetLeakyBucket(&asciCommsLeakyBucket);
 				return true;
 			}
 		}

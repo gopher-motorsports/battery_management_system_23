@@ -165,22 +165,6 @@ bool initBmbs(uint32_t numBmbs);
 void updateBmbData(Bmb_S* bmb, uint32_t numBmbs);
 
 /*!
-  @brief   Only update voltage data on BMBs
-  @param   bmb - BMB array data
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-*/
-// TODO - see whether or not this can be deleted
-void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs);
-
-/*!
-  @brief   Read all temperature channels on BMB
-  @param   bmb - BMB array data
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-*/
-// TODO - see whether or not this can be deleted
-void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs);
-
-/*!
   @brief   Set a given mux configuration on all BMBs
   @param   numBmbs - The expected number of BMBs in the daisy chain
   @param   muxSetting - What mux setting should be used

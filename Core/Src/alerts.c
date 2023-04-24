@@ -171,7 +171,7 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
         }
 
         // Determine if alert was set
-        if (checkTimerExpired(&alert->alertTimer) && (!alert->alertTimer.timThreshold <= 0 || alert->alertConditionPresent(bms)))
+        if (checkTimerExpired(&alert->alertTimer) && (!(alert->alertTimer.timThreshold <= 0) || alert->alertConditionPresent(bms)))
         {
             // Timer expired - Set alert
             alert->alertStatus = ALERT_SET;
@@ -195,7 +195,7 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
         }
 
         // Determine if alert was cleared
-        if (checkTimerExpired(&alert->alertTimer) && (!alert->alertTimer.timThreshold <= 0 || !alert->alertConditionPresent(bms)))
+        if (checkTimerExpired(&alert->alertTimer) && (!(alert->alertTimer.timThreshold <= 0) || !alert->alertConditionPresent(bms)))
         {
             // Timer expired - Clear alert
             alert->alertStatus = ALERT_CLEARED;
@@ -216,7 +216,7 @@ const AlertResponse_E overvoltageWarningAlertResponse[] = { DISABLE_CHARGING };
 Alert_S overvoltageWarningAlert =
 { 
     .alertName = "OvervoltageWarning",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS, .clearTime_MS = OVERVOLTAGE_WARNING_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = overvoltageWarningPresent, 
     .numAlertResponse = NUM_OVERVOLTAGE_WARNING_ALERT_RESPONSE, .alertResponse =  overvoltageWarningAlertResponse
@@ -228,7 +228,7 @@ const AlertResponse_E undervoltageWarningAlertResponse[] = { LIMP_MODE };
 Alert_S undervoltageWarningAlert = 
 { 
     .alertName = "UndervoltageWarning",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS, .clearTime_MS = UNDERVOLTAGE_WARNING_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = undervoltageWarningPresent,
     .numAlertResponse = NUM_UNDERVOLTAGE_WARNING_ALERT_RESPONSE, .alertResponse = undervoltageWarningAlertResponse
@@ -240,7 +240,7 @@ const AlertResponse_E overvoltageFaultAlertResponse[] = { DISABLE_CHARGING, EMER
 Alert_S overvoltageFaultAlert = 
 { 
     .alertName = "OvervoltageFault",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = OVERVOLTAGE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = OVERVOLTAGE_FAULT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = overvoltageFaultPresent, 
     .numAlertResponse = NUM_OVERVOLTAGE_FAULT_ALERT_RESPONSE, .alertResponse =  overvoltageFaultAlertResponse
@@ -252,7 +252,7 @@ const AlertResponse_E undervoltageFaultAlertResponse[] = { AMS_FAULT };
 Alert_S undervoltageFaultAlert = 
 { 
     .alertName = "UndervoltageFault",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = UNDERVOLTAGE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = UNDERVOLTAGE_FAULT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = undervoltageFaultPresent,
     .numAlertResponse = NUM_UNDERVOLTAGE_FAULT_ALERT_RESPONSE, .alertResponse = undervoltageFaultAlertResponse
@@ -264,7 +264,7 @@ const AlertResponse_E cellImbalanceAlertResponse[] = {LIMP_MODE, DISABLE_CHARGIN
 Alert_S cellImbalanceAlert = 
 {
     .alertName = "CellImbalance",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, CELL_IMBALANCE_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CELL_IMBALANCE_ALERT_SET_TIME_MS}, 
     .setTime_MS = CELL_IMBALANCE_ALERT_SET_TIME_MS, .clearTime_MS = CELL_IMBALANCE_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = cellImbalancePresent,
     .numAlertResponse = NUM_CELL_IMBALANCE_ALERT_RESPONSE, .alertResponse = cellImbalanceAlertResponse
@@ -276,7 +276,7 @@ const AlertResponse_E overtempWarningAlertResponse[] = { LIMP_MODE, DISABLE_CHAR
 Alert_S overtempWarningAlert = 
 {
     .alertName = "OvertempWarning",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERTEMPERATURE_WARNING_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = OVERTEMPERATURE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = OVERTEMPERATURE_WARNING_ALERT_SET_TIME_MS, .clearTime_MS = OVERTEMPERATURE_WARNING_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = overtemperatureWarningPresent,
     .numAlertResponse = NUM_OVERTEMP_WARNING_ALERT_RESPONSE, .alertResponse = overtempWarningAlertResponse
@@ -288,7 +288,7 @@ const AlertResponse_E overtempFaultAlertResponse[] = { DISABLE_CHARGING, DISABLE
 Alert_S overtempFaultAlert = 
 {
     .alertName = "OvertempFault",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS}, 
     .setTime_MS = OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = OVERTEMPERATURE_FAULT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = overtemperatureFaultPresent,
     .numAlertResponse = NUM_OVERTEMP_FAULT_ALERT_RESPONSE, .alertResponse = overtempFaultAlertResponse
@@ -300,7 +300,7 @@ const AlertResponse_E amsSdcAlertResponse[] = { INFO_ONLY };
 Alert_S amsSdcFaultAlert = 
 {
     .alertName = "AmsSdcLatched",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = SDC_FAULT_ALERT_SET_TIME_MS}, 
     .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = amsSdcFaultPresent,
     .numAlertResponse = NUM_AMS_SDC_ALERT_RESPONSE, .alertResponse = amsSdcAlertResponse
@@ -312,7 +312,7 @@ const AlertResponse_E bspdSdcAlertResponse[] = { INFO_ONLY };
 Alert_S bspdSdcFaultAlert = 
 {
     .alertName = "BspdSdcLatched",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = SDC_FAULT_ALERT_SET_TIME_MS}, 
     .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = bspdSdcFaultPresent,
     .numAlertResponse = NUM_BSPD_SDC_ALERT_RESPONSE, .alertResponse = bspdSdcAlertResponse
@@ -324,7 +324,7 @@ const AlertResponse_E imdSdcAlertResponse[] = { INFO_ONLY };
 Alert_S imdSdcFaultAlert = 
 {
     .alertName = "ImdSdcLatched",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, SDC_FAULT_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = SDC_FAULT_ALERT_SET_TIME_MS}, 
     .setTime_MS = SDC_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = SDC_FAULT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = imdSdcFaultPresent,
     .numAlertResponse = NUM_IMD_SDC_ALERT_RESPONSE, .alertResponse = imdSdcAlertResponse
@@ -336,7 +336,7 @@ const AlertResponse_E currentSensorErrorAlertResponse[] = { DISABLE_CHARGING };
 Alert_S currentSensorErrorAlert = 
 {
     .alertName = "BadCurrentSense",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, CURRENT_SENSOR_ERROR_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CURRENT_SENSOR_ERROR_ALERT_SET_TIME_MS}, 
     .setTime_MS = CURRENT_SENSOR_ERROR_ALERT_SET_TIME_MS, .clearTime_MS = CURRENT_SENSOR_ERROR_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = currentSensorErrorPresent,
     .numAlertResponse = NUM_CURRENT_SENSOR_ERROR_ALERT_RESPONSE, .alertResponse = currentSensorErrorAlertResponse
@@ -348,7 +348,7 @@ const AlertResponse_E bmbCommunicationFailureAlertResponse[] = { DISABLE_BALANCI
 Alert_S bmbCommunicationFailureAlert = 
 {
     .alertName = "BmbCommunicationFailure",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, BMB_COMMUNICATION_FAILURE_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = BMB_COMMUNICATION_FAILURE_ALERT_SET_TIME_MS}, 
     .setTime_MS = BMB_COMMUNICATION_FAILURE_ALERT_SET_TIME_MS, .clearTime_MS = BMB_COMMUNICATION_FAILURE_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = bmbCommunicationFailurePresent,
     .numAlertResponse = NUM_BMB_COMMUNICATION_FAILURE_ALERT_RESPONSE, .alertResponse = bmbCommunicationFailureAlertResponse
@@ -360,7 +360,7 @@ const AlertResponse_E badVoltageSenseStatusAlertResponse[] = { DISABLE_BALANCING
 Alert_S badVoltageSenseStatusAlert = 
 {
     .alertName = "BadVoltageSenseStatus",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, BAD_VOLTAGE_SENSE_STATUS_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = BAD_VOLTAGE_SENSE_STATUS_ALERT_SET_TIME_MS}, 
     .setTime_MS = BAD_VOLTAGE_SENSE_STATUS_ALERT_SET_TIME_MS, .clearTime_MS = BAD_VOLTAGE_SENSE_STATUS_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = badVoltageSensorStatusPresent,
     .numAlertResponse = NUM_BAD_VOLTAGE_SENSE_STATUS_ALERT_RESPONSE, .alertResponse = badVoltageSenseStatusAlertResponse
@@ -372,7 +372,7 @@ const AlertResponse_E badBrickTempSenseStatusAlertResponse[] = { INFO_ONLY };
 Alert_S badBrickTempSenseStatusAlert = 
 {
     .alertName = "BadBrickTempSenseStatus",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, BAD_BRICK_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = BAD_BRICK_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS}, 
     .setTime_MS = BAD_BRICK_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS, .clearTime_MS = BAD_BRICK_TEMP_SENSE_STATUS_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = badBrickTempSensorStatusPresent,
     .numAlertResponse = NUM_BAD_BRICK_TEMP_SENSE_STATUS_ALERT_RESPONSE, .alertResponse = badBrickTempSenseStatusAlertResponse
@@ -384,7 +384,7 @@ const AlertResponse_E badBoardTempSenseStatusAlertResponse[] = { INFO_ONLY };
 Alert_S badBoardTempSenseStatusAlert = 
 {
     .alertName = "BadBoardTempSenseStatus",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, BAD_BOARD_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = BAD_BOARD_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS}, 
     .setTime_MS = BAD_BOARD_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS, .clearTime_MS = BAD_BOARD_TEMP_SENSE_STATUS_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = badBoardTempSensorStatusPresent,
     .numAlertResponse = NUM_BAD_BOARD_TEMP_SENSE_STATUS_ALERT_RESPONSE, .alertResponse = badBoardTempSenseStatusAlertResponse
@@ -396,7 +396,7 @@ const AlertResponse_E insufficientTempSensorsAlertResponse[] = { DISABLE_BALANCI
 Alert_S insufficientTempSensorsAlert = 
 {
     .alertName = "InsufficientTempSensors",
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, INSUFFICIENT_TEMP_SENSOR_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = INSUFFICIENT_TEMP_SENSOR_ALERT_SET_TIME_MS}, 
     .setTime_MS = INSUFFICIENT_TEMP_SENSOR_ALERT_SET_TIME_MS, .clearTime_MS = INSUFFICIENT_TEMP_SENSOR_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = insufficientTempSensePresent,
     .numAlertResponse = NUM_INSUFFICIENT_TEMP_SENSORS_ALERT_RESPONSE, .alertResponse = insufficientTempSensorsAlertResponse
@@ -409,7 +409,7 @@ const AlertResponse_E stackVsSegmentImbalanceAlertResponse[] = { DISABLE_BALANCI
 #define NUM_STACK_VS_SEGMENT_IMBALANCE_ALERT_RESPONSE sizeof(stackVsSegmentImbalanceAlertResponse) / sizeof(AlertResponse_E)
 Alert_S stackVsSegmentImbalanceAlert = 
 {
-    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){0, STACK_VS_SEGMENT_IMBALANCE_ALERT_SET_TIME_MS}, 
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = STACK_VS_SEGMENT_IMBALANCE_ALERT_SET_TIME_MS}, 
     .setTime_MS = STACK_VS_SEGMENT_IMBALANCE_ALERT_SET_TIME_MS, .clearTime_MS = STACK_VS_SEGMENT_IMBALANCE_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = stackVsSegmentImbalancePresent,
     .numAlertResponse = NUM_STACK_VS_SEGMENT_IMBALANCE_ALERT_RESPONSE, .alertResponse = stackVsSegmentImbalanceAlertResponse

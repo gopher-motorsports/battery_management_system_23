@@ -274,8 +274,10 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 					// Read brick voltage in [15:2]
 					uint32_t brickVRaw = getValueFromBuffer(recvBuffer, j) >> 2;
 					float brickV = brickVRaw * CONVERT_14BIT_TO_5V;
-					bmb[j].brickV[i] = brickV;
-					bmb[j].brickVStatus[i] = is14BitSensorRailed(brickVRaw) ? BAD : GOOD;
+					// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+					const uint32_t bmbIdx = numBmbs - j - 1;
+					bmb[bmbIdx].brickV[i] = brickV;
+					bmb[bmbIdx].brickVStatus[i] = is14BitSensorRailed(brickVRaw) ? BAD : GOOD;
 				}
 			}
 			else
@@ -285,7 +287,9 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 				// Failed to acquire data. Set status to  BAD
 				for (int32_t j = 0; j < numBmbs; j++)
 				{
-					bmb[j].brickVStatus[i] = BAD;
+					// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+					const uint32_t bmbIdx = numBmbs - j - 1;
+					bmb[bmbIdx].brickVStatus[i] = BAD;
 				}
 			}
 		}
@@ -298,8 +302,10 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 				// Read block voltage in [15:2]
 				uint32_t segmentVRaw = getValueFromBuffer(recvBuffer, j) >> 2;
 				float segmentV = segmentVRaw * CONVERT_14BIT_TO_60V;
-				bmb[j].segmentV = segmentV;
-				bmb[j].segmentVStatus = is14BitSensorRailed(segmentVRaw) ? BAD : GOOD;
+				// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+				const uint32_t bmbIdx = numBmbs - j - 1;
+				bmb[bmbIdx].segmentV = segmentV;
+				bmb[bmbIdx].segmentVStatus = is14BitSensorRailed(segmentVRaw) ? BAD : GOOD;
 			}
 		}
 		else
@@ -309,7 +315,9 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			// Failed to acquire data. Set status to BAD
 			for (int32_t j = 0; j < numBmbs; j++)
 			{
-				bmb[j].segmentVStatus =BAD;
+				// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+				const uint32_t bmbIdx = numBmbs - j - 1;
+				bmb[bmbIdx].segmentVStatus =BAD;
 			}
 		}
 
@@ -334,15 +342,19 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 						// NTC3: MUX8 (3) + AIN2 (-1)	= Index 2
 						// NTC4: MUX8 (3) + AIN1 (0)	= Index 3
 						const uint32_t ntcIdx = ((muxState == MUX7) ? 1 : 3) + ((auxChannel == AIN1) ? 0 : -1);
-						bmb[j].boardTemp[ntcIdx] = lookup(auxV, &ntcTable);
-						bmb[j].boardTempStatus[ntcIdx] = is12BitSensorRailed(auxRaw) ? BAD : GOOD;
+						// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+						const uint32_t bmbIdx = numBmbs - j - 1;
+						bmb[bmbIdx].boardTemp[ntcIdx] = lookup(auxV, &ntcTable);
+						bmb[bmbIdx].boardTempStatus[ntcIdx] = is12BitSensorRailed(auxRaw) ? BAD : GOOD;
 						// TODO Add board temp status
 					}
 					else // Zener/Brick Temp Channel
 					{
 						const uint32_t brickIdx = muxState + ((auxChannel == AIN2) ? (NUM_BRICKS_PER_BMB/2) : 0);
-						bmb[j].brickTemp[brickIdx] = lookup(auxV, &zenerTable);
-						bmb[j].brickTempStatus[brickIdx] = is12BitSensorRailed(auxRaw) ? BAD : GOOD;
+						// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+						const uint32_t bmbIdx = numBmbs - j - 1;
+						bmb[bmbIdx].brickTemp[brickIdx] = lookup(auxV, &zenerTable);
+						bmb[bmbIdx].brickTempStatus[brickIdx] = is12BitSensorRailed(auxRaw) ? BAD : GOOD;
 					}
 				}
 			}
@@ -360,12 +372,16 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 						// NTC3: MUX8 (3) + AIN2 (-1)	= Index 2
 						// NTC4: MUX8 (3) + AIN1 (0)	= Index 3
 						const uint32_t ntcIdx = ((muxState == MUX7) ? 1 : 3) + ((auxChannel == AIN1) ? 0 : -1);
-						bmb[j].boardTempStatus[ntcIdx] = BAD;
+						// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+						const uint32_t bmbIdx = numBmbs - j - 1;
+						bmb[bmbIdx].boardTempStatus[ntcIdx] = BAD;
 					}
 					else
 					{
 						const uint32_t brickIdx = muxState + ((auxChannel == AIN2) ? (NUM_BRICKS_PER_BMB/2) : 0);
-						bmb[j].brickTempStatus[brickIdx] = BAD;
+						// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+						const uint32_t bmbIdx = numBmbs - j - 1;
+						bmb[bmbIdx].brickTempStatus[brickIdx] = BAD;
 					}
 				}
 			}

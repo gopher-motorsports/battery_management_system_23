@@ -66,7 +66,7 @@ typedef enum
       { \
         /* If SPI fails to start, HAL must abort transaction. SPI retries */ \
         Debug("SPI transmission failed to start in function: %s! - Attempt %lu!\n", #callingFunc, attemptNum+1); \
-        HAL_SPI_Abort(hspi); \
+        HAL_SPI_Abort_IT(hspi); \
         continue; \
       } \
       /* Wait for SPI interrupt to occur. NotificationFlags will hold notification value indicating status of transaction */ \
@@ -74,6 +74,7 @@ typedef enum
       { \
         /* If no SPI interrupt occurs in time, transaction is aborted to prevent any longer delay */\
         Debug("SPI transmission TIMED OUT in %s! - Aborting!\n", #callingFunc); \
+        HAL_SPI_Abort_IT(hspi); \
         break; \
       } \
       /* If SPI SUCCESS bit is not set in notification value, SPI error has occured. SPI retries */ \
