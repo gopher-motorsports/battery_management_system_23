@@ -170,7 +170,7 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
             clearTimer(&alert->alertTimer);
         }
 
-        // Determine if alert was set
+        // Determine if alert was set or in the case that the timer threshold is 0 then check whether the alert condition is present
         if (checkTimerExpired(&alert->alertTimer) && (!(alert->alertTimer.timThreshold <= 0) || alert->alertConditionPresent(bms)))
         {
             // Timer expired - Set alert
@@ -194,7 +194,7 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
             clearTimer(&alert->alertTimer);
         }
 
-        // Determine if alert was cleared
+        // Determine if alert was cleared or in the case that the timer threshold is 0 then check whether the alert condition is not present
         if (checkTimerExpired(&alert->alertTimer) && (!(alert->alertTimer.timThreshold <= 0) || !alert->alertConditionPresent(bms)))
         {
             // Timer expired - Clear alert

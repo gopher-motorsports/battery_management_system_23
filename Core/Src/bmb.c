@@ -32,6 +32,7 @@
 #define SCANCTRL_START_SCAN				0x0001
 #define SCANCTRL_32_OVERSAMPLES			0x0040
 #define SCANCTRL_ENABLE_AUTOBALSWDIS	0x0800
+#define VERSION_DEFAULT_CONTENT			0x843
 
 
 /* ==================================================================== */
@@ -245,13 +246,12 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 				// Extract register contents from receive buffer
 				uint16_t scanCtrlData = getValueFromBuffer(recvBuffer, j);
 				allBmbScanDone &= ((scanCtrlData & 0xA000) == 0xA000);	// Verify SCANDONE and DATARDY bits
-				// TODO: We may want to still read in data if not all scans were completed. For example if only one BMB
-				// failed to complete the scan in time we still have 6 BMBs with good data. 
 			}
 			if (!allBmbScanDone)
 			{
-				// Do we want to try to restart the scans here?
+				// Restart scans since scan may have not started properly
 				startScan(numBmbs);
+				// TODO: Set sensor status to bad
 				Debug("All BMB Scans failed to complete in time\n");
 				return;	
 			}
@@ -284,7 +284,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			{
 				Debug("Error during cellReg readAll!\n");
 
-				// Failed to acquire data. Set status to  BAD
+				// Failed to acquire data. Set status to BAD
 				for (int32_t j = 0; j < numBmbs; j++)
 				{
 					// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
@@ -317,7 +317,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			{
 				// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
 				const uint32_t bmbIdx = numBmbs - j - 1;
-				bmb[bmbIdx].segmentVStatus =BAD;
+				bmb[bmbIdx].segmentVStatus = BAD;
 			}
 		}
 
@@ -532,9 +532,9 @@ int32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs)
 
 		for (uint32_t i = 0; i < bmbIdx + 1; i++)
 		{
-			// Read model number in [15:4]
+			// Read model number in [15:4] to verify succesful communication
 			uint32_t versionRegister = getValueFromBuffer(recvBuffer, i) >> 4;
-			if (versionRegister != 0x843)
+			if (versionRegister != VERSION_DEFAULT_CONTENT)
 			{
 				// Broken link detected. Convert bmbIdx from 0-indexed to 1-indexed value 
 				return bmbIdx + 1;

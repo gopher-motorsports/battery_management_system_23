@@ -1,8 +1,6 @@
 #ifndef INC_PACKDATA_H_
 #define INC_PACKDATA_H_
 
-#define MAX_CELL_IMBALANCE_V    0.2f
-
 #define MAX_TEMP_SENSOR_VALUE_C     120.0f
 #define MIN_TEMP_SENSOR_VALUE_C     -40.0f
 

@@ -4,12 +4,12 @@
 // Responses for a specific alert
 typedef enum
 {
-    INFO_ONLY = 0,
-    DISABLE_BALANCING,
-    EMERGENCY_BLEED,
-    DISABLE_CHARGING,
-    LIMP_MODE,
-    AMS_FAULT,
+    INFO_ONLY = 0,		// Only used for info no actual response
+    DISABLE_BALANCING,	// Disables cell balancing
+    EMERGENCY_BLEED,	// Emergencly bleed all the cells down
+    DISABLE_CHARGING,	// Disable charging 
+    LIMP_MODE,			// Limit max current out of pack
+    AMS_FAULT,			// Set AMS fault to open shutdown circuit
     NUM_ALERT_RESPONSES
 } AlertResponse_E;
 
