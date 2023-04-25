@@ -100,7 +100,7 @@ void initBmsGopherCan(CAN_HandleTypeDef* hcan)
 */
 bool initBatteryPack(uint32_t* numBmbs)
 {
-	setAmsFault(false);
+	setAmsFault(true);
 	gBms.balancingDisabled = true;
 	gBms.emergencyBleed    = false;
 	gBms.chargingDisabled  = true;
@@ -110,46 +110,59 @@ bool initBatteryPack(uint32_t* numBmbs)
 	if (!initASCI())
 	{
 		goto initializationError;
-	}
-
-	if (!helloAll(numBmbs))
+	}			
+	helloAll(numBmbs);	// Ignore return value as it will be bad due to no loopback
+	
+	// Set internal loopback on final BMB
+	if (!setBmbInternalLoopback(NUM_BMBS_IN_ACCUMULATOR - 1, true))
 	{
 		goto initializationError;
 	}
 
-	if (*numBmbs != NUM_BMBS_IN_ACCUMULATOR)
+	if (helloAll(numBmbs))
 	{
-		Debug("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", *numBmbs, NUM_BMBS_IN_ACCUMULATOR);
+		// helloAll command succeeded - verify that the numBmbs was correctly set
+		if (*numBmbs != NUM_BMBS_IN_ACCUMULATOR)
+		{
+			Debug("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", *numBmbs, NUM_BMBS_IN_ACCUMULATOR);
+			goto initializationError;
+		}
+
+		initBmbs(*numBmbs);
+		gBms.numBmbs = *numBmbs;
+		gBms.bmsHwState = BMS_NOMINAL;
+		setAmsFault(false);
+		// Leaky bucket was filled due to missing external loopback. Since we successfully initialized using
+		// internal loopback, we can reset the leaky bucket
+		resetLeakyBucket(&asciCommsLeakyBucket);
+		return true;
+
+	}
+	else
+	{
 		goto initializationError;
 	}
-
-	if (!initBmbs(*numBmbs))
-	{
-		goto initializationError;
-	}
-
-	gBms.numBmbs = *numBmbs;
-	gBms.bmsHwState = BMS_NOMINAL;
-	setAmsFault(false);
-	return true;
-
+	
 // Routine if initialization error ocurs
 initializationError:
 	// Set hardware error status
 	gBms.bmsHwState = BMS_BMB_FAILURE;
 
 	// Determine if a chain break exists
-	initASCI();	// Ignore return value as it will be bad due to no loopback
+	initASCI();
 	helloAll(numBmbs);	// Ignore return value as it will be bad due to no loopback
 	uint32_t breakLocation = detectBmbDaisyChainBreak(gBms.bmb, NUM_BMBS_IN_ACCUMULATOR);
-	if (breakLocation == 1)
+	if (breakLocation != 0)
 	{
-		Debug("BMB Chain Break detected between BMS and BMB 1\n");
-	}
-	else if (breakLocation != 0)
-	{
-		// breakLocation is 0 indexed but we should print 1 indexed bmb values
-		Debug("BMB Chain Break detected between BMB %lu and BMB %lu\n", breakLocation, breakLocation + 1);
+		// A chain break exists
+		if (breakLocation == 1)
+		{
+			Debug("BMB Chain Break detected between BMS and BMB 1\n");
+		}
+		else
+		{
+			Debug("BMB Chain Break detected between BMB %lu and BMB %lu\n", breakLocation - 1, breakLocation);
+		}
 	}
 	else
 	{
@@ -163,16 +176,14 @@ initializationError:
 			{
 				return false;
 			}
-			if (initBmbs(*numBmbs))
-			{
-				gBms.numBmbs = *numBmbs;
-				gBms.bmsHwState = BMS_NOMINAL;
-				setAmsFault(false);
-				// Leaky bucket was filled due to missing external loopback. Since we successfully initialized using
-				// internal loopback, we can reset the leaky bucket
-				resetLeakyBucket(&asciCommsLeakyBucket);
-				return true;
-			}
+			initBmbs(*numBmbs);
+			gBms.numBmbs = *numBmbs;
+			gBms.bmsHwState = BMS_NOMINAL;
+			setAmsFault(false);
+			// Leaky bucket was filled due to missing external loopback. Since we successfully initialized using
+			// internal loopback, we can reset the leaky bucket
+			resetLeakyBucket(&asciCommsLeakyBucket);
+			return true;
 		}
 	}
 	return false;

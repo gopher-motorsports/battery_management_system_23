@@ -8,4 +8,11 @@
 	#define Debug(__info,...)  
 #endif
 
+#define DEBUG_COMM 0
+#if DEBUG_COMM
+	#define DebugComm(__info,...) printf("DebugComm: " __info,##__VA_ARGS__)
+#else
+	#define DebugComm(__info,...)  
+#endif
+
 #endif

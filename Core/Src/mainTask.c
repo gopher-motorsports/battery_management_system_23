@@ -37,7 +37,7 @@ uint32_t numBmbs = 0;
 static uint32_t initRetries = 5;
 static uint32_t lastUpdateMain = 0;
 
-bool balancingEnabled = false;
+bool balancingEnabled = true;
 uint32_t lastBalancingUpdate = 0;
 
 /* ==================================================================== */

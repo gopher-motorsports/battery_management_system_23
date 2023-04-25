@@ -94,7 +94,7 @@ static bool badBoardTempSensorStatusPresent(Bms_S* bms)
     for (uint32_t i = 0; i < bms->numBmbs; i++)
     {
         Bmb_S* bmb = &bms->bmb[i];
-        if (bmb->numBadBrickTemp != 0)
+        if (bmb->numBadBoardTemp != 0)
         {
             return true;
         }

@@ -58,8 +58,6 @@ static uint16_t getValueFromBuffer(uint8_t* buffer, uint32_t index);
 
 static void updateBmbBalanceSwitches(Bmb_S* bmb);
 
-static bool setBmbInternalLoopback(uint32_t bmbIdx, bool enabled);
-
 static bool startScan(uint32_t numBmbs);
 
 static bool is12BitSensorRailed(uint32_t rawAdcVal);
@@ -112,7 +110,7 @@ static void updateBmbBalanceSwitches(Bmb_S* bmb)
   @param   enabled - True to enable internal loopback mode, false to disable it.
   @return  True if the internal loopback mode was set successfully, false otherwise.
 */
-static bool setBmbInternalLoopback(uint32_t bmbIdx, bool enabled)
+bool setBmbInternalLoopback(uint32_t bmbIdx, bool enabled)
 {
 	for (int i = 0; i < NUM_DATA_CHECKS; i++)
 	{
@@ -142,7 +140,7 @@ static bool startScan(uint32_t numBmbs)
 	const uint16_t scanCtrlData = SCANCTRL_ENABLE_AUTOBALSWDIS | SCANCTRL_32_OVERSAMPLES | SCANCTRL_START_SCAN;
 	if(!writeAll(SCANCTRL, scanCtrlData, numBmbs))
 	{
-		Debug("Failed to start scan!\n");
+		DebugComm("Failed to start scan!\n");
 		return false;
 	}
 	return true;
@@ -159,7 +157,7 @@ static bool is12BitSensorRailed(uint32_t rawAdcVal)
 	rawAdcVal &= MAX_12_BIT;
 
 	// Determine if the adc reading is within a margin of the railed values
-	if ((rawAdcVal < RAILED_MARGIN_COUNT) || (RAILED_MARGIN_COUNT > (MAX_12_BIT - RAILED_MARGIN_COUNT)))
+	if ((rawAdcVal < RAILED_MARGIN_COUNT) || (rawAdcVal > (MAX_12_BIT - RAILED_MARGIN_COUNT)))
 	{
 		return true;
 	}
@@ -178,7 +176,7 @@ static bool is14BitSensorRailed(uint32_t rawAdcVal)
 	rawAdcVal &= MAX_14_BIT;
 
 	// Determine if the adc reading is within a margin of the railed values
-	if ((rawAdcVal < RAILED_MARGIN_COUNT) || (RAILED_MARGIN_COUNT > (MAX_14_BIT - RAILED_MARGIN_COUNT)))
+	if ((rawAdcVal < RAILED_MARGIN_COUNT) || (rawAdcVal > (MAX_14_BIT - RAILED_MARGIN_COUNT)))
 	{
 		return true;
 	}
@@ -194,9 +192,8 @@ static bool is14BitSensorRailed(uint32_t rawAdcVal)
 /*!
   @brief   Initialize the BMBs by configuring registers
   @param   numBmbs - The expected number of BMBs in the daisy chain
-  @return  True if successful initialization, false otherwise
 */
-bool initBmbs(uint32_t numBmbs)
+void initBmbs(uint32_t numBmbs)
 {
 	// TODO - do we want to read the register contents back and verify values?
 	// Enable alive counter byte
@@ -220,8 +217,6 @@ bool initBmbs(uint32_t numBmbs)
 
 	// Set brickOV voltage alert threshold
 	// Set brickUV voltage alert threshold
-
-	return true;
 }
 
 /*!
@@ -252,14 +247,14 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 				// Restart scans since scan may have not started properly
 				startScan(numBmbs);
 				// TODO: Set sensor status to bad
-				Debug("All BMB Scans failed to complete in time\n");
+				DebugComm("All BMB Scans failed to complete in time\n");
 				return;	
 			}
 		}
 		else
 		{
 			// TODO - improve this. Handle failure correctly
-			Debug("Failed to read SCANCTRL register\n");
+			DebugComm("Failed to read SCANCTRL register\n");
 			return;
 		}
 
@@ -282,7 +277,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			}
 			else
 			{
-				Debug("Error during cellReg readAll!\n");
+				DebugComm("Error during cellReg readAll!\n");
 
 				// Failed to acquire data. Set status to BAD
 				for (int32_t j = 0; j < numBmbs; j++)
@@ -310,7 +305,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		}
 		else
 		{
-			Debug("Error during VBLOCK readAll!\n");
+			DebugComm("Error during VBLOCK readAll!\n");
 
 			// Failed to acquire data. Set status to BAD
 			for (int32_t j = 0; j < numBmbs; j++)
@@ -360,7 +355,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			}
 			else
 			{
-				Debug("Error during TEMP readAll!\n");
+				DebugComm("Error during TEMP readAll!\n");
 				// Failed to acquire data. Set status to BAD
 				for (int32_t j = 0; j < numBmbs; j++)
 				{
@@ -571,7 +566,7 @@ void detectPowerOnReset(Bmb_S* bmb, uint32_t numBmbs)
 	}
 	else
 	{
-		Debug("Error during STATUS readAll!\n");
+		DebugComm("Error during STATUS readAll!\n");
 	}
 }
 

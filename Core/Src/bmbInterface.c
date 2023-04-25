@@ -220,7 +220,7 @@ static bool writeAndVerifyRegister(uint8_t registerAddress, uint8_t value)
 			return true;
 		}
 	}
-	Debug("Failed to write and verify register\n");
+	DebugComm("Failed to write and verify register\n");
 	return false;
 }
 
@@ -265,7 +265,7 @@ static bool clearRxIntFlags()
 		// TODO - double check why this is necessary?
 		if ((result & ~(0x40)) == 0x00) { return true; }
 	}
-	Debug("Failed to clear Rx Interrupt Flags!\n");
+	DebugComm("Failed to clear Rx Interrupt Flags!\n");
 	return false;
 }
 
@@ -295,7 +295,7 @@ static bool clearRxBusyFlag()
 		uint8_t result = readRegister(R_RX_INTERRUPT_FLAGS);
 		if ((result & (0x20)) == 0x00) { return true; }
 	}
-	Debug("Failed to clear Rx Busy Flag!\n");
+	DebugComm("Failed to clear Rx Busy Flag!\n");
 	return false;
 }
 
@@ -308,7 +308,7 @@ static bool rxErrorsExist()
 	uint8_t rxIntFlags = readRegister(R_RX_INTERRUPT_FLAGS);
 	if (rxIntFlags & 0x88)
 	{
-		Debug("Detected errors during transmission!\n");
+		DebugComm("Detected errors during transmission!\n");
 		return true;
 	}
 	return false;
@@ -366,7 +366,7 @@ static bool loadAndVerifyTxQueue(uint8_t *data_p, uint32_t numBytes)
 			return true;
 		}
 	}
-	Debug("Failed to load and verify TX queue\n");
+	DebugComm("Failed to load and verify TX queue\n");
 	return false;
 }
 
@@ -510,7 +510,7 @@ void clearTxBuffer()
 */
 bool initASCI()
 {
-	Debug("Initializing ASCI connection...\n");
+	DebugComm("Initializing ASCI connection...\n");
 	resetASCI();
 	csOff();
 	bool successfulConfig = true;
@@ -532,23 +532,26 @@ bool initASCI()
 	INTERRUPT_STATUS_E extIntStatus = WAIT_EXT_INT(TIMEOUT_SPI_COMPLETE_MS, initASCI);
 
 	// Verify that interrupt was successful
-	if(!(extIntStatus & INTERRUPT_SUCCESS))
+	if(extIntStatus & INTERRUPT_SUCCESS)
 	{
-		successfulConfig = false;
-	}
+		// Verify interrupt was caused by RX_Busy
+		if (readRxBusyFlag())
+		{
+			clearRxBusyFlag();
+		}
+		else
+		{
+			successfulConfig = false;
+		}
 
-	// Verify interrupt was caused by RX_Busy
-	if (readRxBusyFlag())
-	{
-		clearRxBusyFlag();
+		// Verify RX_Busy_Status and RX_Empty_Status true
+		successfulConfig &= (readRegister(R_RX_STATUS) == 0x21);
 	}
 	else
 	{
-		successfulConfig = false;
+		// Interrupt timed out - most likely due to missing external loopback
+		DebugComm("Wakeup interrupt failed to occur, could be due to missing loopback")
 	}
-
-	// Verify RX_Busy_Status and RX_Empty_Status true
-	successfulConfig &= (readRegister(R_RX_STATUS) == 0x21);
 
 	// Enable RX_Stop INT
 	successfulConfig &= writeAndVerifyRegister(R_RX_INTERRUPT_ENABLE, 0x8A);
@@ -598,7 +601,7 @@ bool helloAll(uint32_t* numBmbs)
 	uint8_t* pRecvBuffer = recvBuffer;
 	if (!sendReceiveMessageAsci(sendBuffer, &pRecvBuffer, numBytesToSend, numBytesToReceive))
 	{
-		Debug("Error in HelloAll!\n");
+		DebugComm("Error in HelloAll!\n");
 		updateLeakyBucketFail(&asciCommsLeakyBucket);
 		return false;
 	}
@@ -664,7 +667,7 @@ bool writeAll(uint8_t address, uint16_t value, uint32_t numBmbs)
 			return true;
 		}
 	}
-	Debug("Failed to write all\n");
+	DebugComm("Failed to write all\n");
 	updateLeakyBucketFail(&asciCommsLeakyBucket);
 	return false;
 }
@@ -724,7 +727,7 @@ bool writeDevice(uint8_t address, uint16_t value, uint32_t bmbIndex)
 			return true;
 		}
 	}
-	Debug("Failed to write device\n");
+	DebugComm("Failed to write device\n");
 	updateLeakyBucketFail(&asciCommsLeakyBucket);
 	return false;
 }
@@ -782,7 +785,7 @@ bool readAll(uint8_t address, uint8_t *data_p, uint32_t numBmbs)
 			return true;
 		}
 	}
-	Debug("Failed to read all\n");
+	DebugComm("Failed to read all\n");
 	updateLeakyBucketFail(&asciCommsLeakyBucket);
 	return false;
 }
@@ -841,7 +844,7 @@ bool readDevice(uint8_t address, uint8_t *data_p, uint32_t bmbIndex)
 			return true;
 		}
 	}
-	Debug("Failed to read device\n");
+	DebugComm("Failed to read device\n");
 	updateLeakyBucketFail(&asciCommsLeakyBucket);
 	return false;
 }
