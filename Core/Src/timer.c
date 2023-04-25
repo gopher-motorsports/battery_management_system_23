@@ -42,6 +42,7 @@ void configureTimer(Timer_S* timer, uint32_t timerThreshold)
 void clearTimer(Timer_S* timer)
 {
     timer->timCount = 0;
+    timer->lastUpdate = HAL_GetTick();
 }
 
 /*!
