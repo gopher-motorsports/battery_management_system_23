@@ -22,7 +22,7 @@
 /* ==================================================================== */
 
 // The number of BMBs in the accumulator
-#define NUM_BMBS_IN_ACCUMULATOR				7
+#define NUM_BMBS_IN_ACCUMULATOR				7 
 
 // Max allowable voltage difference between bricks for balancing
 #define BALANCE_THRESHOLD_V					0.002f

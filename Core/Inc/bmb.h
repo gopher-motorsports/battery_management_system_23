@@ -151,9 +151,8 @@ typedef struct
 /*!
   @brief   Initialize the BMBs by configuring registers
   @param   numBmbs - The expected number of BMBs in the daisy chain
-  @return  True if successful initialization, false otherwise
 */
-bool initBmbs(uint32_t numBmbs);
+void initBmbs(uint32_t numBmbs);
 
 /*!
   @brief   Update BMB voltages and temperature data. Once new data gathered start new
@@ -176,6 +175,15 @@ void setMux(uint32_t numBmbs, uint8_t muxSetting);
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
 void aggregateBmbData(Bmb_S* bmb,uint32_t numBmbs);
+
+
+/*!
+  @brief   Set or clear the internal loopback mode for a specific BMB.
+  @param   bmbIdx - The index of the BMB to configure.
+  @param   enabled - True to enable internal loopback mode, false to disable it.
+  @return  True if the internal loopback mode was set successfully, false otherwise.
+*/
+bool setBmbInternalLoopback(uint32_t bmbIdx, bool enabled);
 
 /*!
   @brief   Determine where a BMB daisy chain break has occured
