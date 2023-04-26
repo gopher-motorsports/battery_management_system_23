@@ -12,6 +12,7 @@
 #include "epaper.h"
 #include "epaperUtils.h"
 #include "debug.h"
+#include "soc.h"
 #include <stdlib.h>
 #include "GopherCAN_network.h"
 #include "internalResistance.h"
@@ -114,6 +115,10 @@ void runMain()
 			// printInternalResistances();
 			printBoardTemperatures();
 			printActiveAlerts();
+
+			const float soc = getSocFromCellVoltage(gBms.minBrickV);
+			const float soe = getSoeFromSoc(soc);
+			printf("SOC: %5.2f%% \tSOE: %5.2f%%\n", (double)(100.0f * soc), (double)(100.0f * soe));
 
 			printf("Leaky bucket filled: %d\n\n", leakyBucketFilled(&asciCommsLeakyBucket));
 

@@ -14,13 +14,6 @@
 /* ============================== STRUCTS============================== */
 /* ==================================================================== */
 
-//Generic Lookup Table
-typedef struct
-{
-    const uint32_t length;
-    const float* x;			// Pointer to x array
-    const float* y;			// Pointer to y array
-} LookupTable_S;
 
 typedef struct
 {
@@ -37,9 +30,6 @@ typedef struct
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */
 /* ==================================================================== */
-
-// TODO - add description
-float lookup(float x, const LookupTable_S* table);
 
 /*!
   @brief   Sorts an array of Brick_S structs by their voltage from lowest to highest

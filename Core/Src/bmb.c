@@ -8,6 +8,7 @@
 #include "bmbInterface.h"
 #include "bmbUtils.h"
 #include "packData.h"
+#include "lookupTable.h"
 #include "debug.h"
 
 /* ==================================================================== */
