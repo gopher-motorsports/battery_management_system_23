@@ -481,10 +481,10 @@ void epdPopulateData(Epaper_Data_S* epapData)
 	Paint_DrawSOC(30);
 
 	// Populate BMS image with current State
-	Paint_DrawState();
+	Paint_DrawState("temp1");
 
 	// Populate BMS image with current Fault
-	Paint_DrawFault();
+	Paint_DrawFault("temp2");
 }
 
 /*!

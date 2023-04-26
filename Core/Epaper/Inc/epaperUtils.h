@@ -54,12 +54,6 @@ typedef enum {
 #define DOT_PIXEL_DFT  DOT_PIXEL_1X1  //Default dot pilex
 
 typedef enum {
-    DOT_FILL_AROUND  = 1,		// dot pixel 1 x 1
-    DOT_FILL_RIGHTUP  , 		// dot pixel 2 X 2
-} DOT_STYLE;
-#define DOT_STYLE_DFT  DOT_FILL_AROUND  //Default dot pilex
-
-typedef enum {
     LINE_STYLE_SOLID = 0,
     LINE_STYLE_DOTTED,
 } LINE_STYLE;
