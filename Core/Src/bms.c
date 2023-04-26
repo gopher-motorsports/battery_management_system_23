@@ -102,7 +102,6 @@ bool initBatteryPack(uint32_t* numBmbs)
 {
 	setAmsFault(true);
 	gBms.balancingDisabled = true;
-	gBms.emergencyBleed    = false;
 	gBms.chargingDisabled  = true;
 	gBms.limpModeEnabled   = false;
 	gBms.amsFaultPresent   = false;
@@ -211,8 +210,6 @@ void updatePackData(uint32_t numBmbs)
 */
 void balancePack(uint32_t numBmbs, bool balanceRequested)
 {
-	// TODO: Determine how we want to handle EMERGENCY_BLEED
-
 	// If balancing not requested or balancing disabled ensure all balance switches off
 	if (!balanceRequested || gBms.balancingDisabled)
 	{
@@ -316,7 +313,6 @@ void checkAndHandleAlerts()
 
 		// Set BMS status based on alert
 		gBms.balancingDisabled = responseStatus[DISABLE_BALANCING];
-		gBms.emergencyBleed	   = responseStatus[EMERGENCY_BLEED];
 		gBms.chargingDisabled  = responseStatus[DISABLE_CHARGING];
 		gBms.limpModeEnabled   = responseStatus[LIMP_MODE];
 		gBms.amsFaultPresent   = responseStatus[AMS_FAULT];

@@ -6,7 +6,6 @@ typedef enum
 {
     INFO_ONLY = 0,		// Only used for info no actual response
     DISABLE_BALANCING,	// Disables cell balancing
-    EMERGENCY_BLEED,	// Emergencly bleed all the cells down
     DISABLE_CHARGING,	// Disable charging 
     LIMP_MODE,			// Limit max current out of pack
     AMS_FAULT,			// Set AMS fault to open shutdown circuit

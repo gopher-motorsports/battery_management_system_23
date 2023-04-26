@@ -235,7 +235,7 @@ Alert_S undervoltageWarningAlert =
 };
 
 // Overvoltage Fault Alert
-const AlertResponse_E overvoltageFaultAlertResponse[] = { DISABLE_CHARGING, EMERGENCY_BLEED, AMS_FAULT};
+const AlertResponse_E overvoltageFaultAlertResponse[] = { DISABLE_CHARGING, AMS_FAULT};
 #define NUM_OVERVOLTAGE_FAULT_ALERT_RESPONSE sizeof(overvoltageFaultAlertResponse) / sizeof(AlertResponse_E)
 Alert_S overvoltageFaultAlert = 
 { 
@@ -335,7 +335,7 @@ const AlertResponse_E currentSensorErrorAlertResponse[] = { DISABLE_CHARGING };
 #define NUM_CURRENT_SENSOR_ERROR_ALERT_RESPONSE sizeof(currentSensorErrorAlertResponse) / sizeof(AlertResponse_E)
 Alert_S currentSensorErrorAlert = 
 {
-    .alertName = "BadCurrentSense",
+    .alertName = "CurrentSenseError",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CURRENT_SENSOR_ERROR_ALERT_SET_TIME_MS}, 
     .setTime_MS = CURRENT_SENSOR_ERROR_ALERT_SET_TIME_MS, .clearTime_MS = CURRENT_SENSOR_ERROR_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = currentSensorErrorPresent,
@@ -359,7 +359,7 @@ const AlertResponse_E badVoltageSenseStatusAlertResponse[] = { DISABLE_BALANCING
 #define NUM_BAD_VOLTAGE_SENSE_STATUS_ALERT_RESPONSE sizeof(badVoltageSenseStatusAlertResponse) / sizeof(AlertResponse_E)
 Alert_S badVoltageSenseStatusAlert = 
 {
-    .alertName = "BadVoltageSenseStatus",
+    .alertName = "BadVoltageStatus",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = BAD_VOLTAGE_SENSE_STATUS_ALERT_SET_TIME_MS}, 
     .setTime_MS = BAD_VOLTAGE_SENSE_STATUS_ALERT_SET_TIME_MS, .clearTime_MS = BAD_VOLTAGE_SENSE_STATUS_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = badVoltageSensorStatusPresent,
@@ -371,7 +371,7 @@ const AlertResponse_E badBrickTempSenseStatusAlertResponse[] = { INFO_ONLY };
 #define NUM_BAD_BRICK_TEMP_SENSE_STATUS_ALERT_RESPONSE sizeof(badBrickTempSenseStatusAlertResponse) / sizeof(AlertResponse_E)
 Alert_S badBrickTempSenseStatusAlert = 
 {
-    .alertName = "BadBrickTempSenseStatus",
+    .alertName = "BadBrickTempStatus",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = BAD_BRICK_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS}, 
     .setTime_MS = BAD_BRICK_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS, .clearTime_MS = BAD_BRICK_TEMP_SENSE_STATUS_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = badBrickTempSensorStatusPresent,
@@ -383,7 +383,7 @@ const AlertResponse_E badBoardTempSenseStatusAlertResponse[] = { INFO_ONLY };
 #define NUM_BAD_BOARD_TEMP_SENSE_STATUS_ALERT_RESPONSE sizeof(badBoardTempSenseStatusAlertResponse) / sizeof(AlertResponse_E)
 Alert_S badBoardTempSenseStatusAlert = 
 {
-    .alertName = "BadBoardTempSenseStatus",
+    .alertName = "BadBoardTempStatus",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = BAD_BOARD_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS}, 
     .setTime_MS = BAD_BOARD_TEMP_SENSE_STATUS_ALERT_SET_TIME_MS, .clearTime_MS = BAD_BOARD_TEMP_SENSE_STATUS_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = badBoardTempSensorStatusPresent,
@@ -409,6 +409,7 @@ const AlertResponse_E stackVsSegmentImbalanceAlertResponse[] = { DISABLE_BALANCI
 #define NUM_STACK_VS_SEGMENT_IMBALANCE_ALERT_RESPONSE sizeof(stackVsSegmentImbalanceAlertResponse) / sizeof(AlertResponse_E)
 Alert_S stackVsSegmentImbalanceAlert = 
 {
+    .alertName = "StackVsSegmentImbalance",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = STACK_VS_SEGMENT_IMBALANCE_ALERT_SET_TIME_MS}, 
     .setTime_MS = STACK_VS_SEGMENT_IMBALANCE_ALERT_SET_TIME_MS, .clearTime_MS = STACK_VS_SEGMENT_IMBALANCE_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = stackVsSegmentImbalancePresent,
