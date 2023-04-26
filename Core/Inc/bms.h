@@ -25,7 +25,7 @@
 #define NUM_BMBS_IN_ACCUMULATOR				7 
 
 // Max allowable voltage difference between bricks for balancing
-#define BALANCE_THRESHOLD_V					0.002f
+#define BALANCE_THRESHOLD_V					0.001f
 
 // The maximum cell temperature where charging is allowed
 #define MAX_CELL_TEMP_CHARGING_ALLOWED_C	50.0f

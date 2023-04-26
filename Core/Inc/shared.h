@@ -1,6 +1,8 @@
 #ifndef INC_SHARED_H_
 #define INC_SHARED_H_
 
+#include <stdint.h>
+
 // Responses for a specific alert
 typedef enum
 {
@@ -26,6 +28,14 @@ typedef struct
 	float maxBoardTemp;
 	float minBoardTemp;
 	float avgBoardTemp;
+
+	float current;
+
+	char* stateMessage;
+
+	char* alertMessage;
+	uint32_t alertIndex;
+	uint32_t numActiveAlerts;
 } Epaper_Data_S;
 
 #endif /* INC_SHARED_H_ */

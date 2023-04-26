@@ -427,6 +427,53 @@ void updateEpaper()
 		epapData.maxBoardTemp = gBms.maxBoardTemp;
 		epapData.minBoardTemp = gBms.minBoardTemp;
 
+		epapData.current = gBms.tractiveSystemCurrent;
+
+		epapData.stateMessage = "TEMP STATE";
+
+		static uint32_t alertMessageIndex = 0;
+		uint32_t numAlertsSet = 0;
+		uint32_t indexNextAlert = 0;
+		uint32_t indexMinAlert = 0;
+		bool nextAlertFound = false;
+		bool minAlertFound = false;
+
+		for (uint32_t i = 0; i < NUM_ALERTS; i++)
+		{
+			Alert_S* alert = alerts[i];
+			if (getAlertStatus(alert) == ALERT_SET)
+			{
+				numAlertsSet++;
+				if(!minAlertFound)
+				{
+					minAlertFound = true;
+					indexMinAlert = i;
+				}
+				if(!nextAlertFound)
+				{
+					indexNextAlert++;
+					if(i > alertMessageIndex)
+					{
+						nextAlertFound = true;
+						alertMessageIndex = i;
+					}
+				}
+			}
+		}
+
+		epapData.numActiveAlerts = numAlertsSet;
+		if(nextAlertFound)
+		{
+			epapData.alertIndex = indexNextAlert;
+			epapData.alertMessage = alerts[alertMessageIndex]->alertName;
+		}
+		else
+		{
+			alertMessageIndex = indexMinAlert;
+			epapData.alertIndex = 1;
+			epapData.alertMessage = alerts[indexMinAlert]->alertName;
+		}
+
 		xQueueOverwrite(epaperQueueHandle, &epapData);
 	}
 }

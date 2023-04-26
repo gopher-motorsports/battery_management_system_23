@@ -10,6 +10,7 @@
 #include "epaperUtils.h"
 #include "bms.h"
 #include "utils.h"
+#include "soc.h"
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
@@ -478,13 +479,27 @@ void epdPopulateData(Epaper_Data_S* epapData)
 	Paint_DrawTableData(epapData->minBoardTemp, DATA_BOARD_TEMP, DATA_MIN);
 
 	// Populate BMS image with current SOC percent
-	Paint_DrawSOC(30);
+	const float soc = getSocFromCellVoltage(epapData->minBrickV);
+	const float soe = getSoeFromSoc(soc);
+	Paint_DrawSOE(soe * 100.0f);
 
-	// Populate BMS image with current State
-	Paint_DrawState("temp1");
+	// Populate BMS image with current sensor data
+	Paint_DrawCurrent(epapData->current);
 
 	// Populate BMS image with current Fault
-	Paint_DrawFault("temp2");
+	if(epapData->numActiveAlerts == 0)
+	{
+		Paint_DrawFault("NO FAULT PRESENT :)");
+	}
+	else
+	{
+		char faultString[64];
+		sprintf(faultString, "(%lu/%lu) %s", epapData->alertIndex, epapData->numActiveAlerts, epapData->alertMessage);
+		Paint_DrawFault(faultString);
+	}
+
+	// Populate BMS image with current State
+	Paint_DrawState(epapData->stateMessage);
 }
 
 /*!

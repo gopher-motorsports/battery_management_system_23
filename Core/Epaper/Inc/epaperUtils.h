@@ -54,6 +54,12 @@ typedef enum {
 #define DOT_PIXEL_DFT  DOT_PIXEL_1X1  //Default dot pilex
 
 typedef enum {
+    DOT_FILL_AROUND  = 1,		// dot pixel 1 x 1
+    DOT_FILL_RIGHTUP  , 		// dot pixel 2 X 2
+} DOT_STYLE;
+#define DOT_STYLE_DFT  DOT_FILL_AROUND  //Default dot pilex
+
+typedef enum {
     LINE_STYLE_SOLID = 0,
     LINE_STYLE_DOTTED,
 } LINE_STYLE;
@@ -129,21 +135,21 @@ void Paint_DrawTableData(float data, DATA_TABLE_COL col, DATA_TABLE_ROW row);
   @brief    Update BMS Image with current SOC
   @param    SOC BMS State of Charge as a percentage 
 */
-void Paint_DrawSOC(uint32_t SOC);
+void Paint_DrawSOE(uint32_t SOE);
 
 /*!
   @brief   Update BMS Image with state data
 */
-void Paint_DrawState();
+void Paint_DrawState(char* stateMessage);
 
 /*!
   @brief   Update BMS Image with fault data
 */
-void Paint_DrawFault();
+void Paint_DrawFault(char* faultMessage);
+
+/*!
+  @brief   Update BMS Image with current sensor data
+*/
+void Paint_DrawCurrent(float current);
 
 #endif // __EPAPER_UTILS_H
-
-
-
-
-

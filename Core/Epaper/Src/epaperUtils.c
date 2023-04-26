@@ -62,8 +62,10 @@ static void Paint_NewImage(uint8_t *image, uint16_t Width, uint16_t Height, uint
     Paint.Color = Color;    
 	Paint.Scale = 2;
 		
-    Paint.WidthByte = (Width % 8 == 0) ? (Width / 8 ) : (Width / 8 + 1);
-    Paint.HeightByte = Height;
+    Paint.WidthByte = (Width % 8 == 0)? (Width / 8 ): (Width / 8 + 1);
+    Paint.HeightByte = Height;    
+//    printf("WidthByte = %d, HeightByte = %d\r\n", Paint.WidthByte, Paint.HeightByte);
+//    printf(" EPD_WIDTH / 8 = %d\r\n",  122 / 8);
    
     Paint.Rotate = Rotate;
     Paint.Mirror = MIRROR_NONE;
@@ -77,77 +79,263 @@ static void Paint_NewImage(uint8_t *image, uint16_t Width, uint16_t Height, uint
     }
 }
 
+/******************************************************************************
+function: Select Image
+parameter:
+    image : Pointer to the image cache
+******************************************************************************/
+// static void Paint_SelectImage(uint8_t *image)
+// {
+//     Paint.Image = image;
+// }
+
+/******************************************************************************
+function: Select Image Rotate
+parameter:
+    Rotate : 0,90,180,270
+******************************************************************************/
+// static void Paint_SetRotate(uint16_t Rotate)
+// {
+//     if(Rotate == ROTATE_0 || Rotate == ROTATE_90 || Rotate == ROTATE_180 || Rotate == ROTATE_270) {
+//         Debug("Set image Rotate %d\r\n", Rotate);
+//         Paint.Rotate = Rotate;
+//     } else {
+//         Debug("rotate = 0, 90, 180, 270\r\n");
+//     }
+// }
+
+// static void Paint_SetScale(uint8_t scale)
+// {
+//     if(scale == 2){
+//         Paint.Scale = scale;
+//         Paint.WidthByte = (Paint.WidthMemory % 8 == 0)? (Paint.WidthMemory / 8 ): (Paint.WidthMemory / 8 + 1);
+//     }else if(scale == 4){
+//         Paint.Scale = scale;
+//         Paint.WidthByte = (Paint.WidthMemory % 4 == 0)? (Paint.WidthMemory / 4 ): (Paint.WidthMemory / 4 + 1);
+//     }else if(scale == 7){//Only applicable with 5in65 e-Paper
+// 				Paint.Scale = scale;
+// 				Paint.WidthByte = (Paint.WidthMemory % 2 == 0)? (Paint.WidthMemory / 2 ): (Paint.WidthMemory / 2 + 1);;
+// 		}else{
+//         Debug("Set Scale Input parameter error\r\n");
+//         Debug("Scale Only support: 2 4 7\r\n");
+//     }
+// }
+/******************************************************************************
+function:	Select Image mirror
+parameter:
+    mirror   :Not mirror,Horizontal mirror,Vertical mirror,Origin mirror
+******************************************************************************/
+// static void Paint_SetMirroring(uint8_t mirror)
+// {
+//     if(mirror == MIRROR_NONE || mirror == MIRROR_HORIZONTAL || 
+//         mirror == MIRROR_VERTICAL || mirror == MIRROR_ORIGIN) {
+//         Debug("mirror image x:%s, y:%s\r\n",(mirror & 0x01)? "mirror":"none", ((mirror >> 1) & 0x01)? "mirror":"none");
+//         Paint.Mirror = mirror;
+//     } else {
+//         Debug("mirror should be MIRROR_NONE, MIRROR_HORIZONTAL, MIRROR_VERTICAL or MIRROR_ORIGIN\r\n");
+//     }    
+// }
+
+/******************************************************************************
+function: Draw Pixels
+parameter:
+    Xpoint : At point X
+    Ypoint : At point Y
+    Color  : Painted colors
+******************************************************************************/
 static void Paint_SetPixel(uint16_t Xpoint, uint16_t Ypoint, uint16_t Color)
 {
     if(Xpoint > Paint.Width || Ypoint > Paint.Height){
-        Debug("Epaper pixel request out of display bounds!\n");
+        Debug("Exceeding display boundaries\r\n");
+        return;
+    }      
+    uint16_t X, Y;
+
+    switch(Paint.Rotate) {
+    case 0:
+        X = Xpoint;
+        Y = Ypoint;  
+        break;
+    case 90:
+        X = Paint.WidthMemory - Ypoint - 1;
+        Y = Xpoint;
+        break;
+    case 180:
+        X = Paint.WidthMemory - Xpoint - 1;
+        Y = Paint.HeightMemory - Ypoint - 1;
+        break;
+    case 270:
+        X = Ypoint;
+        Y = Paint.HeightMemory - Xpoint - 1;
+        break;
+    default:
+        return;
+    }
+    
+    switch(Paint.Mirror) {
+    case MIRROR_NONE:
+        break;
+    case MIRROR_HORIZONTAL:
+        X = Paint.WidthMemory - X - 1;
+        break;
+    case MIRROR_VERTICAL:
+        Y = Paint.HeightMemory - Y - 1;
+        break;
+    case MIRROR_ORIGIN:
+        X = Paint.WidthMemory - X - 1;
+        Y = Paint.HeightMemory - Y - 1;
+        break;
+    default:
         return;
     }
 
-    uint32_t targetAddress = (Xpoint / 8) + (Ypoint * Paint.WidthByte);
-    uint8_t targetByte = Paint.Image[targetAddress];
-
-    if(Color == BLACK)
-    {
-        Paint.Image[targetAddress] = targetByte & ~(0x80 >> (Xpoint % 8));
-    } 
-    else
-    {
-        Paint.Image[targetAddress] = targetByte | (0x80 >> (Xpoint % 8));
+    if(X > Paint.WidthMemory || Y > Paint.HeightMemory){
+        Debug("Exceeding display boundaries\r\n");
+        return;
     }
+    
+    if(Paint.Scale == 2){
+        uint32_t Addr = X / 8 + Y * Paint.WidthByte;
+        uint8_t Rdata = Paint.Image[Addr];
+        if(Color == BLACK)
+            Paint.Image[Addr] = Rdata & ~(0x80 >> (X % 8));
+        else
+            Paint.Image[Addr] = Rdata | (0x80 >> (X % 8));
+    }else if(Paint.Scale == 4){
+        uint32_t Addr = X / 4 + Y * Paint.WidthByte;
+        Color = Color % 4;//Guaranteed color scale is 4  --- 0~3
+        uint8_t Rdata = Paint.Image[Addr];
+        
+        Rdata = Rdata & (~(0xC0 >> ((X % 4)*2)));
+        Paint.Image[Addr] = Rdata | ((Color << 6) >> ((X % 4)*2));
+    }else if(Paint.Scale == 7){
+		uint32_t Addr = X / 2  + Y * Paint.WidthByte;
+		uint8_t Rdata = Paint.Image[Addr];
+		Rdata = Rdata & (~(0xF0 >> ((X % 2)*4)));//Clear first, then set value
+		Paint.Image[Addr] = Rdata | ((Color << 4) >> ((X % 2)*4));
+		//printf("Add =  %d ,data = %d\r\n",Addr,Rdata);
+		}
 }
 
+/******************************************************************************
+function: Clear the color of the picture
+parameter:
+    Color : Painted colors
+******************************************************************************/
 static void Paint_Clear(uint16_t Color)
 {
-	for (uint16_t y = 0; y < Paint.HeightByte; y++)
-    {
-        for (uint16_t x = 0; x < Paint.WidthByte; x++)
-        {
-            uint32_t address = x + y * Paint.WidthByte;
-            Paint.Image[address] = Color;
+	if(Paint.Scale == 2) {
+		for (uint16_t Y = 0; Y < Paint.HeightByte; Y++) {
+			for (uint16_t X = 0; X < Paint.WidthByte; X++ ) {//8 pixel =  1 byte
+				uint32_t Addr = X + Y*Paint.WidthByte;
+				Paint.Image[Addr] = Color;
+			}
+		}		
+    }else if(Paint.Scale == 4) {
+        for (uint16_t Y = 0; Y < Paint.HeightByte; Y++) {
+			for (uint16_t X = 0; X < Paint.WidthByte; X++ ) {
+				uint32_t Addr = X + Y*Paint.WidthByte;
+				Paint.Image[Addr] = (Color<<6)|(Color<<4)|(Color<<2)|Color;
+			}
+		}		
+	}else if(Paint.Scale == 7) {
+		for (uint16_t Y = 0; Y < Paint.HeightByte; Y++) {
+			for (uint16_t X = 0; X < Paint.WidthByte; X++ ) {
+				uint32_t Addr = X + Y*Paint.WidthByte;
+				Paint.Image[Addr] = (Color<<4)|Color;
+			}
+		}		
+	}
+}
+
+/******************************************************************************
+function: Clear the color of a window
+parameter:
+    Xstart : x starting point
+    Ystart : Y starting point
+    Xend   : x end point
+    Yend   : y end point
+    Color  : Painted colors
+******************************************************************************/
+static void Paint_ClearWindows(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend, uint16_t Color)
+{
+    uint16_t X, Y;
+    for (Y = Ystart; Y < Yend; Y++) {
+        for (X = Xstart; X < Xend; X++) {//8 pixel =  1 byte
+            Paint_SetPixel(X, Y, Color);
         }
     }
 }
 
-static void Paint_ClearWindows(uint16_t xStart, uint16_t yStart, uint16_t xEnd, uint16_t yEnd, uint16_t color)
+/******************************************************************************
+function: Draw Point(Xpoint, Ypoint) Fill the color
+parameter:
+    Xpoint		: The Xpoint coordinate of the point
+    Ypoint		: The Ypoint coordinate of the point
+    Color		: Painted color
+    Dot_Pixel	: point size
+    Dot_Style	: point Style
+******************************************************************************/
+static void Paint_DrawPoint(uint16_t Xpoint, uint16_t Ypoint, uint16_t Color,
+                     DOT_PIXEL Dot_Pixel, DOT_STYLE Dot_Style)
 {
-    for (uint16_t y = yStart; y < yEnd; y++)
-    {
-        for (uint16_t x = xStart; x < xEnd; x++) {//8 pixel =  1 byte
-            Paint_SetPixel(x, y, color);
+    if (Xpoint > Paint.Width || Ypoint > Paint.Height) {
+        Debug("Paint_DrawPoint Input exceeds the normal display range\r\n");
+				printf("Xpoint = %d , Paint.Width = %d  \r\n ",Xpoint,Paint.Width);
+				printf("Ypoint = %d , Paint.Height = %d  \r\n ",Ypoint,Paint.Height);
+        return;
+    }
+
+    int16_t XDir_Num , YDir_Num;
+    if (Dot_Style == DOT_FILL_AROUND) {
+        for (XDir_Num = 0; XDir_Num < 2 * Dot_Pixel - 1; XDir_Num++) {
+            for (YDir_Num = 0; YDir_Num < 2 * Dot_Pixel - 1; YDir_Num++) {
+                if(Xpoint + XDir_Num - Dot_Pixel < 0 || Ypoint + YDir_Num - Dot_Pixel < 0)
+                    break;
+                // printf("x = %d, y = %d\r\n", Xpoint + XDir_Num - Dot_Pixel, Ypoint + YDir_Num - Dot_Pixel);
+                Paint_SetPixel(Xpoint + XDir_Num - Dot_Pixel, Ypoint + YDir_Num - Dot_Pixel, Color);
+            }
+        }
+    } else {
+        for (XDir_Num = 0; XDir_Num <  Dot_Pixel; XDir_Num++) {
+            for (YDir_Num = 0; YDir_Num <  Dot_Pixel; YDir_Num++) {
+                Paint_SetPixel(Xpoint + XDir_Num - 1, Ypoint + YDir_Num - 1, Color);
+            }
         }
     }
 }
 
-static void Paint_DrawPoint(uint16_t Xpoint, uint16_t Ypoint, uint16_t Color, DOT_PIXEL Dot_Pixel)
+/******************************************************************************
+function: Draw a line of arbitrary slope
+parameter:
+    Xstart ：Starting Xpoint point coordinates
+    Ystart ：Starting Xpoint point coordinates
+    Xend   ：End point Xpoint coordinate
+    Yend   ：End point Ypoint coordinate
+    Color  ：The color of the line segment
+    Line_width : Line width
+    Line_Style: Solid and dotted lines
+******************************************************************************/
+static void Paint_DrawLine(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend,
+                    uint16_t Color, DOT_PIXEL Line_width, LINE_STYLE Line_Style)
 {
-
-    for (int16_t x = -1 * (Dot_Pixel - 1) / 2; x < (Dot_Pixel / 2) + 1; x++)
-    {
-        for (int16_t y = -1 * (Dot_Pixel - 1); y < (Dot_Pixel / 2) + 1; y++)
-        {
-            uint16_t targetX = Xpoint + x;
-            uint16_t targetY = Ypoint + y;
-            if((targetX < 0) || (targetX > Paint.Width))    { break; }
-            if((targetY < 0) || (targetY > Paint.Height))   { break; }
-            Paint_SetPixel(targetX, targetY, Color);
-        }
+    if (Xstart > Paint.Width || Ystart > Paint.Height ||
+        Xend > Paint.Width || Yend > Paint.Height) {
+        Debug("Paint_DrawLine Input exceeds the normal display range\r\n");
+        return;
     }
-}
 
-static void Paint_DrawLine(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend, uint16_t Color, DOT_PIXEL Line_width, LINE_STYLE Line_Style)
-{
     uint16_t Xpoint = Xstart;
     uint16_t Ypoint = Ystart;
-    int16_t dx = abs(Xend - Xstart);
-    int16_t dy = abs(Yend - Ystart);
+    int dx = (int)Xend - (int)Xstart >= 0 ? Xend - Xstart : Xstart - Xend;
+    int dy = (int)Yend - (int)Ystart <= 0 ? Yend - Ystart : Ystart - Yend;
 
     // Increment direction, 1 is positive, -1 is counter;
-    int16_t XAddway = Xstart < Xend ? 1 : -1;
-    int16_t YAddway = Ystart < Yend ? 1 : -1;
+    int XAddway = Xstart < Xend ? 1 : -1;
+    int YAddway = Ystart < Yend ? 1 : -1;
 
     //Cumulative error
-    int16_t Esp = dx + dy;
+    int Esp = dx + dy;
     char Dotted_Len = 0;
 
     for (;;) {
@@ -155,10 +343,10 @@ static void Paint_DrawLine(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint
         //Painted dotted line, 2 point is really virtual
         if (Line_Style == LINE_STYLE_DOTTED && Dotted_Len % 3 == 0) {
             //Debug("LINE_DOTTED\r\n");
-            Paint_DrawPoint(Xpoint, Ypoint, IMAGE_BACKGROUND, Line_width);
+            Paint_DrawPoint(Xpoint, Ypoint, IMAGE_BACKGROUND, Line_width, DOT_STYLE_DFT);
             Dotted_Len = 0;
         } else {
-            Paint_DrawPoint(Xpoint, Ypoint, Color, Line_width);
+            Paint_DrawPoint(Xpoint, Ypoint, Color, Line_width, DOT_STYLE_DFT);
         }
         if (2 * Esp >= dy) {
             if (Xpoint == Xend)
@@ -605,6 +793,11 @@ static void Paint_DrawCenteredLabeledFloat(float data, char label, uint32_t maxC
         digits++;
         data *= -1;
     }
+    else if(data == 0)
+    {
+        pStr[digits] = '0';
+        digits++;
+    }
 
     uint32_t wholeNum = (uint32_t) data;
     uint8_t tempStr[MAX_PRINT_LENGTH] = {0};
@@ -685,14 +878,14 @@ void Paint_InitBmsImage(uint8_t* emptyImage)
 	Paint_DrawString_EN(54, 43, "VOLT", &Font16, WHITE, BLACK);
 	Paint_DrawString_EN(122, 43, "TEMP", &Font16, WHITE, BLACK);
 	Paint_DrawString_EN(180, 43, "BLEED", &Font16, WHITE, BLACK);
-	Paint_DrawString_EN(252, 43, "SOC", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(252, 43, "SOE", &Font16, WHITE, BLACK);
 	Paint_DrawString_EN(2, 63, "AVG", &Font16, WHITE, BLACK);
 	Paint_DrawString_EN(2, 84, "MAX", &Font16, WHITE, BLACK);
 	Paint_DrawString_EN(2, 105, "MIN", &Font16, WHITE, BLACK);
 
 	// Print labels for State and Fault indicators
-	Paint_DrawString_EN(2, 5, "STATE:", &Font16, WHITE, BLACK);
-	Paint_DrawString_EN(2, 25, "FAULT:", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(2, 7, "STATE:", &Font12, WHITE, BLACK);
+	Paint_DrawString_EN(2, 27, "FAULT:", &Font12, WHITE, BLACK);
 
 	// Print default battery template
 	Paint_DrawRectangle(255, 65, 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
@@ -740,51 +933,51 @@ void Paint_DrawTableData(float data, DATA_TABLE_COL col, DATA_TABLE_ROW row)
   @brief    Update BMS Image with current SOC
   @param    SOC BMS State of Charge as a percentage 
 */
-void Paint_DrawSOC(uint32_t SOC)
+void Paint_DrawSOE(uint32_t SOE)
 {
-	// Check bounds of SOC
-	if(SOC < 0)
+	// Check bounds of SOE
+	if(SOE < 0)
 	{
-		SOC = 0;
+		SOE = 0;
 	}
-	else if(SOC > 100)
+	else if(SOE > 100)
 	{
-		SOC = 100;
+		SOE = 100;
 	}
 
-	// Calculate the number of digits in the SOC percent value
-	uint8_t digits = calculateIntegerDigits(SOC);
+	// Calculate the number of digits in the SOE percent value
+	uint8_t digits = calculateIntegerDigits(SOE);
 
 	// The x value in the below statements is slected such that 100% is centered
-	// In order to center the SOC percentage given any number of digits, 
+	// In order to center the SOE percentage given any number of digits, 
 	// the printed data is shifted by half a width for each digit less than three (100) 
 	uint16_t startXAdjust =  (Font16.Width / 2) * (3 - digits);
 
-	// Populate BMS image with current SOC percent
+	// Populate BMS image with current SOE percent
 	Paint_ClearWindows(246 + startXAdjust, 105, 246 + Font16.Width * 4, 105 + Font16.Height, WHITE);
-	Paint_DrawNum(246 + startXAdjust, 105, SOC, &Font16, BLACK, WHITE);
+	Paint_DrawNum(246 + startXAdjust, 105, SOE, &Font16, BLACK, WHITE);
 
 	// Place a percent sign directly after the last number, given by the font width times the number of digits
 	Paint_DrawString_EN(246 + startXAdjust + Font16.Width * digits, 105, "%", &Font16, WHITE, BLACK);
 
-	// Adjust the height of the printed battery level based on the SOC as a percentage
-    uint16_t startSOCX = 102 - ((31 * SOC) / 100);
-	// Paint_DrawRectangle(255, 102 - ((37 * SOC) / 100), 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_FULL);
+	// Adjust the height of the printed battery level based on the SOE as a percentage
+    uint16_t startSOEX = 102 - ((31 * SOE) / 100);
+	// Paint_DrawRectangle(255, 102 - ((37 * SOE) / 100), 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_FULL);
     // Paint_DrawRectangle(255, 93, 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_FULL);
-    Paint_DrawRectangle(255, startSOCX, 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_FULL);
+    Paint_DrawRectangle(255, startSOEX, 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_FULL);
 
     static int32_t startIndex = 0;
     uint32_t mask = 1;
     for(int32_t i = 0; i < (25-startIndex); i++)
-    {
-        Paint_DrawPoint(257+i+startIndex, startSOCX-2, (waveImage[0] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1);
-        Paint_DrawPoint(257+i+startIndex, startSOCX-3, (waveImage[1] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1);
+    { 
+        Paint_DrawPoint(257+i+startIndex, startSOEX-2, (waveImage[0] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+        Paint_DrawPoint(257+i+startIndex, startSOEX-3, (waveImage[1] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
         mask <<= 1;
     }
     for(int32_t i = 0; i < startIndex; i++)
     { 
-        Paint_DrawPoint(257+i, startSOCX-2, (waveImage[0] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1);
-        Paint_DrawPoint(257+i, startSOCX-3, (waveImage[1] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1);
+        Paint_DrawPoint(257+i, startSOEX-2, (waveImage[0] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+        Paint_DrawPoint(257+i, startSOEX-3, (waveImage[1] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
         mask <<= 1;
     }
     startIndex += 2;
@@ -800,8 +993,18 @@ void Paint_DrawSOC(uint32_t SOC)
 */
 void Paint_DrawState(char* stateMessage)
 {
-	Paint_ClearWindows(67, 5, 70 + Font16.Width * 12, 5 + Font16.Height, WHITE);
-	Paint_DrawString_EN(67, 5, stateMessage, &Font16, WHITE, BLACK);
+    char state[25] = {0};
+    if(strlen(stateMessage) > 25) {
+        strncpy(state, stateMessage, 25);
+        state[25] = '\0';
+    }
+    else
+    {
+        strcpy(state, stateMessage);
+    }
+
+	Paint_ClearWindows(43, 7, 43 + Font12.Width * 30, 7 + Font12.Height, WHITE);
+	Paint_DrawString_EN(43, 7, state, &Font12, WHITE, BLACK);
 }
 
 /*!
@@ -809,8 +1012,18 @@ void Paint_DrawState(char* stateMessage)
 */
 void Paint_DrawFault(char* faultMessage)
 {
-    Paint_ClearWindows(67, 25, 70 + Font16.Width * 12, 25 + Font16.Height, WHITE);
-	Paint_DrawString_EN(67, 25, faultMessage, &Font16, WHITE, BLACK);
+    char fault[25] = {0};
+    if(strlen(faultMessage) > 25) {
+        strncpy(fault, faultMessage, 25);
+        fault[25] = '\0';
+    }
+    else
+    {
+        strcpy(fault, faultMessage);
+    }
+
+    Paint_ClearWindows(43, 27, 43 + Font12.Width * 30, 27 + Font12.Height, WHITE);
+	Paint_DrawString_EN(43, 27, faultMessage, &Font12, WHITE, BLACK);
 }
 
 /*!
@@ -818,17 +1031,20 @@ void Paint_DrawFault(char* faultMessage)
 */
 void Paint_DrawCurrent(float current)
 {
-    Paint_DrawCenteredLabeledFloat(current, 'A', 4, &Font16, 246, 5);
+    Paint_DrawCenteredLabeledFloat(fabsf(current), 'A', 3, &Font16, 251, 5);
 
     Paint_ClearWindows(252, 25, 285, 40, WHITE);
     if(current > 0)
     {
-        Paint_DrawLine(268, 29, 268, 36, BLACK, DOT_PIXEL_1X1, LINE_STYLE_SOLID);
-
+        Paint_DrawLine(268, 25, 268, 40, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(268, 40, 273, 35, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(268, 40, 263, 35, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
     }
     else if(current < 0)
     {
-
+        Paint_DrawLine(268, 25, 268, 40, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(268, 25, 273, 30, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(268, 25, 263, 30, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
     }
 	
 }
