@@ -2,12 +2,13 @@
 /* ============================= INCLUDES ============================= */
 /* ==================================================================== */
 #include "cmsis_os.h"
+#include "alerts.h"
 #include "bms.h"
 #include "bmb.h"
 #include "bmbInterface.h"
+#include "leakyBucket.h"
 #include "debug.h"
 #include "GopherCAN.h"
-#include "debug.h"
 #include "currentSense.h"
 #include "internalResistance.h"
 #include "gopher_sense.h"
@@ -16,24 +17,52 @@
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
-#define INIT_BMS_BMB_ARRAY \
-{ \
-    [0 ... NUM_BMBS_IN_ACCUMULATOR-1] = {.bmbIdx = __COUNTER__} \
-}
+#define MAX_BRICK_VOLTAGE_READING 5.0f
+#define MIN_BRICK_VOLTAGE_READING 0.0f
+
+#define MAX_TEMP_SENSE_READING 	  120.0f
+#define MIN_TEMP_SENSE_READING	  (-40.0f)
+
+#define EPAP_UPDATE_PERIOD_MS	  2000
+#define ALERT_MONITOR_PERIOD_MS	  10
 
 Bms_S gBms = 
 {
     .numBmbs = NUM_BMBS_IN_ACCUMULATOR,
-    .bmb = INIT_BMS_BMB_ARRAY
+    .bmb = 
+	{
+        [0] = {.bmbIdx = 0},
+        [1] = {.bmbIdx = 1},
+        [2] = {.bmbIdx = 2},
+        [3] = {.bmbIdx = 3},
+        [4] = {.bmbIdx = 4},
+        [5] = {.bmbIdx = 5},
+        [6] = {.bmbIdx = 6}
+    }
 };
+
+
+/* ==================================================================== */
+/* ======================= EXTERNAL VARIABLES ========================= */
+/* ==================================================================== */
 
 extern osMessageQId epaperQueueHandle;
 
 extern CAN_HandleTypeDef hcan2;
 
-static uint32_t lastEpapUpdate = 0;
+extern LeakyBucket_S asciCommsLeakyBucket;
+
+
+/* ==================================================================== */
+/* =================== LOCAL FUNCTION DECLARATIONS ==================== */
+/* ==================================================================== */
 
 static void disableBmbBalancing(Bmb_S* bmb);
+
+
+/* ==================================================================== */
+/* =================== LOCAL FUNCTION DEFINITIONS ===================== */
+/* ==================================================================== */
 
 static void disableBmbBalancing(Bmb_S* bmb)
 {
@@ -42,6 +71,18 @@ static void disableBmbBalancing(Bmb_S* bmb)
 		bmb->balSwRequested[i] = false;
 	}
 }
+
+static void setAmsFault(bool set)
+{
+	// AMS fault pin is active low so if set == true then pin should be low
+	HAL_GPIO_WritePin(AMS_FAULT_OUT_GPIO_Port, AMS_FAULT_OUT_Pin, set ? GPIO_PIN_RESET : GPIO_PIN_SET);
+	return;
+}
+
+
+/* ==================================================================== */
+/* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
+/* ==================================================================== */
 
 void initBmsGopherCan(CAN_HandleTypeDef* hcan)
 {
@@ -59,8 +100,13 @@ void initBmsGopherCan(CAN_HandleTypeDef* hcan)
 */
 bool initBatteryPack(uint32_t* numBmbs)
 {
-	Bms_S* pBms = &gBms;
-
+	setAmsFault(false);
+	gBms.balancingDisabled = true;
+	gBms.emergencyBleed    = false;
+	gBms.chargingDisabled  = true;
+	gBms.limpModeEnabled   = false;
+	gBms.amsFaultPresent   = false;
+	
 	if (!initASCI())
 	{
 		goto initializationError;
@@ -82,19 +128,20 @@ bool initBatteryPack(uint32_t* numBmbs)
 		goto initializationError;
 	}
 
-	pBms->numBmbs = *numBmbs;
-	pBms->bmsHwState = BMS_NOMINAL;
+	gBms.numBmbs = *numBmbs;
+	gBms.bmsHwState = BMS_NOMINAL;
+	setAmsFault(false);
 	return true;
 
 // Routine if initialization error ocurs
 initializationError:
 	// Set hardware error status
-	pBms->bmsHwState = BMS_BMB_FAILURE;
+	gBms.bmsHwState = BMS_BMB_FAILURE;
 
 	// Determine if a chain break exists
 	initASCI();	// Ignore return value as it will be bad due to no loopback
 	helloAll(numBmbs);	// Ignore return value as it will be bad due to no loopback
-	uint32_t breakLocation = detectBmbDaisyChainBreak(pBms->bmb, NUM_BMBS_IN_ACCUMULATOR);
+	uint32_t breakLocation = detectBmbDaisyChainBreak(gBms.bmb, NUM_BMBS_IN_ACCUMULATOR);
 	if (breakLocation == 1)
 	{
 		Debug("BMB Chain Break detected between BMS and BMB 1\n");
@@ -118,7 +165,12 @@ initializationError:
 			}
 			if (initBmbs(*numBmbs))
 			{
+				gBms.numBmbs = *numBmbs;
 				gBms.bmsHwState = BMS_NOMINAL;
+				setAmsFault(false);
+				// Leaky bucket was filled due to missing external loopback. Since we successfully initialized using
+				// internal loopback, we can reset the leaky bucket
+				resetLeakyBucket(&asciCommsLeakyBucket);
 				return true;
 			}
 		}
@@ -126,6 +178,10 @@ initializationError:
 	return false;
 }
 
+/*!
+  @brief   Updates all BMB data
+  @param   numBmbs - The expected number of BMBs in the daisy chain\
+*/
 void updatePackData(uint32_t numBmbs)
 {
 	static uint32_t lastPackUpdate = 0;
@@ -144,50 +200,118 @@ void updatePackData(uint32_t numBmbs)
 */
 void balancePack(uint32_t numBmbs, bool balanceRequested)
 {
-	Bms_S* pBms = &gBms;
+	// TODO: Determine how we want to handle EMERGENCY_BLEED
 
-	if (balanceRequested)
+	// If balancing not requested or balancing disabled ensure all balance switches off
+	if (!balanceRequested || gBms.balancingDisabled)
 	{
-		float bleedTargetVoltage = 5.0f;
-		// Determine minimum voltage across entire battery pack
 		for (int32_t i = 0; i < numBmbs; i++)
 		{
-			if (pBms->bmb[i].minBrickV + BALANCE_THRESHOLD_V < bleedTargetVoltage)
+			disableBmbBalancing(&gBms.bmb[i]);
+		}
+		balanceCells(gBms.bmb, numBmbs);
+		return;
+	}
+
+	// Determine minimum voltage across entire battery pack
+	float bleedTargetVoltage = gBms.minBrickV;
+
+	// Ensure we don't overbleed the cells
+	if (bleedTargetVoltage < MIN_BLEED_TARGET_VOLTAGE_V)
+	{
+		bleedTargetVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
+	}		
+	balancePackToVoltage(numBmbs, bleedTargetVoltage);
+}
+
+/*!
+  @brief   Balance the battery pack to a specified target brick voltage.
+  @param   numBmbs - The number of Battery Management Boards (BMBs) in the pack.
+  @param   targetBrickVoltage - The target voltage for each brick in the pack.
+
+  This function balances the battery pack by setting the bleed request for each brick
+  in every BMB based on the target brick voltage. The target brick voltage is clamped
+  to a minimum value (MIN_BLEED_TARGET_VOLTAGE_V) if it's too low. The function iterates
+  through all BMBs and bricks, checking whether they should be bled or not by comparing
+  the brick voltage to the target voltage plus a balance threshold (BALANCE_THRESHOLD_V).
+  Finally, the balanceCells() function is called to apply the bleed requests to the cells.
+*/
+void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
+{
+	// Clamp target brick voltage if too low
+	if (targetBrickVoltage < MIN_BLEED_TARGET_VOLTAGE_V)
+	{
+		targetBrickVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
+	}
+
+	// Iterate through all BMBs and set bleed request
+	for (int32_t i = 0; i < numBmbs; i++)
+	{
+		// Iterate through all bricks and determine whether they should be bled or not
+		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
+		{
+			if (gBms.bmb[i].brickV[j] > targetBrickVoltage + BALANCE_THRESHOLD_V)
 			{
-				bleedTargetVoltage = pBms->bmb[i].minBrickV + BALANCE_THRESHOLD_V;
+				gBms.bmb[i].balSwRequested[j] = true;
 			}
-		}
-		// Ensure we don't overbleed the cells
-		if (bleedTargetVoltage < MIN_BLEED_TARGET_VOLTAGE_V)
-		{
-			bleedTargetVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
-		}
-		// Set bleed request on cells that have voltage higher than our bleedTargetVoltage
-		for (int32_t i = 0; i < numBmbs; i++)
-		{
-			// Iterate through all bricks and determine whether they should be bled or not
-			for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
+			else
 			{
-				if (pBms->bmb[i].brickV[j] > bleedTargetVoltage)
-				{
-					pBms->bmb[i].balSwRequested[j] = true;
-				}
-				else
-				{
-					pBms->bmb[i].balSwRequested[j] = false;
-				}
+				gBms.bmb[i].balSwRequested[j] = false;
 			}
 		}
 	}
-	else
+	
+	balanceCells(gBms.bmb, numBmbs);
+}
+
+/*!
+  @brief   Check and handle alerts for the BMS by running alert monitors, accumulating alert statuses,
+           and setting BMS status based on the alerts.
+  
+  This function runs each alert monitor, checks the status of each alert, and sets the BMS status
+  based on the alert responses. If an alert is set, it iterates through all alert responses and
+  activates the corresponding response in the BMS. The BMS status is then updated accordingly.
+*/
+void checkAndHandleAlerts()
+{
+	static uint32_t lastAlertMonitorUpdate = 0;
+
+	if (HAL_GetTick() - lastAlertMonitorUpdate > ALERT_MONITOR_PERIOD_MS)
 	{
-		// If bleeding not requested ensure balancing switches are all off
-		for (int32_t i = 0; i < numBmbs; i++)
+		// Run each alert monitor
+		for (uint32_t i = 0; i < NUM_ALERTS; i++)
 		{
-			disableBmbBalancing(&pBms->bmb[i]);
+			runAlertMonitor(&gBms, alerts[i]);
 		}
+
+		// Accumulate alert statuses
+		bool responseStatus[NUM_ALERT_RESPONSES] = { false };
+
+		// Check each alert status
+		for (uint32_t i = 0; i < NUM_ALERTS; i++)
+		{
+			Alert_S* alert = alerts[i];
+			if (getAlertStatus(alert) == ALERT_SET)
+			{
+				// Iterate through all alert responses and set them
+				for (uint32_t j = 0; j < alert->numAlertResponse; j++)
+				{
+					const AlertResponse_E response = alert->alertResponse[j];
+					// Set the alert response to active
+					responseStatus[response] = true;
+				}
+			}
+		}
+
+		// Set BMS status based on alert
+		gBms.balancingDisabled = responseStatus[DISABLE_BALANCING];
+		gBms.emergencyBleed	   = responseStatus[EMERGENCY_BLEED];
+		gBms.chargingDisabled  = responseStatus[DISABLE_CHARGING];
+		gBms.limpModeEnabled   = responseStatus[LIMP_MODE];
+		gBms.amsFaultPresent   = responseStatus[AMS_FAULT];
+		setAmsFault(gBms.amsFaultPresent);
 	}
-	balanceCells(pBms->bmb, numBmbs);
+	
 }
 
 /*!
@@ -197,18 +321,19 @@ void balancePack(uint32_t numBmbs, bool balanceRequested)
 void aggregatePackData(uint32_t numBmbs)
 {
 	Bms_S* pBms = &gBms;
+	// Update BMB level stats
 	aggregateBmbData(pBms->bmb, numBmbs);
 
-	float maxBrickV	   = 0.0f;
-	float minBrickV	   = 5.0f;
+	float maxBrickV	   = MIN_BRICK_VOLTAGE_READING;
+	float minBrickV	   = MAX_BRICK_VOLTAGE_READING;
 	float avgBrickVSum = 0.0f;
 
-	float maxBrickTemp    = -200.0f;
-	float minBrickTemp 	  = 200.0f;
+	float maxBrickTemp    = MIN_TEMP_SENSE_READING;
+	float minBrickTemp 	  = MAX_TEMP_SENSE_READING;
 	float avgBrickTempSum = 0.0f;
 
-	float maxBoardTemp    = -200.0f;
-	float minBoardTemp 	  = 200.0f;
+	float maxBoardTemp    = MIN_TEMP_SENSE_READING;
+	float minBoardTemp 	  = MAX_TEMP_SENSE_READING;
 	float avgBoardTempSum = 0.0f;
 
 	for (int32_t i = 0; i < numBmbs; i++)
@@ -257,36 +382,6 @@ void aggregatePackData(uint32_t numBmbs)
 	pBms->avgBoardTemp = avgBoardTempSum / NUM_BMBS_IN_ACCUMULATOR;
 }
 
-void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
-{
-	Bms_S* pBms = &gBms;
-
-	// Clamp target brick voltage if too low
-	if (targetBrickVoltage < MIN_BLEED_TARGET_VOLTAGE_V)
-	{
-		targetBrickVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
-	}
-
-
-	for (int32_t i = 0; i < numBmbs; i++)
-	{
-		// Iterate through all bricks and determine whether they should be bled or not
-		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
-		{
-			if (pBms->bmb[i].brickV[j] > targetBrickVoltage + BALANCE_THRESHOLD_V)
-			{
-				pBms->bmb[i].balSwRequested[j] = true;
-			}
-			else
-			{
-				pBms->bmb[i].balSwRequested[j] = false;
-			}
-		}
-	}
-	
-	balanceCells(pBms->bmb, numBmbs);
-}
-
 /*!
   @brief   Update the IMD status based on measured frequency and duty cycle
 */
@@ -297,22 +392,14 @@ void updateImdStatus()
 	pBms->imdState = getImdStatus();
 }
 
-
 /*!
-  @brief   Update the SDC status
+  @brief   Update the epaper display with current data
 */
-void updateSdcStatus()
-{
-	Bms_S* pBms = &gBms;
-
-	pBms->amsFault  = HAL_GPIO_ReadPin(AMS_FAULT_SDC_GPIO_Port, AMS_FAULT_SDC_Pin);
-	pBms->bspdFault = HAL_GPIO_ReadPin(BSPD_FAULT_SDC_GPIO_Port, BSPD_FAULT_SDC_Pin);
-	pBms->imdFault  = HAL_GPIO_ReadPin(IMD_FAULT_SDC_GPIO_Port, IMD_FAULT_SDC_Pin);
-}
-
 void updateEpaper()
 {
-	if((HAL_GetTick() - lastEpapUpdate) > 2000)
+	static uint32_t lastEpapUpdate = 0;
+
+	if((HAL_GetTick() - lastEpapUpdate) > EPAP_UPDATE_PERIOD_MS)
 	{
 		lastEpapUpdate = HAL_GetTick();
 
@@ -333,6 +420,9 @@ void updateEpaper()
 	}
 }
 
+/*!
+  @brief   Update the tractive system current
+*/
 void updateTractiveCurrent()
 {
 	static uint32_t lastCurrentUpdate = 0;
@@ -445,7 +535,7 @@ void updateGopherCan()
 				// case GCAN_SEGMENT_6:
 				// case GCAN_SEGMENT_7:
 					
-					update_and_queue_param_float(cellVoltageStatsParams[gcanUpdateState][0], gBms.bmb[gcanUpdateState].stackV);
+					update_and_queue_param_float(cellVoltageStatsParams[gcanUpdateState][0], gBms.bmb[gcanUpdateState].segmentV);
 					update_and_queue_param_float(cellVoltageStatsParams[gcanUpdateState][1], gBms.bmb[gcanUpdateState].avgBrickV);
 					update_and_queue_param_float(cellVoltageStatsParams[gcanUpdateState][2], gBms.bmb[gcanUpdateState].maxBrickV);
 					update_and_queue_param_float(cellVoltageStatsParams[gcanUpdateState][3], gBms.bmb[gcanUpdateState].minBrickV);

@@ -39,23 +39,22 @@
 #define VBLOCK			0x2C
 #define AIN1			0x2D
 #define AIN2			0x2E
-
 #define ALRTRST			0x8000
 
 #define NUM_BRICKS_PER_BMB		12
 #define NUM_BOARD_TEMP_PER_BMB 	4
 
 // 3.3V range & 12 bit reading - 3.3/(2^12) = 805.664 uV/bit
-#define CONVERT_12BIT_TO_3V3	0.000805664f;
+#define CONVERT_12BIT_TO_3V3				0.000805664f;
 // 5V range & 14 bit reading   - 5/(2^14)   = 305.176 uV/bit
-#define CONVERT_14BIT_TO_5V		0.000305176f
-// 60V range & 14 bit ADC 	   - 60/(2^14)  = 3.6621 mV/bit
-#define CONVERT_14BIT_TO_60V	0.0036621f
+#define CONVERT_14BIT_TO_5V					0.000305176f
+// 60V range & 14 bit reading  - 60/(2^14)  = 3.6621 mV/bit
+#define CONVERT_14BIT_TO_60V				0.0036621f
 
 // The minimum voltage that we can bleed to
-#define MIN_BLEED_TARGET_VOLTAGE_V 	3.5f
+#define MIN_BLEED_TARGET_VOLTAGE_V 			3.5f
 // The maximum allowed board temp where bleeding is allowed
-#define MAX_BOARD_TEMP_BALANCING_ALLOWED_C	75.0f
+#define MAX_BOARD_TEMP_BALANCING_ALLOWED_C	90.0f
 // The maximum cell temperature where bleeding is allowed
 #define MAX_CELL_TEMP_BLEEDING_ALLOWED_C	55.0f
 
@@ -68,9 +67,9 @@
 typedef enum
 {
 	UNINITIALIZED = 0,	// Value on startup
-	GOOD,		// Data nominal
-	MIA			// Data wasn't aquired
-} Bmb_Sensor_Status_E;
+	GOOD,				// Data nominal
+	BAD					// Unavailable data or hardware issue
+} Sensor_Status_E;
 
 typedef enum
 {
@@ -97,24 +96,25 @@ typedef struct
 	uint32_t numBricks;
 	// TODO - set initial status value to UNINITIALIZED
 	// The status of all the brick sensors
-	Bmb_Sensor_Status_E brickVStatus[NUM_BRICKS_PER_BMB];
+	Sensor_Status_E brickVStatus[NUM_BRICKS_PER_BMB];
 	// The brick voltages for the bmb
 	float brickV[NUM_BRICKS_PER_BMB];
 	
 	// The resistance of the brick
 	float brickResistance[NUM_BRICKS_PER_BMB];
 
-	// The stack voltage measurement status 
-	Bmb_Sensor_Status_E stackVStatus;
-	// The stack voltage measurement is the total BMB voltage (sum of bricks = stack)
-	float stackV;
+	// The segment voltage measurement status 
+	Sensor_Status_E segmentVStatus;
+	// The segment voltage measurement is the total BMB voltage
+	float segmentV;
 
-	// The status of all the temp sensors
-	Bmb_Sensor_Status_E tempStatus[NUM_BRICKS_PER_BMB+NUM_BOARD_TEMP_PER_BMB];
-	// The raw voltage measurements from all the temp sensors
-	float tempVoltage[NUM_BRICKS_PER_BMB+NUM_BOARD_TEMP_PER_BMB];
+	// The status of the brick temp sensors
+	Sensor_Status_E brickTempStatus[NUM_BRICKS_PER_BMB];
 	// The converted temperatures for all the brick temp sensors
 	float brickTemp[NUM_BRICKS_PER_BMB];
+	
+	// The status of the board temp sensors
+	Sensor_Status_E boardTempStatus[NUM_BOARD_TEMP_PER_BMB];
 	// The converted temperature for all board temp sensors
 	float boardTemp[NUM_BOARD_TEMP_PER_BMB];
 
@@ -123,14 +123,17 @@ typedef struct
 	float maxBrickV;
 	float minBrickV;
 	float avgBrickV;
+	uint32_t numBadBrickV;
 
 	float maxBrickTemp;
 	float minBrickTemp;
 	float avgBrickTemp;
+	uint32_t numBadBrickTemp;
 
 	float maxBoardTemp;
 	float minBoardTemp;
 	float avgBoardTemp;
+	uint32_t numBadBoardTemp;
 
 	// Indicates that a BMB reinitialization is required
 	bool reinitRequired;
@@ -159,22 +162,6 @@ bool initBmbs(uint32_t numBmbs);
   @param   numBmbs - The expected number of BMBs in the daisy chain
 */
 void updateBmbData(Bmb_S* bmb, uint32_t numBmbs);
-
-/*!
-  @brief   Only update voltage data on BMBs
-  @param   bmb - BMB array data
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-*/
-// TODO - see whether or not this can be deleted
-void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs);
-
-/*!
-  @brief   Read all temperature channels on BMB
-  @param   bmb - BMB array data
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-*/
-// TODO - see whether or not this can be deleted
-void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs);
 
 /*!
   @brief   Set a given mux configuration on all BMBs

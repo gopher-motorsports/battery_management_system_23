@@ -13,9 +13,12 @@
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
-
-#define WATCHDOG_1S_STEP_SIZE 0x1000
-#define WATCHDOG_TIMER_LOAD_5 0x0500
+#define BITS_IN_BYTE					8
+#define RAILED_MARGIN_COUNT	  			5
+#define MAX_12_BIT						0x0FFF
+#define MAX_14_BIT						0x3FFF
+#define WATCHDOG_1S_STEP_SIZE 			0x1000
+#define WATCHDOG_TIMER_LOAD_5 			0x0500
 #define DEVCFG1_ENABLE_ALIVE_COUNTER	0x0040
 #define DEVCFG1_DEFAULT_CONFIG			0x1002
 #define MEASUREEN_ENABLE_BRICK_CHANNELS 0x0FFF
@@ -29,6 +32,7 @@
 #define SCANCTRL_START_SCAN				0x0001
 #define SCANCTRL_32_OVERSAMPLES			0x0040
 #define SCANCTRL_ENABLE_AUTOBALSWDIS	0x0800
+#define VERSION_DEFAULT_CONTENT			0x843
 
 
 /* ==================================================================== */
@@ -50,14 +54,33 @@ extern LookupTable_S zenerTable;
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
 /* ==================================================================== */
 
+static uint16_t getValueFromBuffer(uint8_t* buffer, uint32_t index);
+
 static void updateBmbBalanceSwitches(Bmb_S* bmb);
 
 static bool setBmbInternalLoopback(uint32_t bmbIdx, bool enabled);
+
+static bool startScan(uint32_t numBmbs);
+
+static bool is12BitSensorRailed(uint32_t rawAdcVal);
+
+static bool is14BitSensorRailed(uint32_t rawAdcVal);
 
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DEFINITIONS ===================== */
 /* ==================================================================== */
+
+/*!
+  @brief   Retrieve a 16-bit value from a buffer at the specified index.
+  @param   buffer - Pointer to the buffer containing the data.
+  @param   index - The index of the 16-bit value to retrieve.
+  @return  The 16-bit value located at the specified index in the buffer.
+*/
+static uint16_t getValueFromBuffer(uint8_t* buffer, uint32_t index)
+{
+	return buffer[4 + 2*index] << BITS_IN_BYTE | buffer[3 + 2*index];
+}
 
 /*!
   @brief   Enable the hardware bleed switches if balSwEnabled set in BMB struct
@@ -83,6 +106,12 @@ static void updateBmbBalanceSwitches(Bmb_S* bmb)
 	writeDevice(BALSWEN, balanceSwEnabled, bmb->bmbIdx);
 }
 
+/*!
+  @brief   Set or clear the internal loopback mode for a specific BMB.
+  @param   bmbIdx - The index of the BMB to configure.
+  @param   enabled - True to enable internal loopback mode, false to disable it.
+  @return  True if the internal loopback mode was set successfully, false otherwise.
+*/
 static bool setBmbInternalLoopback(uint32_t bmbIdx, bool enabled)
 {
 	for (int i = 0; i < NUM_DATA_CHECKS; i++)
@@ -93,7 +122,7 @@ static bool setBmbInternalLoopback(uint32_t bmbIdx, bool enabled)
 		clearRxBuffer();
 		// Verify that the internal loopback mode was enabled successfully
 		readDevice(DEVCFG2, recvBuffer, bmbIdx);
-		uint16_t registerValue = (recvBuffer[4] << 8) | recvBuffer[3];
+		uint16_t registerValue = getValueFromBuffer(recvBuffer, 0);
 		if (registerValue & DEVCFG2_LASTLOOP)
 		{
 			// Successfully wrote to LASTLOOP bit
@@ -103,6 +132,59 @@ static bool setBmbInternalLoopback(uint32_t bmbIdx, bool enabled)
 	return false;
 }
 
+/*!
+  @brief   Start a scan for all BMBs in the daisy chain
+  @param   numBmbs - The number of BMBs in the daisy chain.
+  @return  True if the scan started successfully, false otherwise.
+*/
+static bool startScan(uint32_t numBmbs)
+{
+	const uint16_t scanCtrlData = SCANCTRL_ENABLE_AUTOBALSWDIS | SCANCTRL_32_OVERSAMPLES | SCANCTRL_START_SCAN;
+	if(!writeAll(SCANCTRL, scanCtrlData, numBmbs))
+	{
+		Debug("Failed to start scan!\n");
+		return false;
+	}
+	return true;
+}
+
+/*!
+  @brief   Check if a 12-bit ADC sensor value is railed (near minimum or maximum).
+  @param   rawAdcVal - The raw 12-bit ADC sensor value to check.
+  @return  True if the sensor value is within the margin of railed values, false otherwise.
+*/
+static bool is12BitSensorRailed(uint32_t rawAdcVal)
+{
+	// Ensure only 12 bit value
+	rawAdcVal &= MAX_12_BIT;
+
+	// Determine if the adc reading is within a margin of the railed values
+	if ((rawAdcVal < RAILED_MARGIN_COUNT) || (RAILED_MARGIN_COUNT > (MAX_12_BIT - RAILED_MARGIN_COUNT)))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+/*!
+  @brief   Check if a 14-bit ADC sensor value is railed (near minimum or maximum).
+  @param   rawAdcVal - The raw 14-bit ADC sensor value to check.
+  @return  True if the sensor value is within the margin of railed values, false otherwise.
+*/
+static bool is14BitSensorRailed(uint32_t rawAdcVal)
+{
+	// Ensure only 14 bit value
+	rawAdcVal &= MAX_14_BIT;
+
+	// Determine if the adc reading is within a margin of the railed values
+	if ((rawAdcVal < RAILED_MARGIN_COUNT) || (RAILED_MARGIN_COUNT > (MAX_14_BIT - RAILED_MARGIN_COUNT)))
+	{
+		return true;
+	}
+
+	return false;
+}
 
 
 /* ==================================================================== */
@@ -134,11 +216,7 @@ bool initBmbs(uint32_t numBmbs)
 	setMux(numBmbs, MUX1);
 
 	// Start initial acquisition with 32 oversamples
-	if(!writeAll(SCANCTRL, (SCANCTRL_START_SCAN | SCANCTRL_32_OVERSAMPLES | SCANCTRL_ENABLE_AUTOBALSWDIS), numBmbs))
-	{
-		Debug("Failed to start initial scan!\n");
-		return false;
-	}
+	startScan(numBmbs);
 
 	// Set brickOV voltage alert threshold
 	// Set brickUV voltage alert threshold
@@ -165,12 +243,15 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			bool allBmbScanDone = true;
 			for (uint8_t j = 0; j < numBmbs; j++)
 			{
-				uint16_t scanCtrlData = (recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j];
+				// Extract register contents from receive buffer
+				uint16_t scanCtrlData = getValueFromBuffer(recvBuffer, j);
 				allBmbScanDone &= ((scanCtrlData & 0xA000) == 0xA000);	// Verify SCANDONE and DATARDY bits
 			}
 			if (!allBmbScanDone)
 			{
-				// Do we want to try to restart the scans here?
+				// Restart scans since scan may have not started properly
+				startScan(numBmbs);
+				// TODO: Set sensor status to bad
 				Debug("All BMB Scans failed to complete in time\n");
 				return;	
 			}
@@ -182,8 +263,8 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			return;
 		}
 
-		// Update cell data
-		for (uint8_t i = 0; i < 12; i++)
+		// Update brick voltage data
+		for (uint8_t i = 0; i < NUM_BRICKS_PER_BMB; i++)
 		{
 			uint8_t cellReg = i + CELLn;
 			if (readAll(cellReg, recvBuffer, numBmbs))
@@ -191,43 +272,52 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 				for (uint8_t j = 0; j < numBmbs; j++)
 				{
 					// Read brick voltage in [15:2]
-					uint32_t brickVRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
+					uint32_t brickVRaw = getValueFromBuffer(recvBuffer, j) >> 2;
 					float brickV = brickVRaw * CONVERT_14BIT_TO_5V;
-					bmb[j].brickV[i] = brickV;
-					bmb[j].brickVStatus[i] = GOOD;
+					// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+					const uint32_t bmbIdx = numBmbs - j - 1;
+					bmb[bmbIdx].brickV[i] = brickV;
+					bmb[bmbIdx].brickVStatus[i] = is14BitSensorRailed(brickVRaw) ? BAD : GOOD;
 				}
 			}
 			else
 			{
 				Debug("Error during cellReg readAll!\n");
 
-				// Failed to acquire data. Set status to MIA
+				// Failed to acquire data. Set status to BAD
 				for (int32_t j = 0; j < numBmbs; j++)
 				{
-					bmb[j].brickVStatus[i] = MIA;
+					// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+					const uint32_t bmbIdx = numBmbs - j - 1;
+					bmb[bmbIdx].brickVStatus[i] = BAD;
 				}
 			}
 		}
 
-		// Read VBLOCK register which is the sum of all brick voltages (stack voltage)
+		// Read VBLOCK register which is the total voltage of the segment
 		if (readAll(VBLOCK, recvBuffer, numBmbs))
 		{
 			for (uint8_t j = 0; j < numBmbs; j++)
 			{
 				// Read block voltage in [15:2]
-				uint32_t stackVRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
-				float stackV = stackVRaw * CONVERT_14BIT_TO_60V;
-				bmb[j].stackV = stackV;
+				uint32_t segmentVRaw = getValueFromBuffer(recvBuffer, j) >> 2;
+				float segmentV = segmentVRaw * CONVERT_14BIT_TO_60V;
+				// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+				const uint32_t bmbIdx = numBmbs - j - 1;
+				bmb[bmbIdx].segmentV = segmentV;
+				bmb[bmbIdx].segmentVStatus = is14BitSensorRailed(segmentVRaw) ? BAD : GOOD;
 			}
 		}
 		else
 		{
 			Debug("Error during VBLOCK readAll!\n");
 
-			// Failed to acquire data. Set status to MIA
+			// Failed to acquire data. Set status to BAD
 			for (int32_t j = 0; j < numBmbs; j++)
 			{
-				bmb[j].stackVStatus = MIA;
+				// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+				const uint32_t bmbIdx = numBmbs - j - 1;
+				bmb[bmbIdx].segmentVStatus = BAD;
 			}
 		}
 
@@ -237,12 +327,11 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 			if (readAll(auxChannel, recvBuffer, numBmbs))
 			{
 				// Parse received data
-				for (uint8_t j = 0; j < numBmbs; j++)
+				for (uint32_t j = 0; j < numBmbs; j++)
 				{
 					// Read AUX voltage in [15:4]
-					uint32_t auxRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 4;
+					uint32_t auxRaw = getValueFromBuffer(recvBuffer, j) >> 4;
 					float auxV = auxRaw * CONVERT_12BIT_TO_3V3;
-					bmb[j].tempVoltage[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = auxV;
 
 					// Convert temp voltage registers to temperature readings
 					if(muxState == MUX7 || muxState == MUX8) // NTC/ON-Board Temp Channel
@@ -252,21 +341,48 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 						// NTC2: MUX7 (1) + AIN1 (0)	= Index 1
 						// NTC3: MUX8 (3) + AIN2 (-1)	= Index 2
 						// NTC4: MUX8 (3) + AIN1 (0)	= Index 3
-						bmb[j].boardTemp[((muxState == MUX7) ? 1 : 3) + ((auxChannel == AIN1) ? 0 : -1)] = lookup(auxV, &ntcTable);
+						const uint32_t ntcIdx = ((muxState == MUX7) ? 1 : 3) + ((auxChannel == AIN1) ? 0 : -1);
+						// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+						const uint32_t bmbIdx = numBmbs - j - 1;
+						bmb[bmbIdx].boardTemp[ntcIdx] = lookup(auxV, &ntcTable);
+						bmb[bmbIdx].boardTempStatus[ntcIdx] = is12BitSensorRailed(auxRaw) ? BAD : GOOD;
+						// TODO Add board temp status
 					}
 					else // Zener/Brick Temp Channel
 					{
-						bmb[j].brickTemp[muxState + ((auxChannel == AIN2) ? (NUM_BRICKS_PER_BMB/2) : 0)] = lookup(auxV, &zenerTable);
+						const uint32_t brickIdx = muxState + ((auxChannel == AIN2) ? (NUM_BRICKS_PER_BMB/2) : 0);
+						// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+						const uint32_t bmbIdx = numBmbs - j - 1;
+						bmb[bmbIdx].brickTemp[brickIdx] = lookup(auxV, &zenerTable);
+						bmb[bmbIdx].brickTempStatus[brickIdx] = is12BitSensorRailed(auxRaw) ? BAD : GOOD;
 					}
 				}
 			}
 			else
 			{
 				Debug("Error during TEMP readAll!\n");
-				// Failed to acquire data. Set status to MIA
+				// Failed to acquire data. Set status to BAD
 				for (int32_t j = 0; j < numBmbs; j++)
 				{
-					bmb[j].tempStatus[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = MIA;
+					if(muxState == MUX7 || muxState == MUX8) // NTC/ON-Board Temp Channel
+					{
+						// Ternary statements used to resolve index of NTC channel from mux position and ain port
+						// NTC1: MUX7 (1) + AIN2 (-1)	= Index 0
+						// NTC2: MUX7 (1) + AIN1 (0)	= Index 1
+						// NTC3: MUX8 (3) + AIN2 (-1)	= Index 2
+						// NTC4: MUX8 (3) + AIN1 (0)	= Index 3
+						const uint32_t ntcIdx = ((muxState == MUX7) ? 1 : 3) + ((auxChannel == AIN1) ? 0 : -1);
+						// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+						const uint32_t bmbIdx = numBmbs - j - 1;
+						bmb[bmbIdx].boardTempStatus[ntcIdx] = BAD;
+					}
+					else
+					{
+						const uint32_t brickIdx = muxState + ((auxChannel == AIN2) ? (NUM_BRICKS_PER_BMB/2) : 0);
+						// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
+						const uint32_t bmbIdx = numBmbs - j - 1;
+						bmb[bmbIdx].brickTempStatus[brickIdx] = BAD;
+					}
 				}
 			}
 		}
@@ -276,126 +392,7 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		setMux(numBmbs, muxState);
 
 		// Start acquisition for next function call with 32 oversamples and AUTOBALSWDIS
-		if(!writeAll(SCANCTRL, 0x0841, numBmbs))
-		{
-			Debug("SHIT!\n");
-		}
-	}
-}
-
-/*!
-  @brief   Only update voltage data on BMBs
-  @param   bmb - BMB array data
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-*/
-// This should probably be rewritten
-void updateBmbVoltageData(Bmb_S* bmb, uint32_t numBmbs)
-{
-	// Start acquisition
-	writeAll(SCANCTRL, 0x0001, numBmbs);
-
-	// Update cell data
-	for (uint8_t i = 0; i < 12; i++)
-	{
-		uint8_t cellReg = i + CELLn;
-		if (readAll(cellReg, recvBuffer, numBmbs))
-		{
-			for (uint8_t j = 0; j < numBmbs; j++)
-			{
-				// Read brick voltage in [15:2]
-				uint32_t brickVRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
-				float brickV = brickVRaw * CONVERT_14BIT_TO_5V;
-				bmb[j].brickV[i] = brickV;
-				bmb[j].brickVStatus[i] = GOOD;
-			}
-		}
-		else
-		{
-			Debug("Error during cellReg readAll!\n");
-
-			// Failed to acquire data. Set status to MIA
-			for (int32_t j = 0; j < numBmbs; j++)
-			{
-				bmb[j].brickVStatus[i] = MIA;
-			}
-		}
-	}
-
-	// Read VBLOCK register which is the sum of all brick voltages (stack voltage)
-		if (readAll(VBLOCK, recvBuffer, numBmbs))
-		{
-			for (uint8_t j = 0; j < numBmbs; j++)
-			{
-				// Read block voltage in [15:2]
-				uint32_t stackVRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 2;
-				float stackV = stackVRaw * CONVERT_14BIT_TO_60V;
-				bmb[j].stackV = stackV;
-			}
-		}
-	else
-	{
-		Debug("Error during VBLOCK readAll!\n");
-
-		// Failed to acquire data. Set status to MIA
-		for (int32_t j = 0; j < numBmbs; j++)
-		{
-			bmb[j].stackVStatus = MIA;
-		}
-	}
-
-	// TODO Add check - Compare VBLOCK with sum of brick voltages
-}
-
-/*!
-  @brief   Read all temperature channels on BMB
-  @param   bmb - BMB array data
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-*/
-void updateBmbTempData(Bmb_S* bmb, uint32_t numBmbs)
-{
-	// Cycle through MUX channels
-	for(Mux_State_E mux = MUX1; mux < NUM_MUX_CHANNELS; mux++)
-	{
-		// Set Mux configuration
-		setMux(numBmbs, mux);
-		// Read AUX/TEMP registers
-		for (int32_t auxChannel = AIN1; auxChannel <= AIN2; auxChannel++)
-		{
-			if (readAll(auxChannel, recvBuffer, numBmbs))
-			{
-				// Parse received data
-				for (uint8_t j = 0; j < numBmbs; j++)
-				{
-					// Read AUX voltage in [15:4]
-					uint32_t auxRaw = ((recvBuffer[4 + 2*j] << 8) | recvBuffer[3 + 2*j]) >> 4;
-					float auxV = auxRaw * CONVERT_12BIT_TO_3V3;
-					bmb[j].tempVoltage[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = auxV;
-
-					// Convert temp voltage registers to temperature readings
-					if(muxState == MUX7 || muxState == MUX8) // NTC/ON-Board Temp Channel
-					{
-						// Ternary statements used to resolve index of NTC channel from mux position and ain port
-						// NTC1: MUX7 (1) + AIN2 (-1)	= Index 0
-						// NTC2: MUX7 (1) + AIN1 (0)	= Index 1
-						// NTC3: MUX8 (3) + AIN2 (-1)	= Index 2
-						// NTC4: MUX8 (3) + AIN1 (0)	= Index 3
-						bmb[j].boardTemp[((muxState == MUX7) ? 1 : 3) + ((auxChannel == AIN1) ? 0 : -1)] = lookup(auxV, &ntcTable);
-					}
-					else // Zener/Brick Temp Channel
-					{
-						bmb[j].brickTemp[muxState + ((auxChannel == AIN2) ? (NUM_BRICKS_PER_BMB/2) : 0)] = lookup(auxV, &zenerTable);
-					}
-				}
-			}
-			else
-			{
-				// Failed to acquire data. Set status to MIA
-				for (int32_t j = 0; j < numBmbs; j++)
-				{
-					bmb[j].tempStatus[muxState + ((auxChannel == AIN2) ? NUM_MUX_CHANNELS : 0)] = MIA;
-				}
-			}
-		}
+		startScan(numBmbs);
 	}
 }
 
@@ -425,69 +422,92 @@ void aggregateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 		float maxBrickV = MIN_VOLTAGE_SENSOR_VALUE_V;
 		float minBrickV = MAX_VOLTAGE_SENSOR_VALUE_V;
 		float sumV	= 0.0f;
+		uint32_t numGoodBrickV = 0;
+
 		float maxBrickTemp = MIN_TEMP_SENSOR_VALUE_C;
 		float minBrickTemp = MAX_TEMP_SENSOR_VALUE_C;
 		float brickTempSum = 0.0f;
+		uint32_t numGoodBrickTemp = 0;
+
 		float maxBoardTemp = MIN_TEMP_SENSOR_VALUE_C;
 		float minBoardTemp = MAX_TEMP_SENSOR_VALUE_C;
 		float boardTempSum = 0.0f;
-		// TODO If UNINITIALIZED do not count
+		uint32_t numGoodBoardTemp = 0;
+
 		// Aggregate brick voltage and temperature data
 		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
 		{
-			float brickV = pBmb->brickV[j];
-			float brickTemp = pBmb->brickTemp[j];
+			// Only update stats if sense status is good
+			if (pBmb->brickVStatus[j] == GOOD)
+			{
+				float brickV = pBmb->brickV[j];
 
-			if (brickV > maxBrickV)
-			{
-				maxBrickV = brickV;
-			}
-			if (brickV < minBrickV)
-			{
-				minBrickV = brickV;
-			}
-
-			if (brickTemp > maxBrickTemp)
-			{
-				maxBrickTemp = brickTemp;
-			}
-			if (brickTemp < minBrickTemp)
-			{
-				minBrickTemp = brickTemp;
+				if (brickV > maxBrickV)
+				{
+					maxBrickV = brickV;
+				}
+				if (brickV < minBrickV)
+				{
+					minBrickV = brickV;
+				}
+				numGoodBrickV++;
+				sumV += brickV;
 			}
 
-			sumV += brickV;
-			brickTempSum += brickTemp;
+			// Only update stats if sense status is good
+			if (pBmb->brickTempStatus[j] == GOOD)
+			{
+				float brickTemp = pBmb->brickTemp[j];
+
+				if (brickTemp > maxBrickTemp)
+				{
+					maxBrickTemp = brickTemp;
+				}
+				if (brickTemp < minBrickTemp)
+				{
+					minBrickTemp = brickTemp;
+				}
+				numGoodBrickTemp++;
+				brickTempSum += brickTemp;
+			}
 		}
 
 		// Aggregate board temp data
 		for (int32_t j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
 		{
-			float boardTemp = pBmb->boardTemp[j];
-
-			if (boardTemp > maxBoardTemp)
+			if (pBmb->boardTempStatus[j] == GOOD)
 			{
-				maxBoardTemp = boardTemp;
-			}
-			if (boardTemp < minBoardTemp)
-			{
-				minBoardTemp = boardTemp;
-			}
+				float boardTemp = pBmb->boardTemp[j];
 
-			boardTempSum += boardTemp;
+				if (boardTemp > maxBoardTemp)
+				{
+					maxBoardTemp = boardTemp;
+				}
+				if (boardTemp < minBoardTemp)
+				{
+					minBoardTemp = boardTemp;
+				}
+				numGoodBoardTemp++;
+				boardTempSum += boardTemp;
+			}
 		}
 
 		// Update BMB statistics
 		pBmb->maxBrickV = maxBrickV;
 		pBmb->minBrickV = minBrickV;
 		pBmb->sumBrickV	= sumV;
-		pBmb->avgBrickV = sumV / NUM_BRICKS_PER_BMB;
+		pBmb->avgBrickV = (numGoodBrickV == 0) ? pBmb->avgBrickV : sumV / numGoodBrickV;
+		pBmb->numBadBrickV = NUM_BRICKS_PER_BMB - numGoodBrickV;
+
 		pBmb->maxBrickTemp = maxBrickTemp;
 		pBmb->minBrickTemp = minBrickTemp;
-		pBmb->avgBrickTemp = brickTempSum / NUM_BRICKS_PER_BMB;
+		pBmb->avgBrickTemp = (numGoodBrickTemp == 0) ? pBmb->avgBrickTemp :  brickTempSum / numGoodBrickTemp;
+		pBmb->numBadBrickTemp = NUM_BRICKS_PER_BMB - numGoodBrickTemp;
+
 		pBmb->maxBoardTemp = maxBoardTemp;
 		pBmb->minBoardTemp = minBoardTemp;
-		pBmb->avgBoardTemp = boardTempSum / NUM_BOARD_TEMP_PER_BMB;
+		pBmb->avgBoardTemp = (numGoodBoardTemp == 0) ? pBmb->avgBoardTemp : boardTempSum / numGoodBoardTemp;
+		pBmb->numBadBoardTemp = NUM_BOARD_TEMP_PER_BMB - numGoodBoardTemp;
 	}
 }
 
@@ -512,9 +532,9 @@ int32_t detectBmbDaisyChainBreak(Bmb_S* bmb, uint32_t numBmbs)
 
 		for (uint32_t i = 0; i < bmbIdx + 1; i++)
 		{
-			// Read model number in [15:4]
-			uint32_t versionRegister = ((recvBuffer[4 + 2*i] << 8) | recvBuffer[3 + 2*i]) >> 4;
-			if (versionRegister != 0x843)
+			// Read model number in [15:4] to verify succesful communication
+			uint32_t versionRegister = getValueFromBuffer(recvBuffer, i) >> 4;
+			if (versionRegister != VERSION_DEFAULT_CONTENT)
 			{
 				// Broken link detected. Convert bmbIdx from 0-indexed to 1-indexed value 
 				return bmbIdx + 1;

@@ -22,6 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stm32f4xx_it.h"
 #include "mainTask.h"
 #include "epaperTask.h"
 #include "idleTask.h"
@@ -61,15 +62,19 @@ TIM_HandleTypeDef htim10;
 UART_HandleTypeDef huart1;
 
 osThreadId defaultTaskHandle;
+uint32_t defaultTaskBuffer[ 512 ];
+osStaticThreadDef_t defaultTaskControlBlock;
 osThreadId mainTaskHandle;
+uint32_t mainTaskBuffer[ 1024 ];
+osStaticThreadDef_t mainTaskControlBlock;
 osThreadId ePaperHandle;
+uint32_t ePaperBuffer[ 1024 ];
+osStaticThreadDef_t ePaperControlBlock;
 osThreadId idleHandle;
+uint32_t idleBuffer[ 256 ];
+osStaticThreadDef_t idleControlBlock;
 osMessageQId epaperQueueHandle;
 /* USER CODE BEGIN PV */
-// TODO: Get rid of these 2
-extern bool balancingEnabled;
-extern uint32_t lastBalancingUpdate;
-
 volatile uint32_t imdFrequency;
 volatile uint32_t imdDutyCycle;
 volatile uint32_t imdLastUpdate;
@@ -125,6 +130,22 @@ GETCHAR_PROTOTYPE
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+/*!
+  @brief   This function is called by FreeRTOS when a stack overflow is detected.
+           This function prints an error message indicating the task that caused the stack overflow
+           and then calls the hardfault handler, which flashes an LED to indicate an error and resets the MCU.
+  @param   xTask The handle of the task that caused the stack overflow.
+  @param   pcTaskName A pointer to a string containing the name of the task that caused the stack overflow.
+*/
+void vApplicationStackOverflowHook( TaskHandle_t xTask, signed char *pcTaskName )
+{
+  // Print out error message indicating offending task
+  Debug("Error: Stack overflow detected in task: %s\n", pcTaskName);
+  // Call hardfault handler which indicates error by flashing led and then resets MCU
+  HardFault_Handler();
+}
+
 /*!
   @brief   Interrupt when SPI TX finishes. Unblock task by releasing
   	  	   semaphore
@@ -297,19 +318,19 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadStaticDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 512, defaultTaskBuffer, &defaultTaskControlBlock);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of mainTask */
-  osThreadDef(mainTask, StartMainTask, osPriorityHigh, 0, 256);
+  osThreadStaticDef(mainTask, StartMainTask, osPriorityHigh, 0, 1024, mainTaskBuffer, &mainTaskControlBlock);
   mainTaskHandle = osThreadCreate(osThread(mainTask), NULL);
 
   /* definition and creation of ePaper */
-  osThreadDef(ePaper, StartEPaper, osPriorityLow, 0, 512);
+  osThreadStaticDef(ePaper, StartEPaper, osPriorityLow, 0, 1024, ePaperBuffer, &ePaperControlBlock);
   ePaperHandle = osThreadCreate(osThread(ePaper), NULL);
 
   /* definition and creation of idle */
-  osThreadDef(idle, StartIdle, osPriorityLow, 0, 128);
+  osThreadStaticDef(idle, StartIdle, osPriorityLow, 0, 256, idleBuffer, &idleControlBlock);
   idleHandle = osThreadCreate(osThread(idle), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */

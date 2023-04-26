@@ -23,54 +23,54 @@
 #define TIMEOUT_SPI_COMPLETE_MS 10
 
 // REGISTERS
-#define R_RX_STATUS 0x01 - 1			// Non writable
-#define R_TX_STATUS 0x03 - 1			// Non writable
-#define R_RX_INTERRUPT_ENABLE 0x04
-#define R_TX_INTERRUPT_ENABLE 0x06
-#define R_RX_INTERRUPT_FLAGS 0x08
-#define R_TX_INTERRUPT_FLAGS 0x0A
-#define R_CONFIG_1 0x0C
-#define R_CONFIG_2 0x0E
-#define R_CONFIG_3 0x10
-#define R_FMEA 0x13 - 1					// Non writable
-#define R_MODEL 0x15 - 1				// Non writable
-#define R_VERSION 0x17 - 1				// Non writable
-#define R_RX_BYTE 0x19 - 1				// Non writable
-#define R_RX_SPACE 0x1B - 1				// Non writable
-#define R_TX_QUEUE_SELECTS 0x95 - 1		// Non writable
-#define R_RX_READ_POINTER 0x97 - 1		// Non writable
-#define R_RX_WRITE_POINTER 0x99 - 1		// Non writable
-#define R_RX_NEXT_MESSAGE 0x9B - 1		// Non writable
+#define R_RX_STATUS             (0x01 - 1)		// Non writable
+#define R_TX_STATUS             (0x03 - 1)		// Non writable
+#define R_RX_INTERRUPT_ENABLE   0x04
+#define R_TX_INTERRUPT_ENABLE   0x06
+#define R_RX_INTERRUPT_FLAGS    0x08
+#define R_TX_INTERRUPT_FLAGS    0x0A
+#define R_CONFIG_1              0x0C
+#define R_CONFIG_2              0x0E
+#define R_CONFIG_3              0x10
+#define R_FMEA                  (0x13 - 1)		// Non writable
+#define R_MODEL                 (0x15 - 1)		// Non writable
+#define R_VERSION               (0x17 - 1)		// Non writable
+#define R_RX_BYTE               (0x19 - 1)		// Non writable
+#define R_RX_SPACE              (0x1B - 1)		// Non writable
+#define R_TX_QUEUE_SELECTS      (0x95 - 1)		// Non writable
+#define R_RX_READ_POINTER       (0x97 - 1)		// Non writable
+#define R_RX_WRITE_POINTER      (0x99 - 1)		// Non writable
+#define R_RX_NEXT_MESSAGE       (0x9B - 1)		// Non writable
 
 // COMMANDS
-#define CMD_WRITE_ALL 0x02          // Write to all BMB registers
-#define CMD_READ_ALL 0x03           // Read from all BMB registers
-#define CMD_CLR_RX_BUF 0xE0         // Clear Receive Buffer
-#define CMD_CLR_TX_BUF 0x20         // Clear Transmit Buffer
-#define CMD_RD_MSG 0x91             // Read Message
-#define CMD_RD_NXT_MSG 0x93         // Read Next Message
-#define CMD_WR_NXT_LD_Q_L0 0xB0     // Write Next Load Queue
-#define CMD_WR_NXT_LD_Q_L1 0xB2
-#define CMD_WR_NXT_LD_Q_L2 0xB4
-#define CMD_WR_NXT_LD_Q_L3 0xB6
-#define CMD_WR_NXT_LD_Q_L4 0xB8
-#define CMD_WR_NXT_LD_Q_L5 0xBA
-#define CMD_WR_NXT_LD_Q_L6 0xBC
-#define CMD_WR_LD_Q_L0 0xC0         // Write Load Queue
-#define CMD_WR_LD_Q_L1 0xC2
-#define CMD_WR_LD_Q_L2 0xC4
-#define CMD_WR_LD_Q_L3 0xC6
-#define CMD_WR_LD_Q_L4 0xC8
-#define CMD_WR_LD_Q_L5 0xCA
-#define CMD_WR_LD_Q_L6 0xCC
-#define CMD_RD_LD_Q_L0 0xC1
-#define CMD_RD_LD_Q_L1 0xC3
-#define CMD_RD_LD_Q_L2 0xC5
-#define CMD_RD_LD_Q_L3 0xC7
-#define CMD_RD_LD_Q_L4 0xC9
-#define CMD_RD_LD_Q_L5 0xCB
-#define CMD_RD_LD_Q_L6 0xCD
-#define CMD_HELLO_ALL 0x57          // Hello All Initialization
+#define CMD_WRITE_ALL 		  0x02        // Write to all BMB registers
+#define CMD_READ_ALL 		    0x03        // Read from all BMB registers
+#define CMD_CLR_TX_BUF 		  0x20        // Clear Transmit Buffer
+#define CMD_RD_MSG 			    0x91        // Read Message
+#define CMD_CLR_RX_BUF 		  0xE0        // Clear Receive Buffer
+#define CMD_RD_NXT_MSG 		  0x93        // Read Next Message
+#define CMD_WR_NXT_LD_Q_L0	0xB0        // Write Next Load Queue
+#define CMD_WR_NXT_LD_Q_L1	0xB2
+#define CMD_WR_NXT_LD_Q_L2	0xB4
+#define CMD_WR_NXT_LD_Q_L3	0xB6
+#define CMD_WR_NXT_LD_Q_L4	0xB8
+#define CMD_WR_NXT_LD_Q_L5	0xBA
+#define CMD_WR_NXT_LD_Q_L6	0xBC
+#define CMD_WR_LD_Q_L0		  0xC0	      // Write Load Queue
+#define CMD_WR_LD_Q_L1		  0xC2
+#define CMD_WR_LD_Q_L2		  0xC4
+#define CMD_WR_LD_Q_L3		  0xC6
+#define CMD_WR_LD_Q_L4		  0xC8
+#define CMD_WR_LD_Q_L5		  0xCA
+#define CMD_WR_LD_Q_L6		  0xCC
+#define CMD_RD_LD_Q_L0		  0xC1
+#define CMD_RD_LD_Q_L1		  0xC3
+#define CMD_RD_LD_Q_L2		  0xC5
+#define CMD_RD_LD_Q_L3		  0xC7
+#define CMD_RD_LD_Q_L4		  0xC9
+#define CMD_RD_LD_Q_L5		  0xCB
+#define CMD_RD_LD_Q_L6		  0xCD
+#define CMD_HELLO_ALL 		  0x57	      // Hello All Initialization
 
 
 /* ==================================================================== */

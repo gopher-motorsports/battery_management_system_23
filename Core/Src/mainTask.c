@@ -7,7 +7,7 @@
 #include "mainTask.h"
 #include "bms.h"
 #include "bmbInterface.h"
-#include "bmbUtils.h"
+#include "leakyBucket.h"
 #include "bmb.h"
 #include "epaper.h"
 #include "epaperUtils.h"
@@ -47,6 +47,7 @@ void printCellVoltages();
 void printCellTemperatures();
 void printBoardTemperatures();
 void printInternalResistances();
+void printActiveAlerts();
 
 
 /* ==================================================================== */
@@ -84,9 +85,9 @@ void runMain()
 
 		updateImdStatus();
 
-		updateSdcStatus();
-
 		updateEpaper();
+
+		checkAndHandleAlerts();
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{
@@ -106,12 +107,14 @@ void runMain()
 				printf("Balancing Enabled: FALSE\n");
 			}
 			balancePack(numBmbs, balancingEnabled);
-			// balancePackToVoltage(numBmbs, 3.7f);
+			// balancePackToVoltage(numBmbs, 3.87f);
 
 			printCellVoltages();
 			printCellTemperatures();
-			printInternalResistances();
+			// printInternalResistances();
 			printBoardTemperatures();
+			printActiveAlerts();
+
 			printf("Leaky bucket filled: %d\n\n", leakyBucketFilled(&asciCommsLeakyBucket));
 
 			printf("Tractive Current: %6.3f\n", (double)gBms.tractiveSystemCurrent);
@@ -135,7 +138,8 @@ void runMain()
 void printCellVoltages()
 {
 	printf("Cell Voltage:\n");
-	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    | StackV  |\n");
+	printf("Max: %5.3fV\t Min: %5.3fV\t Avg: %5.3fV\n", (double)gBms.maxBrickV, (double)gBms.minBrickV, (double)gBms.avgBrickV);
+	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    | Segment |\n");
 	for (int32_t i = 0; i < numBmbs; i++)
 	{
 		printf("|    %02ld   |", i + 1);
@@ -152,7 +156,7 @@ void printCellVoltages()
 			}
 			printf(" |");
 		}
-		printf("  %5.2f  |", (double)gBms.bmb[i].stackV);
+		printf("  %5.2f  |", (double)gBms.bmb[i].segmentV);
 		printf("\n");
 	}
 	printf("\n");
@@ -161,6 +165,7 @@ void printCellVoltages()
 void printCellTemperatures()
 {
 	printf("Cell Temp:\n");
+	printf("Max: %5.1fC\t Min: %5.1fC\t Avg: %5.1fC\n", (double)gBms.maxBrickTemp, (double)gBms.minBrickTemp, (double)gBms.avgBrickTemp);
 	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    |\n");
 	for (int32_t i = 0; i < numBmbs; i++)
 	{
@@ -193,6 +198,7 @@ void printInternalResistances()
 void printBoardTemperatures()
 {
 	printf("Board Temp:\n");
+	printf("Max: %5.1fC\t Min: %5.1fC\t Avg: %5.1fC\n", (double)gBms.maxBoardTemp, (double)gBms.minBoardTemp, (double)gBms.avgBoardTemp);
 	printf("|   BMB   |    1    |    2    |    3    |    4    |\n");
 	for (int32_t i = 0; i < numBmbs; i++)
 	{
@@ -202,6 +208,26 @@ void printBoardTemperatures()
 			printf(" %5.1fC  |", (double)gBms.bmb[i].boardTemp[j]);
 		}
 		printf("\n");
+	}
+	printf("\n");
+}
+
+void printActiveAlerts()
+{
+	printf("Alerts Active:\n");
+	uint32_t numActiveAlerts = 0;
+	for (uint32_t i = 0; i < NUM_ALERTS; i++)
+	{
+		Alert_S* alert = alerts[i];
+		if (getAlertStatus(alert) == ALERT_SET)
+		{
+			printf("%s - ACTIVE!\n", alert->alertName);
+			numActiveAlerts++;
+		}
+	}
+	if (numActiveAlerts == 0)
+	{
+		printf("None\n");
 	}
 	printf("\n");
 }
