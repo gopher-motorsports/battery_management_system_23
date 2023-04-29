@@ -683,7 +683,7 @@ void chargeAccumulator()
 	// If a charger message is recieved, check for charger faults and update the charger status
 	if (newChargerMessage)
 	{
-		validateChargerState(&gBms);
+		updateChargerData(&gBms.chargerData);
 		newChargerMessage = false;
 	}
 
@@ -693,6 +693,13 @@ void chargeAccumulator()
 	if (((HAL_GetTick() - lastChargerUpdate) >= CHARGER_UPDATE_PERIOD_MS) && (!newChargerMessage))
 	{
 		lastChargerUpdate = HAL_GetTick();
-		updateChargerState(&gBms);
+		if(gBms.chargingDisabled)
+		{
+			sendChargerMessage(0.0f, 0.0f, false);
+		}
+		else
+		{
+			// TODO Write conditional charging algorithm
+		}
 	}
 }

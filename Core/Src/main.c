@@ -249,18 +249,16 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 	}
 }
 
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+void custom_can_callback(CAN_HandleTypeDef *hcan, U32 fifo_num)
 {
-
   // Charger CAN
   if(hcan == &hcan1)
   {
     CAN_RxHeaderTypeDef rxHeader;
     uint8_t rxData[8];
     
-    HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rxHeader, rxData);
-
-    if ((rxHeader.ExtId == CHARGER_CAN_ID + 1))
+    HAL_CAN_GetRxMessage(hcan, fifo_num, &rxHeader, rxData);
+    if ((rxHeader.ExtId == CHARGER_CAN_ID_RX) && (rxHeader.DLC == 8))
     {
       for (int32_t i = 0; i < 5; i++)
       {
@@ -268,16 +266,12 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
       }
       newChargerMessage = true;
     }
-    else
-    {
-      printf("Failed to read from charger\n");
-    }
   }
 
   // Gopher CAN
   if(hcan == &hcan2)
   {
-    service_can_rx_hardware(hcan, CAN_RX_FIFO0);
+    service_can_rx_hardware(hcan, fifo_num);
   }
 }
 
@@ -516,7 +510,7 @@ static void MX_CAN1_Init(void)
 
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 20;
+  hcan1.Init.Prescaler = 10;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
   hcan1.Init.TimeSeg1 = CAN_BS1_6TQ;

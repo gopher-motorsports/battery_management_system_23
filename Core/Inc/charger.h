@@ -11,7 +11,8 @@
 /* ==================================================================== */
 
 // Charger TX CAN EXT ID, Charger RX EXT ID is CHARGER_CAN_ID + 1
-#define CHARGER_CAN_ID                      0x1806E5F4
+#define CHARGER_CAN_ID_TX                      0x1806E5F4
+#define CHARGER_CAN_ID_RX                      0x18FF50E5
 
 // Hysteresis bounds for accumulator imbalance
 #define MAX_CELL_IMBALANCE_THRES_HIGH       0.1f
@@ -26,7 +27,7 @@
 
 // The max safe charge current and the requested charge current of the charger
 // VTC6 recommends 3A per 18650. 3A x 7p = 21A
-#define MAX_CHRAGE_CURRENT                  21.0f
+#define MAX_CHARGE_CURRENT                  21.0f
 
 // Charger output validation thresholds 
 // The difference between the charger output and accumulator data must fall below these thresholds
@@ -34,19 +35,47 @@
 #define CHARGER_CURRENT_THRESHOLD           5.0f
 
 /* ==================================================================== */
+/* ========================= ENUMERATED TYPES ========================= */
+/* ==================================================================== */
+
+typedef enum
+{
+    CHARGER_HARDWARE_FAULT,
+    CHARGER_OVERTEMP_FAULT,
+    CHARGER_INPUT_VOLTAGE_FAULT,
+    CHRAGER_REVERSE_POLARITY_FAULT,
+    CHARGER_COMMUNICATION_FAULT,
+    NUM_CHARGER_FAULTS
+} Charger_Error_E;
+
+/* ==================================================================== */
+/* ============================== STRUCTS============================== */
+/* ==================================================================== */
+
+typedef struct
+{
+  float chargerVoltage;
+	float chargerCurrent;
+	bool chargerStatus[NUM_CHARGER_FAULTS];
+
+} Charger_Data_S;
+
+/* ==================================================================== */
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */
 /* ==================================================================== */
 
 /*!
-  @brief   Determine if the charger should be enabled or disabled, and send a request to the charger
-  @param   bms - BMS data struct
+  @brief   Send a CAN message to the charger
+  @param   voltageRequest - Charger Voltage Request
+  @param   currentRequest - Charger Current Request
+  @param   enable - Enable/Disable Request
 */
-void updateChargerState(Bms_S* bms);
+void sendChargerMessage(float voltageRequest, float currentRequest, bool enable);
 
 /*!
-  @brief   Validate that the recieved charger CAN message indicates no faults and corresponds to the current accumulator status
-  @param   bms - BMS data struct
+  @brief   Update a chargerData struct with charger information
+  @param   chargerData - Charger_Data_S data struct to store charger data
 */
-void validateChargerState(Bms_S* bms);
+void updateChargerData(Charger_Data_S* chargerData);
 
 #endif /* CHARGER_H_ */
