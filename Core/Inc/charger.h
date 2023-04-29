@@ -37,8 +37,10 @@
 #define CHARGER_VOLTAGE_MISMATCH_THRESHOLD  15.0f
 #define CHARGER_CURRENT_MISMATCH_THRESHOLD  5.0f
 
+#define MAH_TO_AH                           1.0f / 1000.0f
+
 #define MAX_CHARGE_VOLTAGE_V                MAX_BRICK_VOLTAGE * NUM_BRICKS_PER_BMB * NUM_BMBS_IN_ACCUMULATOR
-#define MAX_CHARGE_CURRENT_A                NUM_PARALLEL_CELLS * MAX_C_RATING * (CELL_CAPACITY_MAH / 1000.0f)   
+#define MAX_CHARGE_CURRENT_A                NUM_PARALLEL_CELLS * MAX_C_RATING * CELL_CAPACITY_MAH * MAH_TO_AH
 
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */
