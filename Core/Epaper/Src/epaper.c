@@ -10,6 +10,7 @@
 #include "epaperUtils.h"
 #include "bms.h"
 #include "utils.h"
+#include "soc.h"
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
@@ -52,9 +53,11 @@
 /* ========================= LOCAL VARIABLES ========================== */
 /* ==================================================================== */
 
-uint8_t blackScreenData[IMAGE_SIZE] = {[0 ... IMAGE_SIZE-1] = 0xff};
-uint8_t sendBuffer[8];
-uint8_t bmsImage[IMAGE_SIZE];
+uint8_t whiteScreenData[IMAGE_SIZE] = {[0 ... IMAGE_SIZE-1] = 0xFF}; 	// Image of only white pixels
+uint8_t sendBuffer[8];	// SPI send buffer
+uint8_t bmsImage[IMAGE_SIZE]; // Empty display image for BMS data
+
+// Partial refresh lookup table
 uint8_t WF_PARTIAL_LUT[LUT_SIZE] =
 {
 0x0,	0x40,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
@@ -74,6 +77,8 @@ uint8_t WF_PARTIAL_LUT[LUT_SIZE] =
 0x0,	0x0,	0x0,	0x0,	0x22,	0x22,	0x22,	0x22,	0x22,	0x22,	
 0x0,	0x0,	0x0,	0x22,	0x17,	0x41,	0xB0,	0x32,	0x36
 };
+
+// Full refresh lookup table
 uint8_t WS_20_30_LUT[LUT_SIZE] =
 {											
 0x80,	0x66,	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	0x40,	0x0,	
@@ -218,6 +223,7 @@ static void setLookupTable(uint8_t *lut)
 {
 	// Set look up table register - last 6 bytes belong to seperate registers
 	sendMessage(CMD_WRITE_LUT_REGISTER, lut, LUT_SIZE - 6);
+
 	// Wait for busy_release interupt
 	waitBusyRelease(); 
 
@@ -312,10 +318,13 @@ static void setCursor(uint16_t Xstart, uint16_t Ystart)
 }
 
 /*!
-  @brief	Initialize epaper display
+  @brief	Sends the image buffer in RAM to e-Paper and enables display
+  @param	Image	Image to display
 */
-static void setDefaultSettings()
+static void epdDisplay(uint8_t *Image)
 {
+	// Full refresh settings begin
+
 	// Set initial pin configuration
 	setCommandMode();
 	csOn();
@@ -355,20 +364,11 @@ static void setDefaultSettings()
 
 	// Wait for busy_release interupt
 	waitBusyRelease();
-}
-
-
-/*!
-  @brief	Sends the image buffer in RAM to e-Paper and enables display
-  @param	Image	Image to display
-*/
-static void epdDisplay(uint8_t *Image)
-{
-	// Reset initial settings
-	setDefaultSettings();
 
 	// Set initial lookup table register 
 	setLookupTable(WS_20_30_LUT);
+
+	// Full refresh settings complete
 
 	// Write image to Black and White RAM
 	sendMessage(CMD_WRITE_RAM_BLACK_WHITE, Image, (EPD_WIDTH * EPD_HEIGHT) / 8);
@@ -386,6 +386,8 @@ static void epdDisplay(uint8_t *Image)
 */
 static void epdDisplayPartial(uint8_t *Image)
 {
+	// Partial refresh settings begin
+
     // Reset epaper communication
 	reset();
 	enable();
@@ -417,12 +419,14 @@ static void epdDisplayPartial(uint8_t *Image)
 	// Active display update sequence
 	sendCommand(CMD_MASTER_ACTIVATION);
 
-	// Wait for Busy* interupt
+	// Wait for Busy interupt
 	waitBusyRelease();  
 	
 	// Set window and cursor position
 	setWindows(0, 0, EPD_WIDTH-1, EPD_HEIGHT-1);
 	setCursor(0, 0);
+
+	// Partial refresh settings reset complete
 
 	// Write Black and White image to RAM
 	sendMessage(CMD_WRITE_RAM_BLACK_WHITE, Image, (EPD_WIDTH * EPD_HEIGHT) / 8);
@@ -440,19 +444,7 @@ static void epdDisplayPartial(uint8_t *Image)
 */
 void epdInit()
 {
-	// // Allocate memory for bms image array
-	// uint16_t imageSize = ((EPD_WIDTH % 8 == 0)? (EPD_WIDTH / 8 ): (EPD_WIDTH / 8 + 1)) * EPD_HEIGHT;
-	// if((bmsImage = (uint8_t *)malloc(imageSize)) == NULL) {
-	// 	Debug("Failed to apply for black memory...\r\n");
-	// }
-
-	// for(int i = 0; i < 4736; i++)
-	// {
-	// 	bmsImage[i] = 0xFF;
-	// }
-
 	memset(bmsImage, 0xFF, IMAGE_SIZE);
-
 	Paint_InitBmsImage(bmsImage);
 }
 
@@ -461,20 +453,12 @@ void epdInit()
 */
 void epdClear()
 {
-	epdDisplay(blackScreenData);
+	epdDisplay(whiteScreenData);
 }
 
 /*!
-  @brief	Performs a full update of the epaper with the current BMS display image stored in memory
-*/
-void epdFullRefresh()
-{
-	epdDisplay(bmsImage);
-}
-
-/*!
-  @brief	Updates only the data in the BMS display image and performs a partial update
-  @param bms The BMS struct containing current BMS data 
+  @brief	Update the data in the BMS display image
+  @param epapData The epapData struct containing current BMS data 
 */
 void epdPopulateData(Epaper_Data_S* epapData)
 {
@@ -495,18 +479,44 @@ void epdPopulateData(Epaper_Data_S* epapData)
 	Paint_DrawTableData(epapData->minBoardTemp, DATA_BOARD_TEMP, DATA_MIN);
 
 	// Populate BMS image with current SOC percent
-	Paint_DrawSOC(25);
+	const float soc = getSocFromCellVoltage(epapData->minBrickV);
+	const float soe = getSoeFromSoc(soc);
+	Paint_DrawSOE(soe);
 
-	// Populate BMS image with current State
-	Paint_DrawState();
+	// Populate BMS image with current sensor data
+	Paint_DrawCurrent(epapData->current);
 
 	// Populate BMS image with current Fault
-	Paint_DrawFault();
-	
-	// Perform a partial refresh of the epaper display
-	epdDisplayPartial(bmsImage);
+	if(epapData->numActiveAlerts == 0)
+	{
+		Paint_DrawFault("NO FAULT PRESENT :)");
+	}
+	else
+	{
+		char faultString[64];
+		sprintf(faultString, "(%lu/%lu) %s", epapData->currAlertIndex, epapData->numActiveAlerts, epapData->alertMessage);
+		Paint_DrawFault(faultString);
+	}
+
+	// Populate BMS image with current State
+	Paint_DrawState(epapData->stateMessage);
 }
 
+/*!
+  @brief	Performs a full update of the epaper with the current BMS display image stored in memory
+*/
+void epdFullRefresh()
+{
+	epdDisplay(bmsImage);
+}
+
+/*!
+  @brief	Performs a partial update of the epaper with the current BMS display image stored in memory
+*/
+void epdPartialRefresh()
+{
+	epdDisplayPartial(bmsImage);
+}
 
 /*!
   @brief	Enable epaper sleep mode

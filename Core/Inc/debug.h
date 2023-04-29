@@ -15,4 +15,11 @@
 	#define DebugComm(__info,...)  
 #endif
 
+#define DEBUG_EPAPER 0
+#if DEBUG_EPAPER
+	#define DebugEpaper(__info,...) printf("DebugEpaper: " __info,##__VA_ARGS__)
+#else
+	#define DebugEpaper(__info,...)  
+#endif
+
 #endif

@@ -27,6 +27,12 @@
 void epdInit();
 
 /*!
+  @brief	Update the data in the BMS display image
+  @param epapData The epapData struct containing current BMS data 
+*/
+void epdPopulateData(Epaper_Data_S* epapData);
+
+/*!
   @brief	Clear epaper display
 */
 void epdClear();
@@ -37,10 +43,9 @@ void epdClear();
 void epdFullRefresh();
 
 /*!
-  @brief	Updates only the data in the BMS display image and performs a partial update
-  @param bms The BMS struct containing current BMS data 
+  @brief	Performs a partial update of the epaper with the current BMS display image stored in memory
 */
-void epdPopulateData(Epaper_Data_S* epapData);
+void epdPartialRefresh();
 
 /*!
   @brief	Enable epaper sleep mode

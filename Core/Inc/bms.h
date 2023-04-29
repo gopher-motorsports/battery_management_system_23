@@ -16,7 +16,6 @@
 #include "bmb.h"
 #include "imd.h"
 
-
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
@@ -24,8 +23,11 @@
 // The number of BMBs in the accumulator
 #define NUM_BMBS_IN_ACCUMULATOR				7 
 
+// The number of Cells in a cell brick
+#define NUM_PARALLEL_CELLS          		7
+
 // Max allowable voltage difference between bricks for balancing
-#define BALANCE_THRESHOLD_V					0.002f
+#define BALANCE_THRESHOLD_V					0.001f
 
 // The maximum cell temperature where charging is allowed
 #define MAX_CELL_TEMP_CHARGING_ALLOWED_C	50.0f
@@ -50,7 +52,6 @@ typedef enum
 	BMS_GSNS_FAILURE,
 	BMS_BMB_FAILURE
 } Bms_Hardware_State_E;
-
 
 typedef enum
 {
@@ -78,6 +79,8 @@ typedef struct Bms
 {
 	uint32_t numBmbs;
 	Bmb_S bmb[NUM_BMBS_IN_ACCUMULATOR];
+
+	float accumulatorVoltage;
 
 	float maxBrickV;
 	float minBrickV;
@@ -109,6 +112,9 @@ typedef struct Bms
 	bool amsFaultStatus;
 
 	Bms_Hardware_State_E bmsHwState;
+
+	bool chargerConnected;
+	Charger_Data_S chargerData;
 } Bms_S;
 
 
@@ -177,5 +183,9 @@ void updateTractiveCurrent();
 */
 void updateGopherCan();
 
+/*!
+  @brief   Perform accumulator charge sequence
+*/
+void chargeAccumulator();
 
 #endif /* INC_BMS_H_ */

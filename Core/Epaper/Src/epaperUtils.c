@@ -10,8 +10,36 @@
 #include <string.h> //memset()
 #include <math.h>
 #include "epaper.h"
+#include "utils.h"
+
+#define MAX_PRINT_LENGTH   60
+
+#define TABLE_START_X        43
+#define TABLE_START_Y        63
+
+#define TABLE_COL_STEP_1    74
+#define TABLE_COL_STEP_2    63
+
+#define TABLE_ROW_STEP_1    21
+#define TABLE_ROW_STEP_2    21
 
 PAINT Paint;
+
+uint32_t waveImage[2] =
+{
+    0b00000001000000000011100000000001,
+    0b00000001110000001111111000000111
+};
+
+uint32_t tableSpacingCol[NUM_DATA_TABLE_COL-1] = 
+{
+    TABLE_COL_STEP_1, TABLE_COL_STEP_2
+};
+uint32_t tableSpacingRow[NUM_DATA_TABLE_ROW-1] =
+{
+    TABLE_ROW_STEP_1, TABLE_ROW_STEP_2
+};
+
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DEFINITIONS ===================== */
@@ -70,10 +98,10 @@ parameter:
 // static void Paint_SetRotate(uint16_t Rotate)
 // {
 //     if(Rotate == ROTATE_0 || Rotate == ROTATE_90 || Rotate == ROTATE_180 || Rotate == ROTATE_270) {
-//         Debug("Set image Rotate %d\r\n", Rotate);
+//         DebugEpaper("Set image Rotate %d\r\n", Rotate);
 //         Paint.Rotate = Rotate;
 //     } else {
-//         Debug("rotate = 0, 90, 180, 270\r\n");
+//         DebugEpaper("rotate = 0, 90, 180, 270\r\n");
 //     }
 // }
 
@@ -89,8 +117,8 @@ parameter:
 // 				Paint.Scale = scale;
 // 				Paint.WidthByte = (Paint.WidthMemory % 2 == 0)? (Paint.WidthMemory / 2 ): (Paint.WidthMemory / 2 + 1);;
 // 		}else{
-//         Debug("Set Scale Input parameter error\r\n");
-//         Debug("Scale Only support: 2 4 7\r\n");
+//         DebugEpaper("Set Scale Input parameter error\r\n");
+//         DebugEpaper("Scale Only support: 2 4 7\r\n");
 //     }
 // }
 /******************************************************************************
@@ -102,10 +130,10 @@ parameter:
 // {
 //     if(mirror == MIRROR_NONE || mirror == MIRROR_HORIZONTAL || 
 //         mirror == MIRROR_VERTICAL || mirror == MIRROR_ORIGIN) {
-//         Debug("mirror image x:%s, y:%s\r\n",(mirror & 0x01)? "mirror":"none", ((mirror >> 1) & 0x01)? "mirror":"none");
+//         DebugEpaper("mirror image x:%s, y:%s\r\n",(mirror & 0x01)? "mirror":"none", ((mirror >> 1) & 0x01)? "mirror":"none");
 //         Paint.Mirror = mirror;
 //     } else {
-//         Debug("mirror should be MIRROR_NONE, MIRROR_HORIZONTAL, MIRROR_VERTICAL or MIRROR_ORIGIN\r\n");
+//         DebugEpaper("mirror should be MIRROR_NONE, MIRROR_HORIZONTAL, MIRROR_VERTICAL or MIRROR_ORIGIN\r\n");
 //     }    
 // }
 
@@ -119,7 +147,7 @@ parameter:
 static void Paint_SetPixel(uint16_t Xpoint, uint16_t Ypoint, uint16_t Color)
 {
     if(Xpoint > Paint.Width || Ypoint > Paint.Height){
-        Debug("Exceeding display boundaries\r\n");
+        DebugEpaper("Exceeding display boundaries\r\n");
         return;
     }      
     uint16_t X, Y;
@@ -163,7 +191,7 @@ static void Paint_SetPixel(uint16_t Xpoint, uint16_t Ypoint, uint16_t Color)
     }
 
     if(X > Paint.WidthMemory || Y > Paint.HeightMemory){
-        Debug("Exceeding display boundaries\r\n");
+        DebugEpaper("Exceeding display boundaries\r\n");
         return;
     }
     
@@ -253,7 +281,7 @@ static void Paint_DrawPoint(uint16_t Xpoint, uint16_t Ypoint, uint16_t Color,
                      DOT_PIXEL Dot_Pixel, DOT_STYLE Dot_Style)
 {
     if (Xpoint > Paint.Width || Ypoint > Paint.Height) {
-        Debug("Paint_DrawPoint Input exceeds the normal display range\r\n");
+        DebugEpaper("Paint_DrawPoint Input exceeds the normal display range\r\n");
 				printf("Xpoint = %d , Paint.Width = %d  \r\n ",Xpoint,Paint.Width);
 				printf("Ypoint = %d , Paint.Height = %d  \r\n ",Ypoint,Paint.Height);
         return;
@@ -294,7 +322,7 @@ static void Paint_DrawLine(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint
 {
     if (Xstart > Paint.Width || Ystart > Paint.Height ||
         Xend > Paint.Width || Yend > Paint.Height) {
-        Debug("Paint_DrawLine Input exceeds the normal display range\r\n");
+        DebugEpaper("Paint_DrawLine Input exceeds the normal display range\r\n");
         return;
     }
 
@@ -315,7 +343,7 @@ static void Paint_DrawLine(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint
         Dotted_Len++;
         //Painted dotted line, 2 point is really virtual
         if (Line_Style == LINE_STYLE_DOTTED && Dotted_Len % 3 == 0) {
-            //Debug("LINE_DOTTED\r\n");
+            //DebugEpaper("LINE_DOTTED\r\n");
             Paint_DrawPoint(Xpoint, Ypoint, IMAGE_BACKGROUND, Line_width, DOT_STYLE_DFT);
             Dotted_Len = 0;
         } else {
@@ -352,7 +380,7 @@ static void Paint_DrawRectangle(uint16_t Xstart, uint16_t Ystart, uint16_t Xend,
 {
     if (Xstart > Paint.Width || Ystart > Paint.Height ||
         Xend > Paint.Width || Yend > Paint.Height) {
-        Debug("Input exceeds the normal display range\r\n");
+        DebugEpaper("Input exceeds the normal display range\r\n");
         return;
     }
 
@@ -384,7 +412,7 @@ parameter:
 //                       uint16_t Color, DOT_PIXEL Line_width, DRAW_FILL Draw_Fill)
 // {
 //     if (X_Center > Paint.Width || Y_Center >= Paint.Height) {
-//         Debug("Paint_DrawCircle Input exceeds the normal display range\r\n");
+//         DebugEpaper("Paint_DrawCircle Input exceeds the normal display range\r\n");
 //         return;
 //     }
 
@@ -455,7 +483,7 @@ static void Paint_DrawChar(uint16_t Xpoint, uint16_t Ypoint, const char Acsii_Ch
     uint16_t Page, Column;
 
     if (Xpoint > Paint.Width || Ypoint > Paint.Height) {
-        Debug("Paint_DrawChar Input exceeds the normal display range\r\n");
+        DebugEpaper("Paint_DrawChar Input exceeds the normal display range\r\n");
         return;
     }
 
@@ -505,7 +533,7 @@ static void Paint_DrawString_EN(uint16_t Xstart, uint16_t Ystart, const char * p
     uint16_t Ypoint = Ystart;
 
     if (Xstart > Paint.Width || Ystart > Paint.Height) {
-        Debug("Paint_DrawString_EN Input exceeds the normal display range\r\n");
+        DebugEpaper("Paint_DrawString_EN Input exceeds the normal display range\r\n");
         return;
     }
 
@@ -542,37 +570,37 @@ parameter:
     Color_Background : Select the background color
 ******************************************************************************/
 #define  ARRAY_LEN 255
-static void Paint_DrawNum(uint16_t Xpoint, uint16_t Ypoint, int32_t Nummber,
-                   sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background)
-{
+// static void Paint_DrawNum(uint16_t Xpoint, uint16_t Ypoint, int32_t Nummber,
+//                    sFONT* Font, uint16_t Color_Foreground, uint16_t Color_Background)
+// {
 
-    int16_t Num_Bit = 0, Str_Bit = 0;
-    uint8_t Str_Array[ARRAY_LEN] = {0}, Num_Array[ARRAY_LEN] = {0};
-    uint8_t *pStr = Str_Array;
+//     int16_t Num_Bit = 0, Str_Bit = 0;
+//     uint8_t Str_Array[ARRAY_LEN] = {0}, Num_Array[ARRAY_LEN] = {0};
+//     uint8_t *pStr = Str_Array;
 
-    if (Xpoint > Paint.Width || Ypoint > Paint.Height) {
-        Debug("Paint_DisNum Input exceeds the normal display range\r\n");
-        return;
-    }
+//     if (Xpoint > Paint.Width || Ypoint > Paint.Height) {
+//         DebugEpaper("Paint_DisNum Input exceeds the normal display range\r\n");
+//         return;
+//     }
 
-    //Converts a number to a string
-    do {
-        Num_Array[Num_Bit] = Nummber % 10 + '0';
-        Num_Bit++;
-        Nummber /= 10;
-    } while(Nummber);
+//     //Converts a number to a string
+//     do {
+//         Num_Array[Num_Bit] = Nummber % 10 + '0';
+//         Num_Bit++;
+//         Nummber /= 10;
+//     } while(Nummber);
     
 
-    //The string is inverted
-    while (Num_Bit > 0) {
-        Str_Array[Str_Bit] = Num_Array[Num_Bit - 1];
-        Str_Bit ++;
-        Num_Bit --;
-    }
+//     //The string is inverted
+//     while (Num_Bit > 0) {
+//         Str_Array[Str_Bit] = Num_Array[Num_Bit - 1];
+//         Str_Bit ++;
+//         Num_Bit --;
+//     }
 
-    //show
-    Paint_DrawString_EN(Xpoint, Ypoint, (const char*)pStr, Font, Color_Background, Color_Foreground);
-}
+//     //show
+//     Paint_DrawString_EN(Xpoint, Ypoint, (const char*)pStr, Font, Color_Background, Color_Foreground);
+// }
 
 /******************************************************************************
 function:	Display nummber (Able to display decimals)
@@ -585,54 +613,54 @@ parameter:
     Color_Foreground : Select the foreground color
     Color_Background : Select the background color
 ******************************************************************************/
-static void Paint_DrawNumDecimals(uint16_t Xpoint, uint16_t Ypoint, double Nummber,
-                    sFONT* Font, uint16_t Digit, uint16_t Color_Foreground, uint16_t Color_Background)
-{
-    int16_t Num_Bit = 0, Str_Bit = 0;
-    uint8_t Str_Array[ARRAY_LEN] = {0}, Num_Array[ARRAY_LEN] = {0};
-    uint8_t *pStr = Str_Array;
-	int temp = Nummber;
-	float decimals;
-	uint8_t i;
-    if (Xpoint > Paint.Width || Ypoint > Paint.Height) {
-        Debug("Paint_DisNum Input exceeds the normal display range\r\n");
-        return;
-    }
+// static void Paint_DrawNumDecimals(uint16_t Xpoint, uint16_t Ypoint, double Nummber,
+//                     sFONT* Font, uint16_t Digit, uint16_t Color_Foreground, uint16_t Color_Background)
+// {
+//     int16_t Num_Bit = 0, Str_Bit = 0;
+//     uint8_t Str_Array[ARRAY_LEN] = {0}, Num_Array[ARRAY_LEN] = {0};
+//     uint8_t *pStr = Str_Array;
+// 	int temp = Nummber;
+// 	float decimals;
+// 	uint8_t i;
+//     if (Xpoint > Paint.Width || Ypoint > Paint.Height) {
+//         DebugEpaper("Paint_DisNum Input exceeds the normal display range\r\n");
+//         return;
+//     }
 
-	if(Digit > 0) {		
-		decimals = Nummber - temp;
-		for(i=Digit; i > 0; i--) {
-			decimals*=10;
-		}
-		temp = decimals;
-		//Converts a number to a string
-		for(i=Digit; i>0; i--) {
-			Num_Array[Num_Bit] = temp % 10 + '0';
-			Num_Bit++;
-			temp /= 10;						
-		}	
-		Num_Array[Num_Bit] = '.';
-		Num_Bit++;
-	}
+// 	if(Digit > 0) {		
+// 		decimals = Nummber - temp;
+// 		for(i=Digit; i > 0; i--) {
+// 			decimals*=10;
+// 		}
+// 		temp = decimals;
+// 		//Converts a number to a string
+// 		for(i=Digit; i>0; i--) {
+// 			Num_Array[Num_Bit] = temp % 10 + '0';
+// 			Num_Bit++;
+// 			temp /= 10;						
+// 		}	
+// 		Num_Array[Num_Bit] = '.';
+// 		Num_Bit++;
+// 	}
 
-	temp = Nummber;
-    //Converts a number to a string
-    do {
-        Num_Array[Num_Bit] = temp % 10 + '0';
-        Num_Bit++;
-        temp /= 10;
-    } while(temp);
+// 	temp = Nummber;
+//     //Converts a number to a string
+//     do {
+//         Num_Array[Num_Bit] = temp % 10 + '0';
+//         Num_Bit++;
+//         temp /= 10;
+//     } while(temp);
 
-    //The string is inverted
-    while (Num_Bit > 0) {
-        Str_Array[Str_Bit] = Num_Array[Num_Bit - 1];
-        Str_Bit ++;
-        Num_Bit --;
-    }
+//     //The string is inverted
+//     while (Num_Bit > 0) {
+//         Str_Array[Str_Bit] = Num_Array[Num_Bit - 1];
+//         Str_Bit ++;
+//         Num_Bit --;
+//     }
 
-    //show
-    Paint_DrawString_EN(Xpoint, Ypoint, (const char*)pStr, Font, Color_Background, Color_Foreground);
-}
+//     //show
+//     Paint_DrawString_EN(Xpoint, Ypoint, (const char*)pStr, Font, Color_Background, Color_Foreground);
+// }
 
 /******************************************************************************
 function:	Display time
@@ -726,18 +754,90 @@ info:
 // 		}
 // }
 
-/*!
-  @brief    Calculate number of integer digits in a number
-  @param    num Target number to calculate number of digits for
-*/
-static uint8_t calculateIntegerDigits(uint32_t num)
+static void Paint_DrawCenteredLabeledFloat(float data, char label, uint32_t maxCharWidth, sFONT *font, uint32_t startX, uint32_t startY)
 {
-    uint8_t digits = 1;
-	while(((num /= 10) > 0) && (digits < 11))
+    uint32_t maxStrLength = EPD_HEIGHT / font->Width;
+    if((maxCharWidth <= 0) || (maxCharWidth > maxStrLength))
+    {
+        DebugEpaper("Requested character width invalid!");
+        return;
+    }
+    
+    Paint_ClearWindows(startX, startY, startX + font->Width * maxCharWidth, startY + font->Height, WHITE);
+
+    // Determine the max and min printable values
+    int32_t maxData = 0;
+    for(uint32_t i = 0; i < (maxCharWidth - 1); i++)
+    {
+        maxData = (maxData * 10) + 9;
+    }
+    int32_t minData = -1 * (maxData / 10);
+
+    // Wrap to printable bounds
+    if(data > (float)maxData)
+    {
+        data = (float)maxData;
+    }
+    else if(data < (float)minData)
+    {
+        data = (float)minData;
+    }
+
+    uint8_t pStr[MAX_PRINT_LENGTH] = {0}; 
+    uint32_t digits = 0;
+
+    // Determine if data is negative and flip sign if neccesary
+    // Minus sign will take up one digit space
+    if(fequals(data, 0))
+    {
+        pStr[digits] = '0';
+        digits++;
+    }
+    else if(data < 0)
+    {
+        pStr[digits] = '-';
+        digits++;
+        data *= -1;
+    }
+
+    uint32_t wholeNum = (uint32_t) data;
+    uint8_t tempStr[MAX_PRINT_LENGTH] = {0};
+    uint8_t tempDigits = 0;
+	while((wholeNum > 0) && ((digits + tempDigits + 1) < maxCharWidth))
 	{
-		digits++;
+        tempStr[tempDigits] = (wholeNum % 10) + '0';
+        tempDigits++;
+        wholeNum /= 10;
 	}
-    return digits;
+    for(int32_t i = 1; i <= tempDigits; i++)
+    {
+        pStr[digits] = tempStr[tempDigits - i];
+        digits++;
+    }
+
+    if((digits + 3) <= maxCharWidth)
+    {
+        pStr[digits] = '.';
+		digits++;
+
+        float temp = data;
+        while((digits + 1) < maxCharWidth)
+        {
+            temp *= 10;
+            pStr[digits] = ((uint32_t)temp % 10) + '0';
+            digits++;
+        }
+    }
+
+    pStr[digits] = label;
+    digits++;
+
+    if(digits < maxCharWidth)
+    {
+        startX += ((maxCharWidth - digits) * font->Width) / 2;
+    }
+
+    Paint_DrawString_EN(startX, startY, (const char*)pStr, font, WHITE, BLACK);
 }
 
 /* ==================================================================== */
@@ -755,24 +855,24 @@ void Paint_InitBmsImage(uint8_t* emptyImage)
 	Paint_Clear(WHITE);
 
 	// Create data table template
-	Paint_DrawRectangle(46, 60, 237, 123, BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
-	Paint_DrawLine(46, 81, 237, 81, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
-	Paint_DrawLine(46, 102, 237, 102, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
-	Paint_DrawLine(110, 60, 110, 123, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
-	Paint_DrawLine(174, 60, 174, 123, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	Paint_DrawRectangle(39, 60, 239, 123, BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
+	Paint_DrawLine(39, 81, 237, 81, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	Paint_DrawLine(39, 102, 237, 102, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	Paint_DrawLine(113, 60, 113, 123, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+	Paint_DrawLine(176, 60, 176, 123, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
 
 	// Print table labels for pack voltage, pack temp, and board temp
-	Paint_DrawString_EN(55, 43, "VOLT", &Font16, WHITE, BLACK);
-	Paint_DrawString_EN(120, 43, "TEMP", &Font16, WHITE, BLACK);
-	Paint_DrawString_EN(178, 43, "BLEED", &Font16, WHITE, BLACK);
-	Paint_DrawString_EN(252, 43, "SOC", &Font16, WHITE, BLACK);
-	Paint_DrawString_EN(5, 63, "AVG", &Font16, WHITE, BLACK);
-	Paint_DrawString_EN(5, 84, "MAX", &Font16, WHITE, BLACK);
-	Paint_DrawString_EN(5, 105, "MIN", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(54, 43, "VOLT", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(122, 43, "TEMP", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(180, 43, "BLEED", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(252, 43, "SOE", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(2, 63, "AVG", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(2, 84, "MAX", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(2, 105, "MIN", &Font16, WHITE, BLACK);
 
 	// Print labels for State and Fault indicators
-	Paint_DrawString_EN(5, 5, "STATE:", &Font16, WHITE, BLACK);
-	Paint_DrawString_EN(5, 25, "FAULT:", &Font16, WHITE, BLACK);
+	Paint_DrawString_EN(2, 7, "STATE:", &Font12, WHITE, BLACK);
+	Paint_DrawString_EN(2, 27, "FAULT:", &Font12, WHITE, BLACK);
 
 	// Print default battery template
 	Paint_DrawRectangle(255, 65, 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_EMPTY);
@@ -788,131 +888,139 @@ void Paint_InitBmsImage(uint8_t* emptyImage)
 void Paint_DrawTableData(float data, DATA_TABLE_COL col, DATA_TABLE_ROW row)
 {
     // Set starting X and Y cordinates
-    uint16_t startX = DATA_START_X + (col * DATA_SEPERATION_X);
-    uint16_t startY = DATA_START_Y + (row * DATA_SEPERATION_Y);
-
-    // Clear data entry space
-    Paint_ClearWindows(startX, startY, startX + Font16.Width * 5, startY + Font16.Height, WHITE);
-
-    // Wrap to printable bounds
-    if(data > 9999.0f)
+    uint16_t startX = DATA_START_X;
+    for(int32_t i = 0; i < col; i++)
     {
-        data = 9999.0f;
+        startX += tableSpacingCol[i];
     }
-    else if(data < -999.0f)
+    uint16_t startY = DATA_START_Y;
+    for(int32_t i = 0; i < row; i++)
     {
-        data = -999.0f;
+        startY += tableSpacingRow[i];
     }
 
-    // Data position adjustment variables
-    uint8_t digits = 0;
-    bool negative = 0;
-
-    // Determine if data is negative and flip sign if neccesary
-    // Minus sign will take up one digit space
-    if(data < 0)
-    {
-        negative = true;
-        data *= -1;
-        digits++;
-    }
-
-    // Calucalte number of digits before decimal place
-    digits += calculateIntegerDigits(data);
-
-    bool decimal = false;
-    if(digits < 3)
-    {
-        decimal = true;
-        (col == DATA_VOLTAGE) ? (digits += 3) : (digits += 2);
-    }
-
-    startX += (Font16.Width / 2 ) * (4 - digits);
-
-    if(negative)
-    {
-        Paint_DrawString_EN(startX, startY, "-", &Font16, WHITE, BLACK);
-        startX += Font16.Width;
-    }
-
-    // Draw number as integer or decimal depending on number of digits
-    if(decimal)
-    {
-        if(col == DATA_VOLTAGE)
-        {
-            Paint_DrawNumDecimals(startX, startY, data, &Font16, 2, BLACK, WHITE);
-        }
-        else
-        {
-            Paint_DrawNumDecimals(startX, startY, data, &Font16, 1, BLACK, WHITE);
-        }
-    }
-    else
-    {
-        Paint_DrawNum(startX, startY, data, &Font16, BLACK, WHITE);
-    }
-
-    // Set data label to display
+    // Set label
+    uint8_t label;
+    uint32_t printWidth;
     if(col == DATA_VOLTAGE)
     {
-        Paint_DrawString_EN(startX + (digits * Font16.Width) - (negative ? Font16.Width : 0), startY, "V", &Font16, WHITE, BLACK);
+        label = 'V';
+        printWidth = 6;
     }
     else
     {
-        Paint_DrawString_EN(startX + (digits * Font16.Width) - (negative ? Font16.Width : 0), startY, "C", &Font16, WHITE, BLACK);
+        label = 'C';
+        printWidth = 5;
     }
-	
+
+    Paint_DrawCenteredLabeledFloat(data, label, printWidth, &Font16, startX, startY);
 }
 
 /*!
   @brief    Update BMS Image with current SOC
-  @param    SOC BMS State of Charge as a percentage 
+  @param    SOE BMS State of Charge as a decimal 
 */
-void Paint_DrawSOC(uint32_t SOC)
+void Paint_DrawSOE(float SOE)
 {
-	// Check bounds of SOC
-	if(SOC < 0)
+    // Convert SOE to percent
+    SOE *= 100.0f;
+
+	// Check bounds of SOE
+	if(SOE < 0.0f)
 	{
-		SOC = 0;
+		SOE = 0.0f;
 	}
-	else if(SOC > 100)
+	else if(SOE > 100.0f)
 	{
-		SOC = 100;
+		SOE = 100.0f;
 	}
 
-	// Calculate the number of digits in the SOC percent value
-	uint8_t digits = calculateIntegerDigits(SOC);
+    Paint_DrawCenteredLabeledFloat(SOE, '%', 5, &Font16, 241, 105);
 
-	// The x value in the below statements is slected such that 100% is centered
-	// In order to center the SOC percentage given any number of digits, 
-	// the printed data is shifted by half a width for each digit less than three (100) 
-	uint16_t startXAdjust =  (Font16.Width / 2) * (3 - digits);
+	// Adjust the height of the printed battery level based on the SOE as a percentage
+    uint16_t startSOEX = 102 - ((31 * SOE) / 100);
+    Paint_DrawRectangle(255, startSOEX, 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_FULL);
 
-	// Populate BMS image with current SOC percent
-	Paint_ClearWindows(246 + startXAdjust, 105, 246 + Font16.Width * 4, 105 + Font16.Height, WHITE);
-	Paint_DrawNum(246 + startXAdjust, 105, SOC, &Font16, BLACK, WHITE);
+    // Display moving wave on battery surface
+    static int32_t startIndex = 0;
+    uint32_t mask = 1;
+    for(int32_t i = 0; i < (25-startIndex); i++)
+    { 
+        Paint_DrawPoint(257+i+startIndex, startSOEX-2, (waveImage[0] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+        Paint_DrawPoint(257+i+startIndex, startSOEX-3, (waveImage[1] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+        mask <<= 1;
+    }
+    for(int32_t i = 0; i < startIndex; i++)
+    { 
+        Paint_DrawPoint(257+i, startSOEX-2, (waveImage[0] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+        Paint_DrawPoint(257+i, startSOEX-3, (waveImage[1] & mask) ? WHITE : BLACK, DOT_PIXEL_1X1, DOT_FILL_AROUND);
+        mask <<= 1;
+    }
+    startIndex += 2;
 
-	// Place a percent sign directly after the last number, given by the font width times the number of digits
-	Paint_DrawString_EN(246 + startXAdjust + Font16.Width * digits, 105, "%", &Font16, WHITE, BLACK);
-
-	// Adjust the height of the printed battery level based on the SOC as a percentage
-	Paint_DrawRectangle(255, 102 - ((37 * SOC) / 100), 283, 102, BLACK, DOT_PIXEL_2X2, DRAW_FILL_FULL);
+    if(startIndex >= 25)
+    {
+        startIndex = 0;
+    }
 }
 
 /*!
   @brief   Update BMS Image with state data
 */
-void Paint_DrawState()
+void Paint_DrawState(char* stateMessage)
 {
-	Paint_ClearWindows(70, 5, 70 + Font16.Width * 12, 5 + Font16.Height, WHITE);
-	Paint_DrawString_EN(70, 5, "YOUR MOTHER", &Font16, WHITE, BLACK);
+    char state[25] = {0};
+    if(strlen(stateMessage) > 25) {
+        strncpy(state, stateMessage, 25);
+        state[25] = '\0';
+    }
+    else
+    {
+        strcpy(state, stateMessage);
+    }
+
+	Paint_ClearWindows(43, 7, 43 + Font12.Width * 30, 7 + Font12.Height, WHITE);
+	Paint_DrawString_EN(43, 7, state, &Font12, WHITE, BLACK);
 }
 
 /*!
   @brief   Update BMS Image with fault data
 */
-void Paint_DrawFault()
+void Paint_DrawFault(char* faultMessage)
 {
-    Paint_ClearWindows(70, 25, 70 + Font16.Width * 12, 25 + Font16.Height, WHITE);
-	Paint_DrawString_EN(70, 25, "NO FAULT", &Font16, WHITE, BLACK);
+    char fault[25] = {0};
+    if(strlen(faultMessage) > 25) {
+        strncpy(fault, faultMessage, 25);
+        fault[25] = '\0';
+    }
+    else
+    {
+        strcpy(fault, faultMessage);
+    }
+
+    Paint_ClearWindows(43, 27, 43 + Font12.Width * 30, 27 + Font12.Height, WHITE);
+	Paint_DrawString_EN(43, 27, faultMessage, &Font12, WHITE, BLACK);
+}
+
+/*!
+  @brief   Update BMS Image with current sensor data
+*/
+void Paint_DrawCurrent(float current)
+{
+    Paint_DrawCenteredLabeledFloat(fabsf(current), 'A', 3, &Font16, 251, 5);
+
+    Paint_ClearWindows(252, 25, 285, 40, WHITE);
+    if(current > 0)
+    {
+        Paint_DrawLine(268, 25, 268, 40, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(268, 40, 273, 35, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(268, 40, 263, 35, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+    }
+    else if(current < 0)
+    {
+        Paint_DrawLine(268, 25, 268, 40, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(268, 25, 273, 30, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(268, 25, 263, 30, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+    }
+	
 }
