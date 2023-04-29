@@ -31,11 +31,11 @@ typedef struct
 
 	float current;
 
-	char* stateMessage;
+	char* stateMessage;			// String of bms state to be displayed on epaper
 
-	char* alertMessage;
-	uint32_t alertIndex;
-	uint32_t numActiveAlerts;
+	char* alertMessage;			// String of alert message to be displayed on epaper
+	uint32_t currAlertIndex;	// The index of currenly active alerts
+	uint32_t numActiveAlerts;	// The number of active alerts, if 0, no alerts will be displayed
 } Epaper_Data_S;
 
 #endif /* INC_SHARED_H_ */

@@ -429,51 +429,72 @@ void updateEpaper()
 
 		epapData.current = gBms.tractiveSystemCurrent;
 
+		// Send the current state of the BMS state machine
 		epapData.stateMessage = "TEMP STATE";
 
-		static uint32_t alertMessageIndex = 0;
-		uint32_t numAlertsSet = 0;
-		uint32_t indexNextAlert = 0;
-		uint32_t indexMinAlert = 0;
-		bool nextAlertFound = false;
-		bool minAlertFound = false;
+		// Active Alert Cycling
+		static uint32_t currAlertMessageIndex = 0;	// Holds the index of the alert array that is currently being displayed
+		uint32_t numAlertsSet = 0;				// Holds the number of alerts currently active
+		uint32_t indexNextAlert = 0;			// Used to find the index of an active alert greater than the index of the currently displayed alert
+		uint32_t indexMinAlert = 0;				// Used to find the index of the first active alert regardless of the currently displayed alert
+		bool nextAlertFound = false;			// Set to true if an alert with a higher index than the currently set alert is active
+		bool minAlertFound = false;				// Set to true once/if the smallest index active alert is set
 
+		// Cycle through all alerts
 		for (uint32_t i = 0; i < NUM_ALERTS; i++)
 		{
 			Alert_S* alert = alerts[i];
+
+			// Triggers only if alert is active
 			if (getAlertStatus(alert) == ALERT_SET)
 			{
+				// Increment active alert counter
 				numAlertsSet++;
+
+				// The first active alert found will be used for indexMinAlert, and will not be set again
 				if(!minAlertFound)
 				{
 					minAlertFound = true;
 					indexMinAlert = i;
 				}
+
+				// The first active alert greater than the curretly displayed active alert index will be used for currAlertMessageIndex
+				// and will not be set again
 				if(!nextAlertFound)
 				{
 					indexNextAlert++;
-					if(i > alertMessageIndex)
+					if(i > currAlertMessageIndex)
 					{
 						nextAlertFound = true;
-						alertMessageIndex = i;
+						currAlertMessageIndex = i;
 					}
 				}
 			}
 		}
 
+		// Update epaper data struct with the number of active alerts
 		epapData.numActiveAlerts = numAlertsSet;
-		if(nextAlertFound)
+
+		// Only update the epaper struct data if there are active alerts
+		// If there are no alerts, the epaper will ignore what is currently set in the currAlertIndex and alertMessage variables
+		if(numAlertsSet > 0)
 		{
-			epapData.alertIndex = indexNextAlert;
-			epapData.alertMessage = alerts[alertMessageIndex]->alertName;
-		}
-		else
-		{
-			alertMessageIndex = indexMinAlert;
-			epapData.alertIndex = 1;
-			epapData.alertMessage = alerts[indexMinAlert]->alertName;
+			// If there is an active alert with index greater than the currently displayed alert, that alert is sent to the epaper
+			// Otherwise, the alert index is reset to 1 and the min alert is sent to the epaper
+			if(nextAlertFound)
+			{
+				epapData.currAlertIndex = indexNextAlert;
+				epapData.alertMessage = (char*)alerts[currAlertMessageIndex]->alertName;
+			}
+			else
+			{
+				currAlertMessageIndex = indexMinAlert;
+				epapData.currAlertIndex = 1;
+				epapData.alertMessage = (char*)alerts[indexMinAlert]->alertName;
+			}
 		}
 
+		// Send epaper Data in queue to epaper
 		xQueueOverwrite(epaperQueueHandle, &epapData);
 	}
 }

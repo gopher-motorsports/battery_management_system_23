@@ -133,9 +133,9 @@ void Paint_DrawTableData(float data, DATA_TABLE_COL col, DATA_TABLE_ROW row);
 
 /*!
   @brief    Update BMS Image with current SOC
-  @param    SOC BMS State of Charge as a percentage 
+  @param    SOE BMS State of Charge as a decimal  
 */
-void Paint_DrawSOE(uint32_t SOE);
+void Paint_DrawSOE(float SOE);
 
 /*!
   @brief   Update BMS Image with state data

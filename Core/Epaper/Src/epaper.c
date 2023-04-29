@@ -481,7 +481,7 @@ void epdPopulateData(Epaper_Data_S* epapData)
 	// Populate BMS image with current SOC percent
 	const float soc = getSocFromCellVoltage(epapData->minBrickV);
 	const float soe = getSoeFromSoc(soc);
-	Paint_DrawSOE(soe * 100.0f);
+	Paint_DrawSOE(soe);
 
 	// Populate BMS image with current sensor data
 	Paint_DrawCurrent(epapData->current);
@@ -494,7 +494,7 @@ void epdPopulateData(Epaper_Data_S* epapData)
 	else
 	{
 		char faultString[64];
-		sprintf(faultString, "(%lu/%lu) %s", epapData->alertIndex, epapData->numActiveAlerts, epapData->alertMessage);
+		sprintf(faultString, "(%lu/%lu) %s", epapData->currAlertIndex, epapData->numActiveAlerts, epapData->alertMessage);
 		Paint_DrawFault(faultString);
 	}
 
