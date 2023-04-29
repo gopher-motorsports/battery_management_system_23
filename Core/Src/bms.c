@@ -12,7 +12,7 @@
 #include "currentSense.h"
 #include "internalResistance.h"
 #include "gopher_sense.h"
-
+#include "charger.h"
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
@@ -47,11 +47,10 @@ Bms_S gBms =
 /* ==================================================================== */
 
 extern osMessageQId epaperQueueHandle;
-
 extern CAN_HandleTypeDef hcan2;
 
+extern bool newChargerMessage;
 extern LeakyBucket_S asciCommsLeakyBucket;
-
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
@@ -338,6 +337,7 @@ void aggregatePackData(uint32_t numBmbs)
 	float maxBrickV	   = MIN_BRICK_VOLTAGE_READING;
 	float minBrickV	   = MAX_BRICK_VOLTAGE_READING;
 	float avgBrickVSum = 0.0f;
+	float accumulatorVSum = 0.0f;
 
 	float maxBrickTemp    = MIN_TEMP_SENSE_READING;
 	float minBrickTemp 	  = MAX_TEMP_SENSE_READING;
@@ -379,9 +379,11 @@ void aggregatePackData(uint32_t numBmbs)
 		}
 
 		avgBrickVSum += pBmb->avgBrickV;
+		accumulatorVSum += pBmb->sumBrickV;
 		avgBrickTempSum += pBmb->avgBrickTemp;
 		avgBoardTempSum += pBmb->avgBoardTemp;
 	}
+	pBms->accumulatorVoltage = accumulatorVSum;
 	pBms->maxBrickV = maxBrickV;
 	pBms->minBrickV = minBrickV;
 	pBms->avgBrickV = avgBrickVSum / NUM_BMBS_IN_ACCUMULATOR;
@@ -427,6 +429,74 @@ void updateEpaper()
 		epapData.maxBoardTemp = gBms.maxBoardTemp;
 		epapData.minBoardTemp = gBms.minBoardTemp;
 
+		epapData.current = gBms.tractiveSystemCurrent;
+
+		// Send the current state of the BMS state machine
+		epapData.stateMessage = "TEMP STATE";
+
+		// Active Alert Cycling
+		static uint32_t currAlertMessageIndex = 0;	// Holds the index of the alert array that is currently being displayed
+		uint32_t numAlertsSet = 0;				// Holds the number of alerts currently active
+		uint32_t indexNextAlert = 0;			// Used to find the index of an active alert greater than the index of the currently displayed alert
+		uint32_t indexMinAlert = 0;				// Used to find the index of the first active alert regardless of the currently displayed alert
+		bool nextAlertFound = false;			// Set to true if an alert with a higher index than the currently set alert is active
+		bool minAlertFound = false;				// Set to true once/if the smallest index active alert is set
+
+		// Cycle through all alerts
+		for (uint32_t i = 0; i < NUM_ALERTS; i++)
+		{
+			Alert_S* alert = alerts[i];
+
+			// Triggers only if alert is active
+			if (getAlertStatus(alert) == ALERT_SET)
+			{
+				// Increment active alert counter
+				numAlertsSet++;
+
+				// The first active alert found will be used for indexMinAlert, and will not be set again
+				if(!minAlertFound)
+				{
+					minAlertFound = true;
+					indexMinAlert = i;
+				}
+
+				// The first active alert greater than the curretly displayed active alert index will be used for currAlertMessageIndex
+				// and will not be set again
+				if(!nextAlertFound)
+				{
+					indexNextAlert++;
+					if(i > currAlertMessageIndex)
+					{
+						nextAlertFound = true;
+						currAlertMessageIndex = i;
+					}
+				}
+			}
+		}
+
+		// Update epaper data struct with the number of active alerts
+		epapData.numActiveAlerts = numAlertsSet;
+
+		// Only update the epaper struct data if there are active alerts
+		// If there are no alerts, the epaper will ignore what is currently set in the currAlertIndex and alertMessage variables
+		if(numAlertsSet > 0)
+		{
+			// If there is an active alert with index greater than the currently displayed alert, that alert is sent to the epaper
+			// Otherwise, the alert index is reset to 1 and the min alert is sent to the epaper
+			if(nextAlertFound)
+			{
+				epapData.currAlertIndex = indexNextAlert;
+				epapData.alertMessage = (char*)alerts[currAlertMessageIndex]->alertName;
+			}
+			else
+			{
+				currAlertMessageIndex = indexMinAlert;
+				epapData.currAlertIndex = 1;
+				epapData.alertMessage = (char*)alerts[indexMinAlert]->alertName;
+			}
+		}
+
+		// Send epaper Data in queue to epaper
 		xQueueOverwrite(epaperQueueHandle, &epapData);
 	}
 }
@@ -437,7 +507,7 @@ void updateEpaper()
 void updateTractiveCurrent()
 {
 	static uint32_t lastCurrentUpdate = 0;
-	if((HAL_GetTick() - lastCurrentUpdate) > CURRENT_SENSOR_UPDATE_PERIOD_MS)
+	if((HAL_GetTick() - lastCurrentUpdate) >= CURRENT_SENSOR_UPDATE_PERIOD_MS)
 	{
 		lastCurrentUpdate = HAL_GetTick();
 		getTractiveSystemCurrent(&gBms);
@@ -530,7 +600,7 @@ void updateGopherCan()
 
 		// Log gcan variables across the alloted time period in data chunks
 		static uint32_t lastGcanUpdate = 0;
-		if((HAL_GetTick() - lastGcanUpdate) > GOPHER_CAN_LOGGING_PERIOD_MS)
+		if((HAL_GetTick() - lastGcanUpdate) >= GOPHER_CAN_LOGGING_PERIOD_MS)
 		{
 			lastGcanUpdate = HAL_GetTick();
 
@@ -622,9 +692,113 @@ void updateGopherCan()
 			}
 
 			// Cycle Gcan state and wrap to 0 if needed
-			gcanUpdateState = (gcanUpdateState++) % NUM_GCAN_STATES;
+			gcanUpdateState = (++gcanUpdateState) % NUM_GCAN_STATES;
 
 			service_can_tx(&hcan2);
 		}
+	}
+}
+
+void checkForNewChargerInfo()
+{
+	static uint32_t lastChargerRX = 0;
+	if (newChargerMessage)
+	{
+		lastChargerRX = HAL_GetTick();
+		gBms.chargerConnected = true;
+		updateChargerData(&gBms.chargerData);
+		newChargerMessage = false;
+	}
+	if (gBms.chargerConnected && ((HAL_GetTick() - lastChargerRX) > CHARGER_RX_TIMEOUT_MS))
+	{
+		gBms.chargerConnected = false;
+	}
+}
+
+/*!
+  @brief   Perform accumulator charge sequence
+*/
+void chargeAccumulator()
+{
+	// Periodically send an updated charger request CAN message to the charger
+	// Second condition protects from case in which a new charger message is recieved between this if statement and the last
+	static uint32_t lastChargerUpdate = 0;
+	if (((HAL_GetTick() - lastChargerUpdate) >= CHARGER_UPDATE_PERIOD_MS) && (!newChargerMessage))
+	{
+		lastChargerUpdate = HAL_GetTick();
+
+		// Voltage and current request defauult to 0
+		float voltageRequest = 0.0f;
+		float currentRequest = 0.0f;
+
+		if(!gBms.chargingDisabled)
+		{
+			// Cell Imbalance hysteresis
+			// cellImbalancePresent set when pack cell imbalance exceeds high threshold
+			// cellImbalancePresent reset when pack cell imbalance falls under low threshold
+			static bool cellImbalancePresent = false;
+			float cellImbalance = gBms.maxBrickV - gBms.minBrickV;
+			if(cellImbalance > MAX_CELL_IMBALANCE_THRES_HIGH)
+			{
+				cellImbalancePresent = true;
+			}
+			else if(cellImbalance < MAX_CELL_IMBALANCE_THRES_LOW)
+			{
+				cellImbalancePresent = false;
+			}
+			else
+			{
+				// Maintain state of cellImbalancePresent
+			}
+
+			// Cell Over Voltage hysteresis
+			// cellOverVoltagePresent set when pack max cell voltage exceeds high threshold
+			// cellOverVoltagePresent reset when pack max cell voltage falls under low threshold
+			static bool cellOverVoltagePresent = false;
+			if(gBms.maxBrickV > MAX_CELL_VOLTAGE_THRES_HIGH)
+			{
+				cellOverVoltagePresent = true;
+			}
+			else if(gBms.maxBrickV < MAX_CELL_VOLTAGE_THRES_LOW)
+			{
+				cellOverVoltagePresent = false;
+			}
+			else
+			{
+				// Maintain state of cellOverVoltagePresent
+			}
+
+			// Charging is only allowed if the bms disable, cellImbalancePresent, and cellOverVoltagePresent are all not true 
+			bool chargeOkay = !(gBms.chargingDisabled || cellImbalancePresent || cellOverVoltagePresent);
+			if(chargeOkay)
+			{
+				// Always request max charging voltage
+				voltageRequest = MAX_CHARGE_VOLTAGE_V;
+
+				// If the min cell voltage is below the low charge voltage threshold, the charge current is reduced
+				if(gBms.minBrickV < LOW_CHARGE_VOLTAGE_THRES_V)
+				{
+					// This is a safe chage current for low voltage cells, typically 1/10 C
+					currentRequest = LOW_CHARGE_CURRENT_A;
+				}
+				else
+				{
+					// This is the normal charge current set in charger.h
+					currentRequest = HIGH_CHARGE_CURRENT_A;
+				}
+
+				// Calculate the max current possible given the charger power and pack voltage
+				float powerLimitAmps = (CHARGER_INPUT_POWER_W * MIN_CHARGER_EFFICIENCY) / (gBms.accumulatorVoltage + CHARGER_VOLTAGE_MISMATCH_THRESHOLD); // TODO factor in eff and safety zone
+
+				// Limit the charge current to the charger max power output if necessary 
+				if(currentRequest > powerLimitAmps)
+				{
+					currentRequest = powerLimitAmps;
+				}
+			}
+		}
+
+		// Send the calculated voltage and current requests to the charger over CAN
+		sendChargerMessage(voltageRequest, currentRequest, false);
 	}
 }

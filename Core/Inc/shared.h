@@ -1,6 +1,12 @@
 #ifndef INC_SHARED_H_
 #define INC_SHARED_H_
 
+#include <stdint.h>
+
+/* ==================================================================== */
+/* ========================= ENUMERATED TYPES ========================= */
+/* ==================================================================== */
+
 // Responses for a specific alert
 typedef enum
 {
@@ -12,6 +18,28 @@ typedef enum
     AMS_FAULT,			// Set AMS fault to open shutdown circuit
     NUM_ALERT_RESPONSES
 } AlertResponse_E;
+
+typedef enum
+{
+    CHARGER_HARDWARE_FAILURE_ERROR,
+    CHARGER_OVERTEMP_ERROR,
+    CHARGER_INPUT_VOLTAGE_ERROR,
+    CHRAGER_BATTERY_NOT_DETECTED_ERROR,
+    CHARGER_COMMUNICATION_ERROR,
+    NUM_CHARGER_FAULTS
+} Charger_Error_E;
+
+/* ==================================================================== */
+/* ============================== STRUCTS============================== */
+/* ==================================================================== */
+
+typedef struct
+{
+  	float chargerVoltage;
+	float chargerCurrent;
+	bool chargerStatus[NUM_CHARGER_FAULTS];
+
+} Charger_Data_S;
 
 typedef struct
 {
@@ -26,6 +54,14 @@ typedef struct
 	float maxBoardTemp;
 	float minBoardTemp;
 	float avgBoardTemp;
+
+	float current;
+
+	char* stateMessage;			// String of bms state to be displayed on epaper
+
+	char* alertMessage;			// String of alert message to be displayed on epaper
+	uint32_t currAlertIndex;	// The index of currenly active alerts
+	uint32_t numActiveAlerts;	// The number of active alerts, if 0, no alerts will be displayed
 } Epaper_Data_S;
 
 #endif /* INC_SHARED_H_ */

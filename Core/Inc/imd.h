@@ -33,6 +33,7 @@ typedef enum
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */
 /* ==================================================================== */
+
 /*!
   @brief   Determine the current status of the IMD from the PWM output
   @returns The current state of the IMD

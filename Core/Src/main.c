@@ -29,6 +29,7 @@
 #include "bms.h"
 #include "gopher_sense.h"
 #include "utils.h"
+#include "charger.h"
 
 /* USER CODE END Includes */
 
@@ -78,6 +79,9 @@ osMessageQId epaperQueueHandle;
 volatile uint32_t imdFrequency;
 volatile uint32_t imdDutyCycle;
 volatile uint32_t imdLastUpdate;
+
+volatile bool newChargerMessage = false;
+volatile uint8_t chargerMessage[5];
 
 /* USER CODE END PV */
 
@@ -245,6 +249,32 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 	}
 }
 
+void custom_can_callback(CAN_HandleTypeDef *hcan, U32 fifo_num)
+{
+  // Charger CAN
+  if(hcan == &hcan1)
+  {
+    CAN_RxHeaderTypeDef rxHeader;
+    uint8_t rxData[8];
+    
+    HAL_CAN_GetRxMessage(hcan, fifo_num, &rxHeader, rxData);
+    if ((rxHeader.ExtId == CHARGER_CAN_ID_RX) && (rxHeader.DLC == 8))
+    {
+      for (int32_t i = 0; i < 5; i++)
+      {
+        chargerMessage[i] = rxData[i];
+      }
+      newChargerMessage = true;
+    }
+  }
+
+  // Gopher CAN
+  if(hcan == &hcan2)
+  {
+    service_can_rx_hardware(hcan, fifo_num);
+  }
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -291,6 +321,10 @@ int main(void)
   // Start IMD timer capture
   HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2);   // Main channel
   HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_1);      // Indirect channel
+
+  // Activate Charger CAN RX MSG PENDING notification
+  HAL_CAN_Start(&hcan1);
+  HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 
   /* USER CODE END 2 */
 
@@ -476,7 +510,7 @@ static void MX_CAN1_Init(void)
 
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 5;
+  hcan1.Init.Prescaler = 10;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
   hcan1.Init.TimeSeg1 = CAN_BS1_6TQ;

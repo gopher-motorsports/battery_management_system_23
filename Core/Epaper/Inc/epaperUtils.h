@@ -17,7 +17,7 @@
 #define ROTATE_180          180
 #define ROTATE_270          270
 
-#define DATA_START_X        50
+#define DATA_START_X        43
 #define DATA_START_Y        63
 #define DATA_SEPERATION_X   63
 #define DATA_SEPERATION_Y   21
@@ -72,14 +72,19 @@ typedef enum {
 typedef enum {
     DATA_VOLTAGE = 0,
     DATA_PACK_TEMP,
-    DATA_BOARD_TEMP
+    DATA_BOARD_TEMP,
+    NUM_DATA_TABLE_COL
 }   DATA_TABLE_COL;
 
 typedef enum {
     DATA_AVG = 0,
     DATA_MAX,
-    DATA_MIN
+    DATA_MIN,
+    NUM_DATA_TABLE_ROW
 }   DATA_TABLE_ROW;
+
+#define VOLTAGE_SIG_FIGS 4
+#define TEMPERATURE_SIG_FIGS 3
 
 /* ==================================================================== */
 /* ============================== STRUCTS============================== */
@@ -128,23 +133,23 @@ void Paint_DrawTableData(float data, DATA_TABLE_COL col, DATA_TABLE_ROW row);
 
 /*!
   @brief    Update BMS Image with current SOC
-  @param    SOC BMS State of Charge as a percentage 
+  @param    SOE BMS State of Charge as a decimal  
 */
-void Paint_DrawSOC(uint32_t SOC);
+void Paint_DrawSOE(float SOE);
 
 /*!
   @brief   Update BMS Image with state data
 */
-void Paint_DrawState();
+void Paint_DrawState(char* stateMessage);
 
 /*!
   @brief   Update BMS Image with fault data
 */
-void Paint_DrawFault();
+void Paint_DrawFault(char* faultMessage);
+
+/*!
+  @brief   Update BMS Image with current sensor data
+*/
+void Paint_DrawCurrent(float current);
 
 #endif // __EPAPER_UTILS_H
-
-
-
-
-
