@@ -16,13 +16,15 @@
 #include "bmb.h"
 #include "imd.h"
 
-
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
 
 // The number of BMBs in the accumulator
 #define NUM_BMBS_IN_ACCUMULATOR				7 
+
+// The number of Cells in a cell brick
+#define NUM_PARALLEL_CELLS          		7
 
 // Max allowable voltage difference between bricks for balancing
 #define BALANCE_THRESHOLD_V					0.001f
@@ -39,10 +41,6 @@
 // Gophercan variable logging frequency. This value will be divided by the number of transactions
 // Frequency cannot exceed HW CONFIG max logging frequency
 #define GOPHER_CAN_LOGGING_FREQUENCY_HZ		1
-
-// The delay between consecutive charger request CAN messages
-// The ELCON charger expects a message every 1s and will fault if a message is not recieve in 5s
-#define CHARGER_UPDATE_PERIOD_MS			10
 
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
@@ -82,6 +80,8 @@ typedef struct Bms
 	uint32_t numBmbs;
 	Bmb_S bmb[NUM_BMBS_IN_ACCUMULATOR];
 
+	float accumulatorVoltage;
+
 	float maxBrickV;
 	float minBrickV;
 	float avgBrickV;
@@ -113,6 +113,7 @@ typedef struct Bms
 
 	Bms_Hardware_State_E bmsHwState;
 
+	bool chargerConnected;
 	Charger_Data_S chargerData;
 } Bms_S;
 

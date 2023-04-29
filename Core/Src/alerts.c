@@ -4,7 +4,8 @@
 #include "alerts.h"
 #include "cellData.h"
 #include "packData.h"
-
+#include "charger.h"
+#include <math.h>
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DEFINITIONS ===================== */
@@ -134,6 +135,50 @@ static bool stackVsSegmentImbalancePresent(Bms_S* bms)
     return false;
 }
 
+static bool chargerOverVoltagePresent(Bms_S* bms)
+{
+    return (bms->chargerConnected) && (bms->chargerData.chargerVoltage > MAX_CHARGE_VOLTAGE_V);
+}
+
+static bool chargerOverCurrentPresent(Bms_S* bms)
+{
+    return (bms->chargerConnected) && ((bms->chargerData.chargerCurrent > MAX_CHARGE_CURRENT_A) || (bms->tractiveSystemCurrent > MAX_CHARGE_CURRENT_A));
+}
+
+static bool chargerVoltageMismatchPresent(Bms_S* bms)
+{
+    return (bms->chargerConnected) && (fabsf(bms->accumulatorVoltage - bms->chargerData.chargerVoltage) > CHARGER_VOLTAGE_MISMATCH_THRESHOLD);
+}
+
+static bool chargerCurrentMismatchPresent(Bms_S* bms)
+{
+    return (bms->chargerConnected) && (fabsf(bms->tractiveSystemCurrent - bms->chargerData.chargerCurrent) > CHARGER_CURRENT_MISMATCH_THRESHOLD);
+}
+
+static bool chargerHardwareFailurePresent(Bms_S* bms)
+{
+    return (bms->chargerConnected) && (bms->chargerData.chargerStatus[CHARGER_HARDWARE_FAILURE_ERROR]);
+}
+
+static bool chargerOverTempPresent(Bms_S* bms)
+{
+    return (bms->chargerConnected) && (bms->chargerData.chargerStatus[CHARGER_OVERTEMP_ERROR]);
+}
+
+static bool chargerInputVoltageErrorPresent(Bms_S* bms)
+{
+    return (bms->chargerConnected) && (bms->chargerData.chargerStatus[CHARGER_INPUT_VOLTAGE_ERROR]);
+}
+
+static bool chargerBatteryNotDetectedErrorPresent(Bms_S* bms)
+{
+    return (bms->chargerConnected) && (bms->chargerData.chargerStatus[CHRAGER_BATTERY_NOT_DETECTED_ERROR]);
+}
+
+static bool chargerCommunicationErrorPresent(Bms_S* bms)
+{
+    return (bms->chargerConnected) && (bms->chargerData.chargerStatus[CHARGER_COMMUNICATION_ERROR]);
+}
 
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
@@ -409,10 +454,119 @@ const AlertResponse_E stackVsSegmentImbalanceAlertResponse[] = { DISABLE_BALANCI
 #define NUM_STACK_VS_SEGMENT_IMBALANCE_ALERT_RESPONSE sizeof(stackVsSegmentImbalanceAlertResponse) / sizeof(AlertResponse_E)
 Alert_S stackVsSegmentImbalanceAlert = 
 {
+    .alertName = "StackVsSegmentImbalance",
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = STACK_VS_SEGMENT_IMBALANCE_ALERT_SET_TIME_MS}, 
     .setTime_MS = STACK_VS_SEGMENT_IMBALANCE_ALERT_SET_TIME_MS, .clearTime_MS = STACK_VS_SEGMENT_IMBALANCE_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = stackVsSegmentImbalancePresent,
     .numAlertResponse = NUM_STACK_VS_SEGMENT_IMBALANCE_ALERT_RESPONSE, .alertResponse = stackVsSegmentImbalanceAlertResponse
+};
+
+// Charger Overvoltage Alert
+const AlertResponse_E chargerOverVoltageAlertResponse[] = { DISABLE_BALANCING, DISABLE_CHARGING, AMS_FAULT };
+#define NUM_CHARGER_OVERVOLTAGE_ALERT_RESPONSE sizeof(chargerOverVoltageAlertResponse) / sizeof(AlertResponse_E)
+Alert_S chargerOverVoltageAlert = 
+{
+    .alertName = "ChargerOvervoltage",
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CHARGER_OVERVOLTAGE_ALERT_SET_TIME_MS}, 
+    .setTime_MS = CHARGER_OVERVOLTAGE_ALERT_SET_TIME_MS, .clearTime_MS = CHARGER_OVERVOLTAGE_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = chargerOverVoltagePresent,
+    .numAlertResponse = NUM_CHARGER_OVERVOLTAGE_ALERT_RESPONSE, .alertResponse = chargerOverVoltageAlertResponse
+};
+
+// Charger Overcurrent Alert
+const AlertResponse_E chargerOverCurrentAlertResponse[] = { DISABLE_BALANCING, DISABLE_CHARGING, AMS_FAULT };
+#define NUM_CHARGER_OVERCURRENT_ALERT_RESPONSE sizeof(chargerOverCurrentAlertResponse) / sizeof(AlertResponse_E)
+Alert_S chargerOverCurrentAlert = 
+{
+    .alertName = "ChargerOvercurrent",
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CHARGER_OVERCURRENT_ALERT_SET_TIME_MS}, 
+    .setTime_MS = CHARGER_OVERCURRENT_ALERT_SET_TIME_MS, .clearTime_MS = CHARGER_OVERCURRENT_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = chargerOverCurrentPresent,
+    .numAlertResponse = NUM_CHARGER_OVERCURRENT_ALERT_RESPONSE, .alertResponse = chargerOverCurrentAlertResponse
+};
+
+// Accumulator Voltage vs Charger Voltage Mismatch Alert
+const AlertResponse_E chargerVoltageMismatchAlertResponse[] = { DISABLE_BALANCING, DISABLE_CHARGING, AMS_FAULT };
+#define NUM_CHARGER_VOLTAGE_MISMATCH_ALERT_RESPONSE sizeof(chargerVoltageMismatchAlertResponse) / sizeof(AlertResponse_E)
+Alert_S chargerVoltageMismatchAlert = 
+{
+    .alertName = "ChargerVoltageMismatch",
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CHARGER_VOLTAGE_MISMATCH_ALERT_SET_TIME_MS}, 
+    .setTime_MS = CHARGER_VOLTAGE_MISMATCH_ALERT_SET_TIME_MS, .clearTime_MS = CHARGER_VOLTAGE_MISMATCH_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = chargerVoltageMismatchPresent,
+    .numAlertResponse = NUM_CHARGER_VOLTAGE_MISMATCH_ALERT_RESPONSE, .alertResponse = chargerVoltageMismatchAlertResponse
+};
+
+// Accumulator Current vs Charger Current Mismatch Alert
+const AlertResponse_E chargerCurrentMismatchAlertResponse[] = { DISABLE_BALANCING, DISABLE_CHARGING, AMS_FAULT };
+#define NUM_CHARGER_CURRENT_MISMATCH_ALERT_RESPONSE sizeof(chargerCurrentMismatchAlertResponse) / sizeof(AlertResponse_E)
+Alert_S chargerCurrentMismatchAlert = 
+{
+    .alertName = "ChargerCurrentMismatch",
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CHARGER_CURRENT_MISMATCH_ALERT_SET_TIME_MS}, 
+    .setTime_MS = CHARGER_CURRENT_MISMATCH_ALERT_SET_TIME_MS, .clearTime_MS = CHARGER_CURRENT_MISMATCH_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = chargerCurrentMismatchPresent,
+    .numAlertResponse = NUM_CHARGER_CURRENT_MISMATCH_ALERT_RESPONSE, .alertResponse = chargerCurrentMismatchAlertResponse
+};
+
+// Charger Hardware Failure Alert
+const AlertResponse_E chargerHardwareFailureAlertResponse[] = { DISABLE_BALANCING, DISABLE_CHARGING, AMS_FAULT };
+#define NUM_CHARGER_HARDWARE_FAILURE_ALERT_RESPONSE sizeof(chargerHardwareFailureAlertResponse) / sizeof(AlertResponse_E)
+Alert_S chargerHardwareFailureAlert = 
+{
+    .alertName = "ChargerHardwareFailure",
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CHARGER_DIAGNOSTIC_ALERT_SET_TIME_MS}, 
+    .setTime_MS = CHARGER_DIAGNOSTIC_ALERT_SET_TIME_MS, .clearTime_MS = CHARGER_DIAGNOSTIC_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = chargerHardwareFailurePresent,
+    .numAlertResponse = NUM_CHARGER_HARDWARE_FAILURE_ALERT_RESPONSE, .alertResponse = chargerHardwareFailureAlertResponse
+};
+
+// Charger Overtemp Alert
+const AlertResponse_E chargerOverTempAlertResponse[] = { DISABLE_BALANCING, DISABLE_CHARGING, AMS_FAULT };
+#define NUM_CHARGER_OVER_TEMP_ALERT_RESPONSE sizeof(chargerOverTempAlertResponse) / sizeof(AlertResponse_E)
+Alert_S chargerOverTempAlert = 
+{
+    .alertName = "ChargerOverTemp",
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CHARGER_DIAGNOSTIC_ALERT_SET_TIME_MS}, 
+    .setTime_MS = CHARGER_DIAGNOSTIC_ALERT_SET_TIME_MS, .clearTime_MS = CHARGER_DIAGNOSTIC_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = chargerOverTempPresent,
+    .numAlertResponse = NUM_CHARGER_OVER_TEMP_ALERT_RESPONSE, .alertResponse = chargerOverTempAlertResponse
+};
+
+// Charger Input Voltage Error Alert
+const AlertResponse_E chargerInputVoltageErrorAlertResponse[] = { INFO_ONLY };
+#define NUM_CHARGER_INPUT_VOLTAGE_ERROR_ALERT_RESPONSE sizeof(chargerInputVoltageErrorAlertResponse) / sizeof(AlertResponse_E)
+Alert_S chargerInputVoltageErrorAlert = 
+{
+    .alertName = "ChargerInputVoltageError",
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CHARGER_DIAGNOSTIC_ALERT_SET_TIME_MS}, 
+    .setTime_MS = CHARGER_DIAGNOSTIC_ALERT_SET_TIME_MS, .clearTime_MS = CHARGER_DIAGNOSTIC_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = chargerInputVoltageErrorPresent,
+    .numAlertResponse = NUM_CHARGER_INPUT_VOLTAGE_ERROR_ALERT_RESPONSE, .alertResponse = chargerInputVoltageErrorAlertResponse
+};
+
+// Charger Battery Not Detected Error Alert
+const AlertResponse_E chargerBatteryNotDetectedErrorAlertResponse[] = { INFO_ONLY };
+#define NUM_CHARGER_BATTERY_NOT_DETECTED_ERROR_ALERT_RESPONSE sizeof(chargerBatteryNotDetectedErrorAlertResponse) / sizeof(AlertResponse_E)
+Alert_S chargerBatteryNotDetectedErrorAlert = 
+{
+    .alertName = "ChargerVoltageNotDetected",
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CHARGER_DIAGNOSTIC_ALERT_SET_TIME_MS}, 
+    .setTime_MS = CHARGER_DIAGNOSTIC_ALERT_SET_TIME_MS, .clearTime_MS = CHARGER_DIAGNOSTIC_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = chargerBatteryNotDetectedErrorPresent,
+    .numAlertResponse = NUM_CHARGER_BATTERY_NOT_DETECTED_ERROR_ALERT_RESPONSE, .alertResponse = chargerBatteryNotDetectedErrorAlertResponse
+};
+
+// Charger Communication Error Alert
+const AlertResponse_E chargerCommunicationErrorAlertResponse[] = { INFO_ONLY };
+#define NUM_CHARGER_COMMUNICATION_ERROR_ALERT_RESPONSE sizeof(chargerCommunicationErrorAlertResponse) / sizeof(AlertResponse_E)
+Alert_S chargerCommunicationErrorAlert = 
+{
+    .alertName = "ChargerCommsFailure",
+    .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CHARGER_DIAGNOSTIC_ALERT_SET_TIME_MS}, 
+    .setTime_MS = CHARGER_DIAGNOSTIC_ALERT_SET_TIME_MS, .clearTime_MS = CHARGER_DIAGNOSTIC_ALERT_CLEAR_TIME_MS, 
+    .alertConditionPresent = chargerCommunicationErrorPresent,
+    .numAlertResponse = NUM_CHARGER_COMMUNICATION_ERROR_ALERT_RESPONSE, .alertResponse = chargerCommunicationErrorAlertResponse
 };
 
 Alert_S* alerts[] = 
@@ -433,7 +587,16 @@ Alert_S* alerts[] =
     &badBrickTempSenseStatusAlert,
     &badBoardTempSenseStatusAlert,
     &insufficientTempSensorsAlert,
-    &stackVsSegmentImbalanceAlert
+    &stackVsSegmentImbalanceAlert,
+    &chargerOverVoltageAlert,
+    &chargerOverCurrentAlert,
+    &chargerVoltageMismatchAlert,
+    &chargerCurrentMismatchAlert,
+    &chargerHardwareFailureAlert,
+    &chargerOverTempAlert,
+    &chargerInputVoltageErrorAlert,
+    &chargerBatteryNotDetectedErrorAlert,
+    &chargerCommunicationErrorAlert
 };
 
 // Number of alerts

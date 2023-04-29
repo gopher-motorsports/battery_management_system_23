@@ -337,6 +337,7 @@ void aggregatePackData(uint32_t numBmbs)
 	float maxBrickV	   = MIN_BRICK_VOLTAGE_READING;
 	float minBrickV	   = MAX_BRICK_VOLTAGE_READING;
 	float avgBrickVSum = 0.0f;
+	float accumulatorVSum = 0.0f;
 
 	float maxBrickTemp    = MIN_TEMP_SENSE_READING;
 	float minBrickTemp 	  = MAX_TEMP_SENSE_READING;
@@ -378,9 +379,11 @@ void aggregatePackData(uint32_t numBmbs)
 		}
 
 		avgBrickVSum += pBmb->avgBrickV;
+		accumulatorVSum += pBmb->sumBrickV;
 		avgBrickTempSum += pBmb->avgBrickTemp;
 		avgBoardTempSum += pBmb->avgBoardTemp;
 	}
+	pBms->accumulatorVoltage = accumulatorVSum;
 	pBms->maxBrickV = maxBrickV;
 	pBms->minBrickV = minBrickV;
 	pBms->avgBrickV = avgBrickVSum / NUM_BMBS_IN_ACCUMULATOR;
@@ -675,18 +678,27 @@ void updateGopherCan()
 	}
 }
 
+void checkForNewChargerInfo()
+{
+	static uint32_t lastChargerRX = 0;
+	if (newChargerMessage)
+	{
+		lastChargerRX = HAL_GetTick();
+		gBms.chargerConnected = true;
+		updateChargerData(&gBms.chargerData);
+		newChargerMessage = false;
+	}
+	if (gBms.chargerConnected && ((HAL_GetTick() - lastChargerRX) > CHARGER_RX_TIMEOUT_MS))
+	{
+		gBms.chargerConnected = false;
+	}
+}
+
 /*!
   @brief   Perform accumulator charge sequence
 */
 void chargeAccumulator()
 {
-	// If a charger message is recieved, check for charger faults and update the charger status
-	if (newChargerMessage)
-	{
-		updateChargerData(&gBms.chargerData);
-		newChargerMessage = false;
-	}
-
 	// Periodically send an updated charger request CAN message to the charger
 	// Second condition protects from case in which a new charger message is recieved between this if statement and the last
 	static uint32_t lastChargerUpdate = 0;
