@@ -12,7 +12,7 @@
 #include "currentSense.h"
 #include "internalResistance.h"
 #include "gopher_sense.h"
-
+#include "charger.h"
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
@@ -47,11 +47,10 @@ Bms_S gBms =
 /* ==================================================================== */
 
 extern osMessageQId epaperQueueHandle;
-
 extern CAN_HandleTypeDef hcan2;
 
+extern bool newChargerMessage;
 extern LeakyBucket_S asciCommsLeakyBucket;
-
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
@@ -338,6 +337,7 @@ void aggregatePackData(uint32_t numBmbs)
 	float maxBrickV	   = MIN_BRICK_VOLTAGE_READING;
 	float minBrickV	   = MAX_BRICK_VOLTAGE_READING;
 	float avgBrickVSum = 0.0f;
+	float accumulatorVSum = 0.0f;
 
 	float maxBrickTemp    = MIN_TEMP_SENSE_READING;
 	float minBrickTemp 	  = MAX_TEMP_SENSE_READING;
@@ -379,9 +379,11 @@ void aggregatePackData(uint32_t numBmbs)
 		}
 
 		avgBrickVSum += pBmb->avgBrickV;
+		accumulatorVSum += pBmb->sumBrickV;
 		avgBrickTempSum += pBmb->avgBrickTemp;
 		avgBoardTempSum += pBmb->avgBoardTemp;
 	}
+	pBms->accumulatorVoltage = accumulatorVSum;
 	pBms->maxBrickV = maxBrickV;
 	pBms->minBrickV = minBrickV;
 	pBms->avgBrickV = avgBrickVSum / NUM_BMBS_IN_ACCUMULATOR;
@@ -505,7 +507,7 @@ void updateEpaper()
 void updateTractiveCurrent()
 {
 	static uint32_t lastCurrentUpdate = 0;
-	if((HAL_GetTick() - lastCurrentUpdate) > CURRENT_SENSOR_UPDATE_PERIOD_MS)
+	if((HAL_GetTick() - lastCurrentUpdate) >= CURRENT_SENSOR_UPDATE_PERIOD_MS)
 	{
 		lastCurrentUpdate = HAL_GetTick();
 		getTractiveSystemCurrent(&gBms);
@@ -598,7 +600,7 @@ void updateGopherCan()
 
 		// Log gcan variables across the alloted time period in data chunks
 		static uint32_t lastGcanUpdate = 0;
-		if((HAL_GetTick() - lastGcanUpdate) > GOPHER_CAN_LOGGING_PERIOD_MS)
+		if((HAL_GetTick() - lastGcanUpdate) >= GOPHER_CAN_LOGGING_PERIOD_MS)
 		{
 			lastGcanUpdate = HAL_GetTick();
 
@@ -690,9 +692,47 @@ void updateGopherCan()
 			}
 
 			// Cycle Gcan state and wrap to 0 if needed
-			gcanUpdateState = (gcanUpdateState++) % NUM_GCAN_STATES;
+			gcanUpdateState = (++gcanUpdateState) % NUM_GCAN_STATES;
 
 			service_can_tx(&hcan2);
+		}
+	}
+}
+
+void checkForNewChargerInfo()
+{
+	static uint32_t lastChargerRX = 0;
+	if (newChargerMessage)
+	{
+		lastChargerRX = HAL_GetTick();
+		gBms.chargerConnected = true;
+		updateChargerData(&gBms.chargerData);
+		newChargerMessage = false;
+	}
+	if (gBms.chargerConnected && ((HAL_GetTick() - lastChargerRX) > CHARGER_RX_TIMEOUT_MS))
+	{
+		gBms.chargerConnected = false;
+	}
+}
+
+/*!
+  @brief   Perform accumulator charge sequence
+*/
+void chargeAccumulator()
+{
+	// Periodically send an updated charger request CAN message to the charger
+	// Second condition protects from case in which a new charger message is recieved between this if statement and the last
+	static uint32_t lastChargerUpdate = 0;
+	if (((HAL_GetTick() - lastChargerUpdate) >= CHARGER_UPDATE_PERIOD_MS) && (!newChargerMessage))
+	{
+		lastChargerUpdate = HAL_GetTick();
+		if(gBms.chargingDisabled)
+		{
+			sendChargerMessage(0.0f, 0.0f, false);
+		}
+		else
+		{
+			// TODO Write conditional charging algorithm
 		}
 	}
 }
