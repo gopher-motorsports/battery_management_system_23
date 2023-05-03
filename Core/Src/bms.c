@@ -699,6 +699,9 @@ void updateGopherCan()
 	}
 }
 
+/*!
+  @brief   Check for new charger message and interpret data
+*/
 void checkForNewChargerInfo()
 {
 	static uint32_t lastChargerRX = 0;
@@ -721,18 +724,73 @@ void checkForNewChargerInfo()
 void chargeAccumulator()
 {
 	// Periodically send an updated charger request CAN message to the charger
-	// Second condition protects from case in which a new charger message is recieved between this if statement and the last
+	// Second condition (!newChargerMessage) protects from case in which a new charger message is 
+	// recieved between the last call of checkForNewChargerInfo and this function call
 	static uint32_t lastChargerUpdate = 0;
 	if (((HAL_GetTick() - lastChargerUpdate) >= CHARGER_UPDATE_PERIOD_MS) && (!newChargerMessage))
 	{
 		lastChargerUpdate = HAL_GetTick();
-		if(gBms.chargingDisabled)
+
+		// Default V and I requests are 0
+		float voltageRequest = 0.0f;
+		float currentRequest = 0.0f;
+
+		// Cell imbalance hysteresis
+		// cellImbalance set when pack imbalance exceeds high threshold
+		// cellImbalance reset when pack imbalance falls under low threshold
+		static bool cellImbalance = false;
+		if(cellImbalance)
 		{
-			sendChargerMessage(0.0f, 0.0f, false);
+			cellImbalance = (gBms.maxBrickV - gBms.minBrickV) > MAX_CELL_IMBALANCE_THRES_LOW;
 		}
 		else
 		{
-			// TODO Write conditional charging algorithm
+			cellImbalance = (gBms.maxBrickV - gBms.minBrickV) > MAX_CELL_IMBALANCE_THRES_HIGH;
 		}
+
+		// Cell Over Voltage hysteresis
+		// cellOverVoltage set when pack max cell voltage exceeds high threshold
+		// cellOverVoltage reset when pack max cell voltage falls under low threshold
+		static bool cellOverVoltage = false;
+		if(cellOverVoltage)
+		{
+			cellOverVoltage = gBms.maxBrickV > MAX_CELL_VOLTAGE_THRES_LOW;
+		}
+		else
+		{
+			cellOverVoltage = gBms.maxBrickV > MAX_CELL_VOLTAGE_THRES_HIGH;
+		}
+
+		// Charging is only allowed if the bms disable, cellImbalance, and cellOverVoltage are all not true 
+		bool chargeOkay = !(gBms.chargingDisabled || cellImbalance || cellOverVoltage);
+		if(chargeOkay)
+		{
+			// Always request max charging voltage
+			voltageRequest = MAX_CHARGE_VOLTAGE_V;
+
+			// If the min cell voltage is below the low charge voltage threshold, the charge current is reduced
+			if(gBms.minBrickV < LOW_CHARGE_VOLTAGE_THRES_V)
+			{
+				// This is a safe chage current for low voltage cells, typically 1/10 C
+				currentRequest = LOW_CHARGE_CURRENT_A;
+			}
+			else
+			{
+				// This is the normal charge current set in charger.h
+				currentRequest = HIGH_CHARGE_CURRENT_A;
+			}
+
+			// Calculate the max current possible given the charger power and pack voltage
+			float powerLimitAmps = (CHARGER_INPUT_POWER_W * MIN_CHARGER_EFFICIENCY) / (gBms.accumulatorVoltage + CHARGER_VOLTAGE_MISMATCH_THRESHOLD); // TODO factor in eff and safety zone
+
+			// Limit the charge current to the charger max power output if necessary 
+			if(currentRequest > powerLimitAmps)
+			{
+				currentRequest = powerLimitAmps;
+			}
+		}
+
+		// Send the calculated voltage and current requests to the charger over CAN
+		sendChargerMessage(voltageRequest, currentRequest, false);
 	}
 }

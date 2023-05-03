@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include "shared.h"
 #include "bms.h"
+#include "cellData.h"
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
@@ -37,10 +38,21 @@
 #define CHARGER_VOLTAGE_MISMATCH_THRESHOLD  15.0f
 #define CHARGER_CURRENT_MISMATCH_THRESHOLD  5.0f
 
-#define MAH_TO_AH                           1.0f / 1000.0f
+#define HIGH_CHARGE_C_RATE                  1
+#define LOW_CHARGE_C_RATE                   1.0f / 10.0f
+
+#define LOW_CHARGE_VOLTAGE_THRES_V          3.0f
+
+#define MIN_CHARGER_EFFICIENCY              0.9f
+
+#define CHARGER_INPUT_POWER_W               1800.0f  
+
+// Static_assert here to check if charge c rating is less than max c rating?
 
 #define MAX_CHARGE_VOLTAGE_V                MAX_BRICK_VOLTAGE * NUM_BRICKS_PER_BMB * NUM_BMBS_IN_ACCUMULATOR
-#define MAX_CHARGE_CURRENT_A                NUM_PARALLEL_CELLS * MAX_C_RATING * CELL_CAPACITY_MAH * MAH_TO_AH
+#define MAX_CHARGE_CURRENT_A                NUM_PARALLEL_CELLS * MAX_CHARGE_C_RATING * CELL_CAPACITY_AH
+#define HIGH_CHARGE_CURRENT_A               NUM_PARALLEL_CELLS * HIGH_CHARGE_C_RATE * CELL_CAPACITY_AH
+#define LOW_CHARGE_CURRENT_A                NUM_PARALLEL_CELLS * LOW_CHARGE_C_RATE * CELL_CAPACITY_AH
 
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */

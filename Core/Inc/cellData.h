@@ -11,8 +11,10 @@
 #define MAX_BRICK_TEMP_WARNING_C    55.0f
 #define MAX_BRICK_TEMP_FAULT_C      60.0f
 
+#define MAH_TO_AH                   1.0f / 1000.0f
 #define CELL_CAPACITY_MAH           3000.0f
-#define MAX_C_RATING                1
+#define CELL_CAPACITY_AH            CELL_CAPACITY_MAH * MAH_TO_AH
+#define MAX_CHARGE_C_RATING         1
 
 
 #endif /* INC_CELLDATA_H_ */
