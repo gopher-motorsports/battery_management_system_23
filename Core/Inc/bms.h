@@ -33,6 +33,9 @@
 // The delay between consecutive current sensor updates
 #define CURRENT_SENSOR_UPDATE_PERIOD_MS 	4
 
+// The rate at which we update the coulomb counter
+#define SOC_AND_SOE_UPDATE_PERIOD_MS		10
+
 // The delay between consecutive bmb updates
 #define VOLTAGE_DATA_UPDATE_PERIOD_MS		50
 

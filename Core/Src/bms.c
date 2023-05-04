@@ -38,7 +38,10 @@ Bms_S gBms =
         [4] = {.bmbIdx = 4},
         [5] = {.bmbIdx = 5},
         [6] = {.bmbIdx = 6}
-    }
+    },
+	.soc.socByOcvGoodTimer.timCount = SOC_BY_OCV_GOOD_QUALIFICATION_TIME_MS,
+	.soc.socByOcvGoodTimer.lastUpdate = 0,
+	.soc.socByOcvGoodTimer.timThreshold = SOC_BY_OCV_GOOD_QUALIFICATION_TIME_MS
 };
 
 
@@ -516,7 +519,19 @@ void updateTractiveCurrent()
 
 void updateStateOfChargeAndEnergy()
 {
-	updateSocAndSoe(gBms.minBrickV, gBms.tractiveSystemCurrent, &gBms.soc);
+	static uint32_t lastSocAndSoeUpdate = 0;
+	if ((HAL_GetTick() - lastSocAndSoeUpdate) >= SOC_AND_SOE_UPDATE_PERIOD_MS)
+	{
+		uint32_t deltaTimeMs = HAL_GetTick() - lastSocAndSoeUpdate;
+		lastSocAndSoeUpdate = HAL_GetTick();
+
+		// Populate data to be used in SOC and SOE calculation
+		Soc_S* pSoc = &gBms.soc;
+		pSoc->minBrickVoltage = gBms.minBrickV;
+		pSoc->curAccumulatorCurrent = gBms.tractiveSystemCurrent;
+		pSoc->deltaTimeMs = deltaTimeMs;
+		updateSocAndSoe(&gBms.soc);
+	}	
 }
 
 /*!
