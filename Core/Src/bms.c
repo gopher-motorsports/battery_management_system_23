@@ -514,6 +514,11 @@ void updateTractiveCurrent()
 	}	
 }
 
+void updateStateOfChargeAndEnergy()
+{
+	updateSocAndSoe(gBms.minBrickV, gBms.tractiveSystemCurrent, &gBms.soc);
+}
+
 /*!
   @brief   Log non-ADC gopher can variables
 */
