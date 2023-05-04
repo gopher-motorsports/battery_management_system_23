@@ -5,10 +5,7 @@
 #include "lookupTable.h"
 
 #define TABLE_LENGTH 101
-#define MILLISECONDS_IN_SECOND  1000
-#define SECOND_IN_HOUR          3600
 
-#define MAX_ACCUMULATOR_MILLICOULOMBS CELL_CAPACITY_MAH * NUM_PARALLEL_CELLS * SECOND_IN_HOUR * MILLISECONDS_IN_SECOND
 
 // Open cell voltage for VTC6 cells. References SOC table
 float openCellVoltage[TABLE_LENGTH] = 
@@ -104,17 +101,16 @@ static void updateSocMethod(Soc_S* soc)
         if (soc->socByOcvGood)
         {
             // Save current SOC value as initial reference for coulomb counting and reset coulomb counter
-            soc->lastGoodSoc = soc->socByOcv;
             soc->socByOcvGood = false;
             soc->coulombCounter.accumulatedMilliCoulombs = 0;
-            soc->coulombCounter.initialMilliCoulombCount = getMilliCoulombsFromSoc(soc->lastGoodSoc);
+            soc->coulombCounter.initialMilliCoulombCount = getMilliCoulombsFromSoc(soc->socByOcv);
         }
     }
 }
 
 static void countCoulombs(Soc_S* soc)
 {
-    int32_t deltaMilliCoulombs =  * soc->curAccumulatorCurrent;
+    int32_t deltaMilliCoulombs =  soc->deltaTimeMs * soc->curAccumulatorCurrent;
     soc->coulombCounter.accumulatedMilliCoulombs += deltaMilliCoulombs;
 }
 
@@ -124,7 +120,7 @@ static void calculateSocAndSoe(Soc_S* soc)
     if (soc->socByOcvGood)
     {
         // Currently soc by ocv is a reliable estimate
-        soc->socByOcv = getSocFromCellVoltage(soc->minCellVoltage);
+        soc->socByOcv = getSocFromCellVoltage(soc->minBrickVoltage);
         soc->soeByOcv = getSoeFromSoc(soc->socByOcv);
         soc->socByCoulombCounting = 0;
         soc->soeByCoulombCounting = 0;
@@ -132,7 +128,7 @@ static void calculateSocAndSoe(Soc_S* soc)
     else
     {
         // Currently soc by ocv is unreliable. Do coulomb counting
-        soc->socByOcv = getSocFromCellVoltage(soc->minCellVoltage);
+        soc->socByOcv = getSocFromCellVoltage(soc->minBrickVoltage);
         soc->soeByOcv = getSoeFromSoc(soc->socByOcv);
 
         // Update coulomb counter
@@ -142,7 +138,7 @@ static void calculateSocAndSoe(Soc_S* soc)
     }
 }
 
-void updateSocAndSoe(float minCellVoltage, float curAccumulatorCurrent, Soc_S* soc)
+void updateSocAndSoe(Soc_S* soc)
 {
     updateSocMethod(soc);
 
