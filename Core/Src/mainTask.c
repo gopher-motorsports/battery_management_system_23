@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include "GopherCAN_network.h"
 #include "internalResistance.h"
+#include "timer.h"
 
 
 /* ==================================================================== */
@@ -49,6 +50,7 @@ void printCellTemperatures();
 void printBoardTemperatures();
 void printInternalResistances();
 void printActiveAlerts();
+void printSocAndSoe();
 void printImdState();
 void printChargerData();
 
@@ -73,14 +75,28 @@ void initMain()
 
 void runMain()
 {
-	if (gBms.bmsHwState == BMS_BMB_FAILURE)
+	if (gBms.bmsHwState != BMS_BMB_FAILURE)
 	{
 		// Retry initializing the BMBs
 		initBatteryPack(&numBmbs);
 	}
 	else
 	{
+		numBmbs = 1;
 		updateTractiveCurrent();
+		if (HAL_GetTick() > 10000)
+		{
+			if (HAL_GetTick() < 20000)
+			{
+				gBms.tractiveSystemCurrent = 200.0f;
+			}
+			else
+			{
+				gBms.tractiveSystemCurrent = 0.0f;
+			}
+		}
+
+		updateStateOfChargeAndEnergy();
 		
 		updatePackData(numBmbs);
 
@@ -98,10 +114,10 @@ void runMain()
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{
-			if (leakyBucketFilled(&asciCommsLeakyBucket))
-			{
-				gBms.bmsHwState = BMS_BMB_FAILURE;
-			}
+			// if (leakyBucketFilled(&asciCommsLeakyBucket))
+			// {
+			// 	gBms.bmsHwState = BMS_BMB_FAILURE;
+			// }
 			// Clear console
 			printf("\e[1;1H\e[2J");
 
@@ -121,12 +137,10 @@ void runMain()
 			// printInternalResistances();
 			printBoardTemperatures();
 			printActiveAlerts();
+			printSocAndSoe();
 			printImdState();
 			printChargerData();
 
-			const float soc = getSocFromCellVoltage(gBms.minBrickV);
-			const float soe = getSoeFromSoc(soc);
-			printf("SOC: %5.2f%% \tSOE: %5.2f%%\n", (double)(100.0f * soc), (double)(100.0f * soe));
 
 			printf("Leaky bucket filled: %d\n\n", leakyBucketFilled(&asciCommsLeakyBucket));
 
@@ -283,6 +297,15 @@ void printChargerData()
 		printf("%d ", gBms.chargerData.chargerStatus[i]);
 	}
 	printf("\n");
+}
+
+
+void printSocAndSoe()
+{
+	printf("| METHOD |    SOC   |    SOE   |\n");
+	printf("|  OCV   |  %5.2f%%  |  %5.2f%%  |\n", (double)(100.0f * gBms.soc.socByOcv), (double)(100.0f * gBms.soc.soeByOcv));
+	printf("|  CC    |  %5.2f%%  |  %5.2f%%  |\n", (double)(100.0f * gBms.soc.socByCoulombCounting), (double)(100.0f * gBms.soc.soeByCoulombCounting));
+	printf("Remaining SOC by OCV qualification time ms: %lu\n", getTimeTilExpirationMs(&gBms.soc.socByOcvGoodTimer));
 }
 
 

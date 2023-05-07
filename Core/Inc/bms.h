@@ -181,6 +181,8 @@ void updateEpaper();
 */
 void updateTractiveCurrent();
 
+void updateStateOfChargeAndEnergy();
+
 /*!
   @brief   Log non-ADC gopher can variables
 */

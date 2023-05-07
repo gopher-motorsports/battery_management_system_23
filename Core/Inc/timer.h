@@ -39,6 +39,9 @@ void clearTimer(Timer_S* timer);
 */
 void saturateTimer(Timer_S* timer);
 
+
+uint32_t getTimeTilExpirationMs(Timer_S* timer);
+
 /*!
     @brief   Check whether or not the timer has reached its threshold (expired)
     @param   timer - Pointer to the Timer_S struct to be checked

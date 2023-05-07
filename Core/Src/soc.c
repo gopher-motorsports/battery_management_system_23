@@ -72,12 +72,24 @@ float getSoeFromSoc(float soc)
 
 static uint32_t getMilliCoulombsFromSoc(float soc)
 {
+    if (soc < 0.0f)
+    {
+        soc = 0.0f;
+    }
+    if (soc > 1.0f)
+    {
+        soc = 1.0f;
+    }
     return (uint32_t)(MAX_ACCUMULATOR_MILLICOULOMBS * soc);
 }
 
 static float getSocFromMilliCoulombs(uint32_t milliCoulombs)
 {
-    return ((float)milliCoulombs / MAX_ACCUMULATOR_MILLICOULOMBS);
+    if (milliCoulombs > MAX_ACCUMULATOR_MILLICOULOMBS)
+    {
+        milliCoulombs = MAX_ACCUMULATOR_MILLICOULOMBS;
+    }
+    return ((float)milliCoulombs)/((float)MAX_ACCUMULATOR_MILLICOULOMBS);
 }
 
 static void updateSocMethod(Soc_S* soc)
