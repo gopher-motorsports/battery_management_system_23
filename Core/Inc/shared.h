@@ -55,6 +55,8 @@ typedef struct
 	float minBoardTemp;
 	float avgBoardTemp;
 
+	float stateOfEnergy;
+
 	float current;
 
 	char* stateMessage;			// String of bms state to be displayed on epaper

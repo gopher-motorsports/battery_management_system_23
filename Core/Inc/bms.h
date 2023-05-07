@@ -102,6 +102,7 @@ typedef struct Bms
 	Sensor_Status_E tractiveSystemCurrentStatus;
 	float tractiveSystemCurrent;
 
+	// Struct to contain data for SOC calculations
 	Soc_S soc;
 
 	bool balancingDisabled;
@@ -181,6 +182,10 @@ void updateEpaper();
 */
 void updateTractiveCurrent();
 
+/*!
+  @brief   Update the state of charge (SOC) and state of energy (SOE) using both SOC by 
+		   Open Cell Voltage (OCV) and Coulomb Counting
+*/
 void updateStateOfChargeAndEnergy();
 
 /*!

@@ -4,7 +4,6 @@
 // The number of Cells in a cell brick
 #define NUM_PARALLEL_CELLS          		7
 
-
 #define MAX_TEMP_SENSOR_VALUE_C     120.0f
 #define MIN_TEMP_SENSOR_VALUE_C     -40.0f
 
