@@ -82,8 +82,9 @@
 
 typedef enum
 {
-    ALERT_CLEARED = 0,
-    ALERT_SET
+    ALERT_CLEARED = 0,	// Indicates alert has not been set yet
+    ALERT_LATCHED,		// Indicates alert is no longer present, but was at one point (only applies for latching alerts)
+    ALERT_SET			// Indicates alert is currently set
 } AlertStatus_E;
 
 
@@ -98,6 +99,8 @@ typedef bool (*AlertConditionPresent)(Bms_S*);
 typedef struct
 {
     const char* alertName;
+    // Whether the alert is latching or not
+    const bool latching;
     // The current status of the alert
     AlertStatus_E alertStatus;
     // The timer used for qualifying the alert set/clear condition

@@ -201,7 +201,7 @@ AlertStatus_E getAlertStatus(Alert_S* alert)
 */
 void runAlertMonitor(Bms_S* bms, Alert_S* alert)
 {
-    if (alert->alertStatus == ALERT_CLEARED)
+    if (alert->alertStatus == ALERT_CLEARED || alert->alertStatus == ALERT_LATCHED)
     {
         // Determine if we need to set the alert
         if (alert->alertConditionPresent(bms))
@@ -242,8 +242,17 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
         // Determine if alert was cleared or in the case that the timer threshold is 0 then check whether the alert condition is not present
         if (checkTimerExpired(&alert->alertTimer) && (!(alert->alertTimer.timThreshold <= 0) || !alert->alertConditionPresent(bms)))
         {
-            // Timer expired - Clear alert
-            alert->alertStatus = ALERT_CLEARED;
+            // Timer expired indicating alert is no longer present. Either set status to latched or clear
+            if (alert->latching)
+            {
+                // Latching alerts can't be cleared - set status to latched to indicate that conditions are no longer met
+                alert->alertStatus = ALERT_LATCHED;
+            }
+            else
+            {
+                // If non latching alert, the alert can be cleared
+                alert->alertStatus = ALERT_CLEARED;
+            }
             // Load timer with alert set time
             configureTimer(&alert->alertTimer, alert->setTime_MS);
         }
