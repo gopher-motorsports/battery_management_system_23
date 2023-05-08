@@ -304,7 +304,8 @@ void checkAndHandleAlerts()
 		for (uint32_t i = 0; i < NUM_ALERTS; i++)
 		{
 			Alert_S* alert = alerts[i];
-			if (getAlertStatus(alert) == ALERT_SET)
+			const AlertStatus_E alertStatus = getAlertStatus(alert);
+			if ((alertStatus == ALERT_SET) || (alertStatus == ALERT_LATCHED))
 			{
 				// Iterate through all alert responses and set them
 				for (uint32_t j = 0; j < alert->numAlertResponse; j++)
