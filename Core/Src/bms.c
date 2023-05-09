@@ -736,33 +736,34 @@ void chargeAccumulator()
 		float currentRequest = 0.0f;
 
 		// Cell imbalance hysteresis
-		// cellImbalance set when pack imbalance exceeds high threshold
-		// cellImbalance reset when pack imbalance falls under low threshold
-		static bool cellImbalance = false;
-		if(cellImbalance)
+		// cellImbalancePresent set when pack imbalance exceeds high threshold
+		// cellImbalancePresent reset when pack imbalance falls under low threshold
+		static bool cellImbalancePresent = false;
+		float cellImbalance = gBms.maxBrickV - gBms.minBrickV;
+		if (cellImbalance > MAX_CELL_IMBALANCE_THRES_HIGH)
 		{
-			cellImbalance = (gBms.maxBrickV - gBms.minBrickV) > MAX_CELL_IMBALANCE_THRES_LOW;
+			cellImbalancePresent = true;
 		}
-		else
+		else if (cellImbalance < MAX_CELL_IMBALANCE_THRES_LOW)
 		{
-			cellImbalance = (gBms.maxBrickV - gBms.minBrickV) > MAX_CELL_IMBALANCE_THRES_HIGH;
+			cellImbalancePresent = false;
 		}
 
 		// Cell Over Voltage hysteresis
-		// cellOverVoltage set when pack max cell voltage exceeds high threshold
-		// cellOverVoltage reset when pack max cell voltage falls under low threshold
-		static bool cellOverVoltage = false;
-		if(cellOverVoltage)
+		// cellOverVoltagePresent set when pack max cell voltage exceeds high threshold
+		// cellOverVoltagePresent reset when pack max cell voltage falls under low threshold
+		static bool cellOverVoltagePresent = false;
+		if(gBms.maxBrickV > MAX_CELL_VOLTAGE_THRES_HIGH)
 		{
-			cellOverVoltage = gBms.maxBrickV > MAX_CELL_VOLTAGE_THRES_LOW;
+			cellOverVoltagePresent = true;
 		}
-		else
+		else if(gBms.maxBrickV < MAX_CELL_VOLTAGE_THRES_LOW)
 		{
-			cellOverVoltage = gBms.maxBrickV > MAX_CELL_VOLTAGE_THRES_HIGH;
+			cellOverVoltagePresent = false;
 		}
 
-		// Charging is only allowed if the bms disable, cellImbalance, and cellOverVoltage are all not true 
-		bool chargeOkay = !(gBms.chargingDisabled || cellImbalance || cellOverVoltage);
+		// Charging is only allowed if the bms disable, cellImbalancePresent, and cellOverVoltagePresent are all not true 
+		bool chargeOkay = !(gBms.chargingDisabled || cellImbalancePresent || cellOverVoltagePresent);
 		if(chargeOkay)
 		{
 			// Always request max charging voltage
