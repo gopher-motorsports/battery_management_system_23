@@ -34,7 +34,6 @@ extern LeakyBucket_S asciCommsLeakyBucket;
 /* ========================= LOCAL VARIABLES ========================== */
 /* ==================================================================== */
 
-uint32_t numBmbs = 0;
 static uint32_t initRetries = 5;
 static uint32_t lastUpdateMain = 0;
 
@@ -60,7 +59,7 @@ void initMain()
 	for (int i = 0; i < initRetries; i++)
 	{
 		// Try to initialize the BMS HW
-		if (initBatteryPack(&numBmbs))
+		if (initBatteryPack())
 		{
 			// Successfully initialized
 			return;
@@ -74,13 +73,11 @@ void runMain()
 	if (gBms.bmsHwState == BMS_BMB_FAILURE)
 	{
 		// Retry initializing the BMBs
-		initBatteryPack(&numBmbs);
+		initBatteryPack();
 	}
 	else
-	{
-		updateTractiveCurrent();
-		
-		updatePackData(numBmbs);
+	{		
+		updatePackData();
 
 		updateGopherCan();
 
@@ -107,7 +104,7 @@ void runMain()
 			{
 				printf("Balancing Enabled: FALSE\n");
 			}
-			balancePack(numBmbs, balancingEnabled);
+			balancePack(balancingEnabled);
 			// balancePackToVoltage(numBmbs, 3.87f);
 
 			printCellVoltages();
@@ -145,7 +142,7 @@ void printCellVoltages()
 	printf("Cell Voltage:\n");
 	printf("Max: %5.3fV\t Min: %5.3fV\t Avg: %5.3fV\n", (double)gBms.maxBrickV, (double)gBms.minBrickV, (double)gBms.avgBrickV);
 	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    | Segment |\n");
-	for (int32_t i = 0; i < numBmbs; i++)
+	for (int32_t i = 0; i < gBms.numBmbs; i++)
 	{
 		printf("|    %02ld   |", i + 1);
 		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
@@ -172,7 +169,7 @@ void printCellTemperatures()
 	printf("Cell Temp:\n");
 	printf("Max: %5.1fC\t Min: %5.1fC\t Avg: %5.1fC\n", (double)gBms.maxBrickTemp, (double)gBms.minBrickTemp, (double)gBms.avgBrickTemp);
 	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    |\n");
-	for (int32_t i = 0; i < numBmbs; i++)
+	for (int32_t i = 0; i < gBms.numBmbs; i++)
 	{
 		printf("|    %02ld   |", i + 1);
 		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
@@ -188,7 +185,7 @@ void printInternalResistances()
 {
 	printf("Internal Resistance:\n");
 	printf("|   BMB   |    1    |    2    |    3    |    4    |    5    |    6    |    7    |    8    |    9    |   10    |   11    |   12    |\n");
-	for (int32_t i = 0; i < numBmbs; i++)
+	for (int32_t i = 0; i < gBms.numBmbs; i++)
 	{
 		printf("|    %02ld   |", i + 1);
 		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
@@ -205,7 +202,7 @@ void printBoardTemperatures()
 	printf("Board Temp:\n");
 	printf("Max: %5.1fC\t Min: %5.1fC\t Avg: %5.1fC\n", (double)gBms.maxBoardTemp, (double)gBms.minBoardTemp, (double)gBms.avgBoardTemp);
 	printf("|   BMB   |    1    |    2    |    3    |    4    |\n");
-	for (int32_t i = 0; i < numBmbs; i++)
+	for (int32_t i = 0; i < gBms.numBmbs; i++)
 	{
 		printf("|    %02ld   |", i + 1);
 		for (int32_t j = 0; j < NUM_BOARD_TEMP_PER_BMB; j++)
