@@ -26,6 +26,8 @@
 #define EPAP_UPDATE_PERIOD_MS	  2000
 #define ALERT_MONITOR_PERIOD_MS	  10
 
+#define BALANCE_REQUEST_PERIOD_MS 1000
+
 // The fun way to initilize bmb struct array
 // #define INIT_BMB_ARR_HELPER(x)  [x] = {.bmbIdx = x}
 // #define INIT_BMB_ARR_HELPER_1   INIT_BMB_ARR_HELPER(__COUNTER__)
@@ -102,6 +104,8 @@ bool initBatteryPack()
 	gBms.chargingDisabled  = true;
 	gBms.limpModeEnabled   = false;
 	gBms.amsFaultPresent   = false;
+
+	DebugInit("initializing BMS\n");
 	
 	if (!initASCI())
 	{
@@ -121,7 +125,7 @@ bool initBatteryPack()
 		// helloAll command succeeded - verify that the numBmbs was correctly set
 		if (numBmbs != NUM_BMBS_IN_ACCUMULATOR)
 		{
-			Debug("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", numBmbs, NUM_BMBS_IN_ACCUMULATOR);
+			DebugInit("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", numBmbs, NUM_BMBS_IN_ACCUMULATOR);
 			goto initializationError;
 		}
 
@@ -154,11 +158,11 @@ initializationError:
 		// A chain break exists
 		if (breakLocation == 1)
 		{
-			Debug("BMB Chain Break detected between BMS and BMB 1\n");
+			DebugInit("BMB Chain Break detected between BMS and BMB 1\n");
 		}
 		else
 		{
-			Debug("BMB Chain Break detected between BMB %lu and BMB %lu\n", breakLocation - 1, breakLocation);
+			DebugInit("BMB Chain Break detected between BMB %lu and BMB %lu\n", breakLocation - 1, breakLocation);
 		}
 	}
 	else
@@ -263,8 +267,14 @@ void aggregatePackData()
 */
 void updatePackData()
 {
+	if (leakyBucketFilled(&asciCommsLeakyBucket))
+	{
+		gBms.bmsHwState = BMS_BMB_FAILURE;
+		return;
+	}
+
 	static uint32_t lastPackUpdate = 0;
-	if((HAL_GetTick() - lastPackUpdate) > BMB_DATA_UPDATE_PERIOD_MS)
+	if((HAL_GetTick() - lastPackUpdate) >= BMB_DATA_UPDATE_PERIOD_MS)
 	{
 		lastPackUpdate = HAL_GetTick();
 		updateBmbData(gBms.bmb, gBms.numBmbs);
@@ -289,33 +299,6 @@ static void disableBalancing()
 		}
 	}
 	balanceCells(gBms.bmb, gBms.numBmbs);
-}
-
-/*!
-  @brief   Handles balancing the battery pack
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-  @param   balanceRequested - True if we want to balance, false otherwise
-*/
-void balancePack()
-{
-	// TODO: Determine how we want to handle EMERGENCY_BLEED
-
-	// If balancing not requested or balancing disabled ensure all balance switches off
-	if (gBms.balancingDisabled)
-	{
-		disableBalancing();
-		return;
-	}
-
-	// Determine minimum voltage across entire battery pack
-	float bleedTargetVoltage = gBms.minBrickV;
-
-	// Ensure we don't overbleed the cells
-	if (bleedTargetVoltage < MIN_BLEED_TARGET_VOLTAGE_V)
-	{
-		bleedTargetVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
-	}		
-	balancePackToVoltage(bleedTargetVoltage);
 }
 
 /*!
@@ -359,6 +342,40 @@ void balancePackToVoltage(float targetBrickVoltage)
 }
 
 /*!
+  @brief   Handles balancing the battery pack
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+  @param   balanceRequested - True if we want to balance, false otherwise
+*/
+void balancePack(bool balanceRequested)
+{
+	// TODO: Determine how we want to handle EMERGENCY_BLEED
+
+	static uint32_t lastBalanceUpdate = 0;
+	if(HAL_GetTick() - lastBalanceUpdate >= BALANCE_REQUEST_PERIOD_MS)
+	{
+		// If balancing not requested or balancing disabled ensure all balance switches off
+		if (!balanceRequested || gBms.balancingDisabled)
+		{
+			disableBalancing();
+			gBms.packBalancing = false;
+		}
+		else
+		{
+			// Determine minimum voltage across entire battery pack
+			float bleedTargetVoltage = gBms.minBrickV;
+
+			// Ensure we don't overbleed the cells
+			if (bleedTargetVoltage < MIN_BLEED_TARGET_VOLTAGE_V)
+			{
+				bleedTargetVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
+			}		
+			gBms.packBalancing = true;
+			balancePackToVoltage(bleedTargetVoltage);
+		}	
+	}
+}
+
+/*!
   @brief   Check and handle alerts for the BMS by running alert monitors, accumulating alert statuses,
            and setting BMS status based on the alerts.
   
@@ -370,7 +387,7 @@ void checkAndHandleAlerts()
 {
 	static uint32_t lastAlertMonitorUpdate = 0;
 
-	if (HAL_GetTick() - lastAlertMonitorUpdate > ALERT_MONITOR_PERIOD_MS)
+	if (HAL_GetTick() - lastAlertMonitorUpdate >= ALERT_MONITOR_PERIOD_MS)
 	{
 		// Run each alert monitor
 		for (uint32_t i = 0; i < NUM_ALERTS; i++)
@@ -413,9 +430,7 @@ void checkAndHandleAlerts()
 */
 void updateImdStatus()
 {
-	Bms_S* pBms = &gBms;
-
-	pBms->imdState = getImdStatus();
+	gBms.imdState = getImdStatus();
 }
 
 /*!
@@ -425,7 +440,7 @@ void updateEpaper()
 {
 	static uint32_t lastEpapUpdate = 0;
 
-	if((HAL_GetTick() - lastEpapUpdate) > EPAP_UPDATE_PERIOD_MS)
+	if((HAL_GetTick() - lastEpapUpdate) >= EPAP_UPDATE_PERIOD_MS)
 	{
 		lastEpapUpdate = HAL_GetTick();
 
@@ -514,10 +529,10 @@ void updateEpaper()
 	}
 }
 
-void initBmsGopherCan(CAN_HandleTypeDef* hcan)
+void initBmsGopherCan()
 {
 	// initialize CAN
-	if (init_can(GCAN0, hcan, BMS_ID, BXTYPE_MASTER))
+	if (init_can(GCAN0, &hcan2, BMS_ID, BXTYPE_MASTER))
 	{
 		gBms.bmsHwState = BMS_GSNS_FAILURE;
 	}
@@ -718,7 +733,7 @@ void checkForNewChargerInfo()
 		updateChargerData(&gBms.chargerData);
 		newChargerMessage = false;
 	}
-	if (gBms.chargerConnected && ((HAL_GetTick() - lastChargerRX) > CHARGER_RX_TIMEOUT_MS))
+	if (gBms.chargerConnected && ((HAL_GetTick() - lastChargerRX) >= CHARGER_RX_TIMEOUT_MS))
 	{
 		gBms.chargerConnected = false;
 	}
@@ -810,4 +825,110 @@ void chargeAccumulator()
 		// Send the calculated voltage and current requests to the charger over CAN
 		sendChargerMessage(voltageRequest, currentRequest, false);
 	}
+}
+
+/* ==================================================================== */
+/* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
+/* ==================================================================== */
+
+Bms_State_E runBmsInit()
+{
+	initBatteryPack();
+	initBmsGopherCan();
+
+	if(gBms.bmsHwState != BMS_NOMINAL)
+	{
+		return BMS_STATE_INIT;
+	}
+	else
+	{
+		return BMS_STATE_NOMINAL;
+	}
+}
+
+Bms_State_E runBmsNominal()
+{
+	updatePackData();
+
+	updateImdStatus();
+
+	checkAndHandleAlerts();
+
+	updateGopherCan();
+
+	updateEpaper();
+
+	checkForNewChargerInfo();
+
+	balancePack(false);
+
+	if(gBms.amsFaultPresent)
+	{
+		return BMS_STATE_FAULT;
+	}
+	else if(gBms.bmsHwState != BMS_NOMINAL)
+	{
+		return BMS_STATE_INIT;
+	}
+	else if(gBms.chargerConnected) //TODO && !chargeComplete
+	{
+		return BMS_STATE_CHARGING;
+	}
+	else
+	{
+		return BMS_STATE_NOMINAL;
+	}
+}
+
+Bms_State_E runBmsCharging()
+{
+	updatePackData();
+
+	updateImdStatus();
+
+	checkAndHandleAlerts();
+
+	updateGopherCan();
+
+	updateEpaper();
+
+	checkForNewChargerInfo();
+
+	chargeAccumulator();
+
+	balancePack(true);
+
+	if(gBms.amsFaultPresent)
+	{
+		return BMS_STATE_FAULT;
+	}
+	else if(gBms.bmsHwState != BMS_NOMINAL)
+	{
+		return BMS_STATE_INIT;
+	}
+	else if(gBms.chargerConnected) //TODO && !chargeComplete
+	{
+		return BMS_STATE_CHARGING;
+	}
+	else
+	{
+		return BMS_STATE_NOMINAL;
+	}
+}
+
+Bms_State_E runBmsFault()
+{
+	updatePackData();
+
+	updateImdStatus();
+
+	checkAndHandleAlerts();
+
+	updateGopherCan();
+
+	updateEpaper();
+
+	disableBalancing();
+
+	return BMS_STATE_FAULT;
 }

@@ -48,6 +48,15 @@
 
 typedef enum
 {
+	BMS_STATE_INIT = 0,
+	BMS_STATE_NOMINAL,
+	BMS_STATE_CHARGING,
+	BMS_STATE_FAULT
+
+} Bms_State_E;
+
+typedef enum
+{
 	BMS_NOMINAL = 0,
 	BMS_GSNS_FAILURE,
 	BMS_BMB_FAILURE
@@ -101,6 +110,8 @@ typedef struct Bms
 	Sensor_Status_E tractiveSystemCurrentStatus;
 	float tractiveSystemCurrent;
 
+	bool packBalancing;
+
 	bool balancingDisabled;
 	bool emergencyBleed;
 	bool chargingDisabled;
@@ -127,7 +138,7 @@ typedef struct Bms
 */
 bool initBatteryPack();
 
-void initBmsGopherCan(CAN_HandleTypeDef* hcan);
+void initBmsGopherCan();
 
 /*!
   @brief   Updates all BMB data
@@ -139,7 +150,7 @@ void updatePackData();
   @brief   Handles balancing the battery pack
   @param   balanceRequested - True if we want to balance, false otherwise
 */
-void balancePack();
+void balancePack(bool balanceRequested);
 
 /*!
   @brief   Update BMS data statistics. Min/Max/Avg
@@ -178,5 +189,14 @@ void updateGopherCan();
   @brief   Perform accumulator charge sequence
 */
 void chargeAccumulator();
+
+Bms_State_E runBmsInit();
+
+Bms_State_E runBmsNominal();
+
+Bms_State_E runBmsCharging();
+
+Bms_State_E runBmsFault();
+
 
 #endif /* INC_BMS_H_ */

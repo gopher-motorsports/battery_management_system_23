@@ -1,11 +1,28 @@
 #ifndef INC_DEBUG_H_
 #define INC_DEBUG_H_
 
-#define DEBUG 1
-#if DEBUG
-	#define Debug(__info,...) printf("Debug: " __info,##__VA_ARGS__)
+/* ==================================================================== */
+/* =================== GLOBAL FUNCTION DECLARATIONS =================== */
+/* ==================================================================== */
+
+void printBmsStruct();
+
+/* ==================================================================== */
+/* =========================== DEBUG MACROS =========================== */
+/* ==================================================================== */
+
+#define DEBUG_DATA 1
+#if DEBUG_DATA
+	#define DebugData() printBmsStruct()
 #else
-	#define Debug(__info,...)  
+	#define DebugData()  
+#endif
+
+#define DEBUG_INIT 1
+#if DEBUG_INIT
+	#define DebugInit(__info,...) printf("DebugInit: " __info,##__VA_ARGS__)
+#else
+	#define DebugInit(__info,...)  
 #endif
 
 #define DEBUG_COMM 0
@@ -22,4 +39,4 @@
 	#define DebugEpaper(__info,...)  
 #endif
 
-#endif
+#endif // INC_DEBUG_H_
