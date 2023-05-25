@@ -69,6 +69,30 @@ void initMain()
 	Debug("Failed to initialize BMS\n");
 }
 
+// TEMPORARY
+const char* IMD_State_To_String(IMD_State_E state) {
+    switch(state) {
+        case IMD_NO_SIGNAL:
+            return "IMD_NO_SIGNAL";
+        case IMD_NORMAL:
+            return "IMD_NORMAL";
+        case IMD_UNDER_VOLT:
+            return "IMD_UNDER_VOLT";
+        case IMD_SPEED_START_MEASUREMENT_GOOD:
+            return "IMD_SPEED_START_MEASUREMENT_GOOD";
+        case IMD_SPEED_START_MEASUREMENT_BAD:
+            return "IMD_SPEED_START_MEASUREMENT_BAD";
+        case IMD_DEVICE_ERROR:
+            return "IMD_DEVICE_ERROR";
+        case IMD_EARTH_FAULT:
+            return "IMD_EARTH_FAULT";
+        default:
+            return "UNKNOWN_STATE";
+    }
+}
+// TEMPORARY
+
+
 void runMain()
 {
 	if (gBms.bmsHwState == BMS_BMB_FAILURE)
@@ -123,6 +147,11 @@ void runMain()
 			printf("Leaky bucket filled: %d\n\n", leakyBucketFilled(&asciCommsLeakyBucket));
 
 			printf("Tractive Current: %6.3f\n", (double)gBms.tractiveSystemCurrent);
+
+			// TEMPORARY
+			const char* stateStr = IMD_State_To_String(gBms.imdState);
+    		printf("IMD State: %s\n", stateStr);
+			// TEMPORARY
 
 			// Update lastUpdate
 			lastUpdateMain = HAL_GetTick();
