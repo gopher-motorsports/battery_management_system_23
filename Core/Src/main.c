@@ -145,7 +145,7 @@ GETCHAR_PROTOTYPE
 void vApplicationStackOverflowHook( TaskHandle_t xTask, signed char *pcTaskName )
 {
   // Print out error message indicating offending task
-  Debug("Error: Stack overflow detected in task: %s\n", pcTaskName);
+  printf("Error: Stack overflow detected in task: %s\n", pcTaskName);
   // Call hardfault handler which indicates error by flashing led and then resets MCU
   HardFault_Handler();
 }
@@ -903,7 +903,6 @@ void StartDefaultTask(void const * argument)
 void StartMainTask(void const * argument)
 {
   /* USER CODE BEGIN StartMainTask */
-  initMain();
   /* Infinite loop */
   for(;;)
   {
