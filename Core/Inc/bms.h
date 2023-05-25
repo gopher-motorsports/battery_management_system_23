@@ -36,7 +36,7 @@
 #define CURRENT_SENSOR_UPDATE_PERIOD_MS 	4
 
 // The delay between consecutive bmb updates
-#define VOLTAGE_DATA_UPDATE_PERIOD_MS		50
+#define BMB_DATA_UPDATE_PERIOD_MS		50
 
 // Gophercan variable logging frequency. This value will be divided by the number of transactions
 // Frequency cannot exceed HW CONFIG max logging frequency
@@ -123,10 +123,9 @@ typedef struct Bms
 /* ==================================================================== */
 /*!
   @brief   Initialization function for the battery pack
-  @param   numBmbs - The expected number of BMBs in the daisy chain
   @returns bool True if initialization successful, false otherwise
 */
-bool initBatteryPack(uint32_t* numBmbs);
+bool initBatteryPack();
 
 void initBmsGopherCan(CAN_HandleTypeDef* hcan);
 
@@ -134,27 +133,24 @@ void initBmsGopherCan(CAN_HandleTypeDef* hcan);
   @brief   Updates all BMB data
   @param   numBmbs - The expected number of BMBs in the daisy chain\
 */
-void updatePackData(uint32_t numBmbs);
+void updatePackData();
 
 /*!
   @brief   Handles balancing the battery pack
-  @param   numBmbs - The expected number of BMBs in the daisy chain
   @param   balanceRequested - True if we want to balance, false otherwise
 */
-void balancePack(uint32_t numBmbs, bool balanceRequested);
+void balancePack();
 
 /*!
   @brief   Update BMS data statistics. Min/Max/Avg
-  @param   numBmbs - The expected number of BMBs in the daisy chain
 */
-void aggregatePackData(uint32_t numBmbs);
+void aggregatePackData();
 
 /*!
   @brief   Balance the battery pack to a specified target brick voltage.
-  @param   numBmbs - The number of Battery Management Boards (BMBs) in the pack.
   @param   targetBrickVoltage - The target voltage for each brick in the pack.
 */
-void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage);
+void balancePackToVoltage(float targetBrickVoltage);
 
 
 /*!
@@ -172,11 +168,6 @@ void updateImdStatus();
   @brief   Update the epaper display with current data
 */
 void updateEpaper();
-
-/*!
-  @brief   Update the tractive system current
-*/
-void updateTractiveCurrent();
 
 /*!
   @brief   Log non-ADC gopher can variables

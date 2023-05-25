@@ -26,6 +26,19 @@
 #define EPAP_UPDATE_PERIOD_MS	  2000
 #define ALERT_MONITOR_PERIOD_MS	  10
 
+// The fun way to initilize bmb struct array
+// #define INIT_BMB_ARR_HELPER(x)  [x] = {.bmbIdx = x}
+// #define INIT_BMB_ARR_HELPER_1   INIT_BMB_ARR_HELPER(__COUNTER__)
+// #define INIT_BMB_ARR_HELPER_2   INIT_BMB_ARR_HELPER_1,INIT_BMB_ARR_HELPER(__COUNTER__)
+// #define INIT_BMB_ARR_HELPER_3   INIT_BMB_ARR_HELPER_2,INIT_BMB_ARR_HELPER(__COUNTER__)
+// #define INIT_BMB_ARR_HELPER_4   INIT_BMB_ARR_HELPER_3,INIT_BMB_ARR_HELPER(__COUNTER__)
+// #define INIT_BMB_ARR_HELPER_5   INIT_BMB_ARR_HELPER_4,INIT_BMB_ARR_HELPER(__COUNTER__)
+// #define INIT_BMB_ARR_HELPER_6   INIT_BMB_ARR_HELPER_5,INIT_BMB_ARR_HELPER(__COUNTER__)
+// #define INIT_BMB_ARR_HELPER_7   INIT_BMB_ARR_HELPER_6,INIT_BMB_ARR_HELPER(__COUNTER__)
+// #define INIT_BMB_ARR_3(x)       INIT_BMB_ARR_HELPER_##x
+// #define INIT_BMB_ARR_2(x)       INIT_BMB_ARR_3(x)
+// #define INIT_BMB_ARR            {INIT_BMB_ARR_2(NUM_BMBS_IN_ACCUMULATOR)}
+
 Bms_S gBms = 
 {
     .numBmbs = NUM_BMBS_IN_ACCUMULATOR,
@@ -56,20 +69,14 @@ extern LeakyBucket_S asciCommsLeakyBucket;
 /* =================== LOCAL FUNCTION DECLARATIONS ==================== */
 /* ==================================================================== */
 
-static void disableBmbBalancing(Bmb_S* bmb);
+static void setAmsFault(bool set);
+
+static void disableBalancing();
 
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DEFINITIONS ===================== */
 /* ==================================================================== */
-
-static void disableBmbBalancing(Bmb_S* bmb)
-{
-	for (int32_t i = 0; i < NUM_BRICKS_PER_BMB; i++)
-	{
-		bmb->balSwRequested[i] = false;
-	}
-}
 
 static void setAmsFault(bool set)
 {
@@ -78,26 +85,16 @@ static void setAmsFault(bool set)
 	return;
 }
 
-
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
 /* ==================================================================== */
-
-void initBmsGopherCan(CAN_HandleTypeDef* hcan)
-{
-	// initialize CAN
-	if (init_can(GCAN0, hcan, BMS_ID, BXTYPE_MASTER))
-	{
-		gBms.bmsHwState = BMS_GSNS_FAILURE;
-	}
-}
 
 /*!
   @brief   Initialization function for the battery pack
   @param   numBmbs - The expected number of BMBs in the daisy chain
   @returns bool True if initialization successful, false otherwise
 */
-bool initBatteryPack(uint32_t* numBmbs)
+bool initBatteryPack()
 {
 	setAmsFault(true);
 	gBms.balancingDisabled = true;
@@ -110,7 +107,8 @@ bool initBatteryPack(uint32_t* numBmbs)
 	{
 		goto initializationError;
 	}			
-	helloAll(numBmbs);	// Ignore return value as it will be bad due to no loopback
+	uint32_t numBmbs = 0;
+	helloAll(&numBmbs);	// Ignore return value as it will be bad due to no loopback
 	
 	// Set internal loopback on final BMB
 	if (!setBmbInternalLoopback(NUM_BMBS_IN_ACCUMULATOR - 1, true))
@@ -118,17 +116,17 @@ bool initBatteryPack(uint32_t* numBmbs)
 		goto initializationError;
 	}
 
-	if (helloAll(numBmbs))
+	if (helloAll(&numBmbs))
 	{
 		// helloAll command succeeded - verify that the numBmbs was correctly set
-		if (*numBmbs != NUM_BMBS_IN_ACCUMULATOR)
+		if (numBmbs != NUM_BMBS_IN_ACCUMULATOR)
 		{
-			Debug("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", *numBmbs, NUM_BMBS_IN_ACCUMULATOR);
+			Debug("Number of BMBs detected (%lu) doesn't match expectation (%d)\n", numBmbs, NUM_BMBS_IN_ACCUMULATOR);
 			goto initializationError;
 		}
 
-		initBmbs(*numBmbs);
-		gBms.numBmbs = *numBmbs;
+		initBmbs(numBmbs);
+		gBms.numBmbs = numBmbs;
 		gBms.bmsHwState = BMS_NOMINAL;
 		setAmsFault(false);
 		// Leaky bucket was filled due to missing external loopback. Since we successfully initialized using
@@ -149,7 +147,7 @@ initializationError:
 
 	// Determine if a chain break exists
 	initASCI();
-	helloAll(numBmbs);	// Ignore return value as it will be bad due to no loopback
+	helloAll(&numBmbs);	// Ignore return value as it will be bad due to no loopback
 	uint32_t breakLocation = detectBmbDaisyChainBreak(gBms.bmb, NUM_BMBS_IN_ACCUMULATOR);
 	if (breakLocation != 0)
 	{
@@ -168,15 +166,15 @@ initializationError:
 		// Break location is in the external loopback of the final BMB
 		// This is fixable by enabling the internal loopback on the final BMB which is 
 		// done in the detectBmbDaisyChainBreak function
-		if (helloAll(numBmbs))
+		if (helloAll(&numBmbs))
 		{
 			// helloAll command succeeded - verify that the numBmbs was correctly set
-			if (*numBmbs != NUM_BMBS_IN_ACCUMULATOR)
+			if (numBmbs != NUM_BMBS_IN_ACCUMULATOR)
 			{
 				return false;
 			}
-			initBmbs(*numBmbs);
-			gBms.numBmbs = *numBmbs;
+			initBmbs(numBmbs);
+			gBms.numBmbs = numBmbs;
 			gBms.bmsHwState = BMS_NOMINAL;
 			setAmsFault(false);
 			// Leaky bucket was filled due to missing external loopback. Since we successfully initialized using
@@ -189,18 +187,108 @@ initializationError:
 }
 
 /*!
+  @brief   Update BMS data statistics. Min/Max/Avg
+  @param   numBmbs - The expected number of BMBs in the daisy chain
+*/
+void aggregatePackData()
+{
+	Bms_S* pBms = &gBms;
+	// Update BMB level stats
+	aggregateBmbData(pBms->bmb, pBms->numBmbs);
+
+	float maxBrickV	   = MIN_BRICK_VOLTAGE_READING;
+	float minBrickV	   = MAX_BRICK_VOLTAGE_READING;
+	float avgBrickVSum = 0.0f;
+	float accumulatorVSum = 0.0f;
+
+	float maxBrickTemp    = MIN_TEMP_SENSE_READING;
+	float minBrickTemp 	  = MAX_TEMP_SENSE_READING;
+	float avgBrickTempSum = 0.0f;
+
+	float maxBoardTemp    = MIN_TEMP_SENSE_READING;
+	float minBoardTemp 	  = MAX_TEMP_SENSE_READING;
+	float avgBoardTempSum = 0.0f;
+
+	for (int32_t i = 0; i < pBms->numBmbs; i++)
+	{
+		Bmb_S* pBmb = &pBms->bmb[i];
+
+		if (pBmb->maxBrickV > maxBrickV)
+		{
+			maxBrickV = pBmb->maxBrickV;
+		}
+		if (pBmb->minBrickV < minBrickV)
+		{
+			minBrickV = pBmb->minBrickV;
+		}
+
+		if (pBmb->maxBrickTemp > maxBrickTemp)
+		{
+			maxBrickTemp = pBmb->maxBrickTemp;
+		}
+		if (pBmb->minBrickTemp < minBrickTemp)
+		{
+			minBrickTemp = pBmb->minBrickTemp;
+		}
+
+		if (pBmb->maxBoardTemp > maxBoardTemp)
+		{
+			maxBoardTemp = pBmb->maxBoardTemp;
+		}
+		if (pBmb->minBoardTemp < minBoardTemp)
+		{
+			minBoardTemp = pBmb->minBoardTemp;
+		}
+
+		avgBrickVSum += pBmb->avgBrickV;
+		accumulatorVSum += pBmb->sumBrickV;
+		avgBrickTempSum += pBmb->avgBrickTemp;
+		avgBoardTempSum += pBmb->avgBoardTemp;
+	}
+	pBms->accumulatorVoltage = accumulatorVSum;
+	pBms->maxBrickV = maxBrickV;
+	pBms->minBrickV = minBrickV;
+	pBms->avgBrickV = avgBrickVSum / NUM_BMBS_IN_ACCUMULATOR;
+	pBms->maxBrickTemp = maxBrickTemp;
+	pBms->minBrickTemp = minBrickTemp;
+	pBms->avgBrickTemp = avgBrickTempSum / NUM_BMBS_IN_ACCUMULATOR;
+	pBms->maxBoardTemp = maxBoardTemp;
+	pBms->minBoardTemp = minBoardTemp;
+	pBms->avgBoardTemp = avgBoardTempSum / NUM_BMBS_IN_ACCUMULATOR;
+}
+
+/*!
   @brief   Updates all BMB data
   @param   numBmbs - The expected number of BMBs in the daisy chain\
 */
-void updatePackData(uint32_t numBmbs)
+void updatePackData()
 {
 	static uint32_t lastPackUpdate = 0;
-	if(HAL_GetTick() - lastPackUpdate > VOLTAGE_DATA_UPDATE_PERIOD_MS)
+	if((HAL_GetTick() - lastPackUpdate) > BMB_DATA_UPDATE_PERIOD_MS)
 	{
-		updateBmbData(gBms.bmb, numBmbs);
-		aggregatePackData(numBmbs);
+		lastPackUpdate = HAL_GetTick();
+		updateBmbData(gBms.bmb, gBms.numBmbs);
+		aggregatePackData();
 		updateInternalResistanceCalcs(&gBms);
 	}
+	static uint32_t lastCurrentUpdate = 0;
+	if((HAL_GetTick() - lastCurrentUpdate) >= CURRENT_SENSOR_UPDATE_PERIOD_MS)
+	{
+		lastCurrentUpdate = HAL_GetTick();
+		getTractiveSystemCurrent(&gBms);
+	}
+}
+
+static void disableBalancing()
+{
+	for (int32_t i = 0; i < NUM_BMBS_IN_ACCUMULATOR; i++)
+	{
+		for(int j = 0; j < NUM_BRICKS_PER_BMB; j++)
+		{
+			gBms.bmb[i].balSwRequested[j] = false;
+		}
+	}
+	balanceCells(gBms.bmb, gBms.numBmbs);
 }
 
 /*!
@@ -208,18 +296,14 @@ void updatePackData(uint32_t numBmbs)
   @param   numBmbs - The expected number of BMBs in the daisy chain
   @param   balanceRequested - True if we want to balance, false otherwise
 */
-void balancePack(uint32_t numBmbs, bool balanceRequested)
+void balancePack()
 {
 	// TODO: Determine how we want to handle EMERGENCY_BLEED
 
 	// If balancing not requested or balancing disabled ensure all balance switches off
-	if (!balanceRequested || gBms.balancingDisabled)
+	if (gBms.balancingDisabled)
 	{
-		for (int32_t i = 0; i < numBmbs; i++)
-		{
-			disableBmbBalancing(&gBms.bmb[i]);
-		}
-		balanceCells(gBms.bmb, numBmbs);
+		disableBalancing();
 		return;
 	}
 
@@ -231,7 +315,7 @@ void balancePack(uint32_t numBmbs, bool balanceRequested)
 	{
 		bleedTargetVoltage = MIN_BLEED_TARGET_VOLTAGE_V;
 	}		
-	balancePackToVoltage(numBmbs, bleedTargetVoltage);
+	balancePackToVoltage(bleedTargetVoltage);
 }
 
 /*!
@@ -246,7 +330,7 @@ void balancePack(uint32_t numBmbs, bool balanceRequested)
   the brick voltage to the target voltage plus a balance threshold (BALANCE_THRESHOLD_V).
   Finally, the balanceCells() function is called to apply the bleed requests to the cells.
 */
-void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
+void balancePackToVoltage(float targetBrickVoltage)
 {
 	// Clamp target brick voltage if too low
 	if (targetBrickVoltage < MIN_BLEED_TARGET_VOLTAGE_V)
@@ -255,7 +339,7 @@ void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
 	}
 
 	// Iterate through all BMBs and set bleed request
-	for (int32_t i = 0; i < numBmbs; i++)
+	for (int32_t i = 0; i < NUM_BMBS_IN_ACCUMULATOR; i++)
 	{
 		// Iterate through all bricks and determine whether they should be bled or not
 		for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
@@ -271,7 +355,7 @@ void balancePackToVoltage(uint32_t numBmbs, float targetBrickVoltage)
 		}
 	}
 	
-	balanceCells(gBms.bmb, numBmbs);
+	balanceCells(gBms.bmb, gBms.numBmbs);
 }
 
 /*!
@@ -322,77 +406,6 @@ void checkAndHandleAlerts()
 		setAmsFault(gBms.amsFaultPresent);
 	}
 	
-}
-
-/*!
-  @brief   Update BMS data statistics. Min/Max/Avg
-  @param   numBmbs - The expected number of BMBs in the daisy chain
-*/
-void aggregatePackData(uint32_t numBmbs)
-{
-	Bms_S* pBms = &gBms;
-	// Update BMB level stats
-	aggregateBmbData(pBms->bmb, numBmbs);
-
-	float maxBrickV	   = MIN_BRICK_VOLTAGE_READING;
-	float minBrickV	   = MAX_BRICK_VOLTAGE_READING;
-	float avgBrickVSum = 0.0f;
-	float accumulatorVSum = 0.0f;
-
-	float maxBrickTemp    = MIN_TEMP_SENSE_READING;
-	float minBrickTemp 	  = MAX_TEMP_SENSE_READING;
-	float avgBrickTempSum = 0.0f;
-
-	float maxBoardTemp    = MIN_TEMP_SENSE_READING;
-	float minBoardTemp 	  = MAX_TEMP_SENSE_READING;
-	float avgBoardTempSum = 0.0f;
-
-	for (int32_t i = 0; i < numBmbs; i++)
-	{
-		Bmb_S* pBmb = &pBms->bmb[i];
-
-		if (pBmb->maxBrickV > maxBrickV)
-		{
-			maxBrickV = pBmb->maxBrickV;
-		}
-		if (pBmb->minBrickV < minBrickV)
-		{
-			minBrickV = pBmb->minBrickV;
-		}
-
-		if (pBmb->maxBrickTemp > maxBrickTemp)
-		{
-			maxBrickTemp = pBmb->maxBrickTemp;
-		}
-		if (pBmb->minBrickTemp < minBrickTemp)
-		{
-			minBrickTemp = pBmb->minBrickTemp;
-		}
-
-		if (pBmb->maxBoardTemp > maxBoardTemp)
-		{
-			maxBoardTemp = pBmb->maxBoardTemp;
-		}
-		if (pBmb->minBoardTemp < minBoardTemp)
-		{
-			minBoardTemp = pBmb->minBoardTemp;
-		}
-
-		avgBrickVSum += pBmb->avgBrickV;
-		accumulatorVSum += pBmb->sumBrickV;
-		avgBrickTempSum += pBmb->avgBrickTemp;
-		avgBoardTempSum += pBmb->avgBoardTemp;
-	}
-	pBms->accumulatorVoltage = accumulatorVSum;
-	pBms->maxBrickV = maxBrickV;
-	pBms->minBrickV = minBrickV;
-	pBms->avgBrickV = avgBrickVSum / NUM_BMBS_IN_ACCUMULATOR;
-	pBms->maxBrickTemp = maxBrickTemp;
-	pBms->minBrickTemp = minBrickTemp;
-	pBms->avgBrickTemp = avgBrickTempSum / NUM_BMBS_IN_ACCUMULATOR;
-	pBms->maxBoardTemp = maxBoardTemp;
-	pBms->minBoardTemp = minBoardTemp;
-	pBms->avgBoardTemp = avgBoardTempSum / NUM_BMBS_IN_ACCUMULATOR;
 }
 
 /*!
@@ -501,17 +514,13 @@ void updateEpaper()
 	}
 }
 
-/*!
-  @brief   Update the tractive system current
-*/
-void updateTractiveCurrent()
+void initBmsGopherCan(CAN_HandleTypeDef* hcan)
 {
-	static uint32_t lastCurrentUpdate = 0;
-	if((HAL_GetTick() - lastCurrentUpdate) >= CURRENT_SENSOR_UPDATE_PERIOD_MS)
+	// initialize CAN
+	if (init_can(GCAN0, hcan, BMS_ID, BXTYPE_MASTER))
 	{
-		lastCurrentUpdate = HAL_GetTick();
-		getTractiveSystemCurrent(&gBms);
-	}	
+		gBms.bmsHwState = BMS_GSNS_FAILURE;
+	}
 }
 
 /*!
