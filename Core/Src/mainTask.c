@@ -38,7 +38,7 @@ uint32_t numBmbs = 0;
 static uint32_t initRetries = 5;
 static uint32_t lastUpdateMain = 0;
 
-bool balancingEnabled = true;
+bool balancingEnabled = false;
 uint32_t lastBalancingUpdate = 0;
 
 /* ==================================================================== */
@@ -112,6 +112,10 @@ void runMain()
 
 		updateEpaper();
 
+		checkForNewChargerInfo();
+
+		// chargeAccumulator();
+
 		checkAndHandleAlerts();
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
@@ -151,6 +155,14 @@ void runMain()
 			// TEMPORARY
 			const char* stateStr = IMD_State_To_String(gBms.imdState);
     		printf("IMD State: %s\n", stateStr);
+
+			printf("Charger connected: %d\n", gBms.chargerConnected);
+			printf("Charger Voltage: %f\t Charger Current: %f\t Charger Status:", (double)gBms.chargerData.chargerVoltage, (double)gBms.chargerData.chargerCurrent);
+			for (int i = 0; i < NUM_CHARGER_FAULTS; i++)
+			{
+				printf("%d ", gBms.chargerData.chargerStatus[i]);
+			}
+			printf("\n");
 			// TEMPORARY
 
 			// Update lastUpdate

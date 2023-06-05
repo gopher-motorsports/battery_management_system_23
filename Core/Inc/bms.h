@@ -184,6 +184,11 @@ void updateTractiveCurrent();
 void updateGopherCan();
 
 /*!
+  @brief   Check for new charger messages
+*/
+void checkForNewChargerInfo();
+
+/*!
   @brief   Perform accumulator charge sequence
 */
 void chargeAccumulator();

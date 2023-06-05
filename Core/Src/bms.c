@@ -723,13 +723,21 @@ void chargeAccumulator()
 	// Periodically send an updated charger request CAN message to the charger
 	// Second condition protects from case in which a new charger message is recieved between this if statement and the last
 	static uint32_t lastChargerUpdate = 0;
-	if (((HAL_GetTick() - lastChargerUpdate) >= CHARGER_UPDATE_PERIOD_MS) && (!newChargerMessage))
+	if (((HAL_GetTick() - lastChargerUpdate) >= CHARGER_UPDATE_PERIOD_MS) && (!newChargerMessage) )
 	{
 		lastChargerUpdate = HAL_GetTick();
+
+		if (!gBms.chargerConnected)
+		{
+			// Send message to charger to wake up
+			sendChargerMessage(0.0f, 0.0f, false);
+			return;
+		}
 
 		// Voltage and current request defauult to 0
 		float voltageRequest = 0.0f;
 		float currentRequest = 0.0f;
+		bool chargeOkay = false;
 
 		if(!gBms.chargingDisabled)
 		{
@@ -769,7 +777,7 @@ void chargeAccumulator()
 			}
 
 			// Charging is only allowed if the bms disable, cellImbalancePresent, and cellOverVoltagePresent are all not true 
-			bool chargeOkay = !(gBms.chargingDisabled || cellImbalancePresent || cellOverVoltagePresent);
+			chargeOkay = !(gBms.chargingDisabled || cellImbalancePresent || cellOverVoltagePresent);
 			if(chargeOkay)
 			{
 				// Always request max charging voltage
@@ -799,6 +807,6 @@ void chargeAccumulator()
 		}
 
 		// Send the calculated voltage and current requests to the charger over CAN
-		sendChargerMessage(voltageRequest, currentRequest, false);
+		sendChargerMessage(voltageRequest, currentRequest, chargeOkay);
 	}
 }
