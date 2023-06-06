@@ -723,16 +723,9 @@ void chargeAccumulator()
 	// Periodically send an updated charger request CAN message to the charger
 	// Second condition protects from case in which a new charger message is recieved between this if statement and the last
 	static uint32_t lastChargerUpdate = 0;
-	if (((HAL_GetTick() - lastChargerUpdate) >= CHARGER_UPDATE_PERIOD_MS) && (!newChargerMessage) )
+	if (((HAL_GetTick() - lastChargerUpdate) >= CHARGER_UPDATE_PERIOD_MS) && (!newChargerMessage))
 	{
 		lastChargerUpdate = HAL_GetTick();
-
-		if (!gBms.chargerConnected)
-		{
-			// Send message to charger to wake up
-			sendChargerMessage(0.0f, 0.0f, false);
-			return;
-		}
 
 		// Voltage and current request defauult to 0
 		float voltageRequest = 0.0f;

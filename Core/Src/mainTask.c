@@ -49,6 +49,8 @@ void printCellTemperatures();
 void printBoardTemperatures();
 void printInternalResistances();
 void printActiveAlerts();
+void printImdState();
+void printChargerData();
 
 
 /* ==================================================================== */
@@ -68,30 +70,6 @@ void initMain()
 	}
 	Debug("Failed to initialize BMS\n");
 }
-
-// TEMPORARY
-const char* IMD_State_To_String(IMD_State_E state) {
-    switch(state) {
-        case IMD_NO_SIGNAL:
-            return "IMD_NO_SIGNAL";
-        case IMD_NORMAL:
-            return "IMD_NORMAL";
-        case IMD_UNDER_VOLT:
-            return "IMD_UNDER_VOLT";
-        case IMD_SPEED_START_MEASUREMENT_GOOD:
-            return "IMD_SPEED_START_MEASUREMENT_GOOD";
-        case IMD_SPEED_START_MEASUREMENT_BAD:
-            return "IMD_SPEED_START_MEASUREMENT_BAD";
-        case IMD_DEVICE_ERROR:
-            return "IMD_DEVICE_ERROR";
-        case IMD_EARTH_FAULT:
-            return "IMD_EARTH_FAULT";
-        default:
-            return "UNKNOWN_STATE";
-    }
-}
-// TEMPORARY
-
 
 void runMain()
 {
@@ -143,6 +121,8 @@ void runMain()
 			// printInternalResistances();
 			printBoardTemperatures();
 			printActiveAlerts();
+			printImdState();
+			printChargerData();
 
 			const float soc = getSocFromCellVoltage(gBms.minBrickV);
 			const float soe = getSoeFromSoc(soc);
@@ -151,19 +131,6 @@ void runMain()
 			printf("Leaky bucket filled: %d\n\n", leakyBucketFilled(&asciCommsLeakyBucket));
 
 			printf("Tractive Current: %6.3f\n", (double)gBms.tractiveSystemCurrent);
-
-			// TEMPORARY
-			const char* stateStr = IMD_State_To_String(gBms.imdState);
-    		printf("IMD State: %s\n", stateStr);
-
-			printf("Charger connected: %d\n", gBms.chargerConnected);
-			printf("Charger Voltage: %f\t Charger Current: %f\t Charger Status:", (double)gBms.chargerData.chargerVoltage, (double)gBms.chargerData.chargerCurrent);
-			for (int i = 0; i < NUM_CHARGER_FAULTS; i++)
-			{
-				printf("%d ", gBms.chargerData.chargerStatus[i]);
-			}
-			printf("\n");
-			// TEMPORARY
 
 			// Update lastUpdate
 			lastUpdateMain = HAL_GetTick();
@@ -274,6 +241,46 @@ void printActiveAlerts()
 	if (numActiveAlerts == 0)
 	{
 		printf("None\n");
+	}
+	printf("\n");
+}
+
+const char* IMD_State_To_String(IMD_State_E state) 
+{
+	switch(state) {
+        case IMD_NO_SIGNAL:
+            return "IMD_NO_SIGNAL";
+        case IMD_NORMAL:
+            return "IMD_NORMAL";
+        case IMD_UNDER_VOLT:
+            return "IMD_UNDER_VOLT";
+        case IMD_SPEED_START_MEASUREMENT_GOOD:
+            return "IMD_SPEED_START_MEASUREMENT_GOOD";
+        case IMD_SPEED_START_MEASUREMENT_BAD:
+            return "IMD_SPEED_START_MEASUREMENT_BAD";
+        case IMD_DEVICE_ERROR:
+            return "IMD_DEVICE_ERROR";
+        case IMD_EARTH_FAULT:
+            return "IMD_EARTH_FAULT";
+        default:
+            return "UNKNOWN_STATE";
+    }
+}
+
+void printImdState()
+{
+	const char* stateStr = IMD_State_To_String(gBms.imdState);
+	printf("IMD State: %s\n", stateStr);
+	printf("\n");
+}
+
+void printChargerData()
+{
+	printf("Charger connected: %d\n", gBms.chargerConnected);
+	printf("Charger Voltage: %f\t Charger Current: %f\t Charger Status:", (double)gBms.chargerData.chargerVoltage, (double)gBms.chargerData.chargerCurrent);
+	for (int i = 0; i < NUM_CHARGER_FAULTS; i++)
+	{
+		printf("%d ", gBms.chargerData.chargerStatus[i]);
 	}
 	printf("\n");
 }
