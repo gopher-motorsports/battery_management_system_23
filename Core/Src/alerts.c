@@ -137,12 +137,12 @@ static bool stackVsSegmentImbalancePresent(Bms_S* bms)
 
 static bool chargerOverVoltagePresent(Bms_S* bms)
 {
-    return (bms->chargerConnected) && (fabsf(bms->chargerData.chargerVoltage - MAX_CHARGE_VOLTAGE_V) > CHARGER_VOLTAGE_MISMATCH_THRESHOLD);
+    return (bms->chargerConnected) && (bms->chargerData.chargerVoltage > MAX_CHARGE_VOLTAGE_V + CHARGER_VOLTAGE_MISMATCH_THRESHOLD);
 }
 
 static bool chargerOverCurrentPresent(Bms_S* bms)
 {
-    return (bms->chargerConnected) && ((fabsf(bms->chargerData.chargerCurrent - MAX_CHARGE_CURRENT_A) > CHARGER_CURRENT_MISMATCH_THRESHOLD) || (fabsf(bms->tractiveSystemCurrent - MAX_CHARGE_CURRENT_A) > CHARGER_CURRENT_MISMATCH_THRESHOLD));
+    return (bms->chargerConnected) && ((bms->chargerData.chargerCurrent > MAX_CHARGE_CURRENT_A + CHARGER_CURRENT_MISMATCH_THRESHOLD)  || (bms->tractiveSystemCurrent > MAX_CHARGE_CURRENT_A + CHARGER_CURRENT_MISMATCH_THRESHOLD));
 }
 
 static bool chargerVoltageMismatchPresent(Bms_S* bms)

@@ -730,6 +730,7 @@ void chargeAccumulator()
 		// Voltage and current request defauult to 0
 		float voltageRequest = 0.0f;
 		float currentRequest = 0.0f;
+		bool chargeOkay = false;
 
 		if(!gBms.chargingDisabled)
 		{
@@ -769,7 +770,7 @@ void chargeAccumulator()
 			}
 
 			// Charging is only allowed if the bms disable, cellImbalancePresent, and cellOverVoltagePresent are all not true 
-			bool chargeOkay = !(gBms.chargingDisabled || cellImbalancePresent || cellOverVoltagePresent);
+			chargeOkay = !(gBms.chargingDisabled || cellImbalancePresent || cellOverVoltagePresent);
 			if(chargeOkay)
 			{
 				// Always request max charging voltage
@@ -799,6 +800,6 @@ void chargeAccumulator()
 		}
 
 		// Send the calculated voltage and current requests to the charger over CAN
-		sendChargerMessage(voltageRequest, currentRequest, false);
+		sendChargerMessage(voltageRequest, currentRequest, chargeOkay);
 	}
 }
