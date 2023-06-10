@@ -818,7 +818,7 @@ void chargeAccumulator()
 				}
 
 				// Calculate the max current possible given the charger power and pack voltage
-				float powerLimitAmps = (CHARGER_INPUT_POWER_W * MIN_CHARGER_EFFICIENCY) / (gBms.accumulatorVoltage + CHARGER_VOLTAGE_MISMATCH_THRESHOLD); // TODO factor in eff and safety zone
+				const float powerLimitAmps = (CHARGER_OUTPUT_POWER_W) / (gBms.accumulatorVoltage + CHARGER_VOLTAGE_MISMATCH_THRESHOLD);
 
 				// Limit the charge current to the charger max power output if necessary 
 				if(currentRequest > powerLimitAmps)

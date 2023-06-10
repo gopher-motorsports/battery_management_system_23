@@ -96,12 +96,13 @@ void runMain()
 
 		checkAndHandleAlerts();
 
+		if (leakyBucketFilled(&asciCommsLeakyBucket))
+		{
+			gBms.bmsHwState = BMS_BMB_FAILURE;
+		}
+
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{
-			if (leakyBucketFilled(&asciCommsLeakyBucket))
-			{
-				gBms.bmsHwState = BMS_BMB_FAILURE;
-			}
 			// Clear console
 			printf("\e[1;1H\e[2J");
 
