@@ -66,6 +66,7 @@ typedef enum
 	GCAN_CELL_TEMP_STATS,
 	GCAN_BOARD_TEMP_STATS,
 	GCAN_BALSWEN,
+	GCAN_ALERTS,
 	NUM_GCAN_STATES
 } Gcan_State_E;
 
@@ -120,6 +121,13 @@ typedef struct Bms
 	bool chargerConnected;
 	Charger_Data_S chargerData;
 } Bms_S;
+
+typedef struct Display_Data
+{
+	uint8_t numActiveAlerts;
+	uint8_t currAlertIndex;
+	uint8_t alertMessage;
+} Display_Data_S;
 
 
 /* ==================================================================== */
