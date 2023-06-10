@@ -1818,7 +1818,54 @@ buckets:
                 samples_buffered: 1
 
             # END SEGMENT 7
-            
+
+            # Display info
+
+            bmsAveBrickVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsMaxBrickVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsMinBrickVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsAveBrickTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsMaxBrickTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsMinBrickTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsAveBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsMaxBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsMinBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
             # Error states
             amsFault_state:
                 ADC: NON_ADC
