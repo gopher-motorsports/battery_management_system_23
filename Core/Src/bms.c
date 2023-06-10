@@ -746,14 +746,19 @@ void updateGopherCan()
 					break;
 
 				case GCAN_DISPLAY_INFO:
-					update_and_queue_param_u8(&bmsNumActiveAlerts_state, gBms.avgBrickV);
-					update_and_queue_param_u8(&bmsNumActiveAlerts_state, gBms.maxBrickV);
-					update_and_queue_param_u8(&bmsNumActiveAlerts_state, gBms.minBrickV);
+					update_and_queue_param_float(&bmsAveBrickVoltage_V, gBms.avgBrickV);
+					update_and_queue_param_float(&bmsMaxBrickVoltage_V, gBms.maxBrickV);
+					update_and_queue_param_float(&bmsMinBrickVoltage_V, gBms.minBrickV);
+
+					update_and_queue_param_float(&bmsAveBrickTemp_C, gBms.avgBrickTemp);
+					update_and_queue_param_float(&bmsMaxBrickTemp_C, gBms.maxBrickTemp);
+					update_and_queue_param_float(&bmsMinBrickTemp_C, gBms.minBrickTemp);
 
 					update_and_queue_param_float(&bmsAveBoardTemp_C, gBms.avgBoardTemp);
 					update_and_queue_param_float(&bmsMaxBoardTemp_C, gBms.maxBoardTemp);
 					update_and_queue_param_float(&bmsMinBoardTemp_C, gBms.minBoardTemp);
 
+				case GCAN_ALERTS:
 					update_and_queue_param_u8(&bmsNumActiveAlerts_state, displayData.numActiveAlerts);
 					update_and_queue_param_u8(&bmsCurrAlertIndex_state, displayData.currAlertIndex);
 					update_and_queue_param_u8(&bmsAlertMessage_state, displayData.alertMessage);
