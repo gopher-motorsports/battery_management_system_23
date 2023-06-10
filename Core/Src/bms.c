@@ -45,6 +45,8 @@ Bms_S gBms =
 	.soc.socByOcvGoodTimer.timThreshold = SOC_BY_OCV_GOOD_QUALIFICATION_TIME_MS
 };
 
+Display_Data_S displayData;
+
 
 /* ==================================================================== */
 /* ======================= EXTERNAL VARIABLES ========================= */
@@ -497,6 +499,7 @@ void updateEpaper()
 
 		// Update epaper data struct with the number of active alerts
 		epapData.numActiveAlerts = numAlertsSet;
+		displayData.numActiveAlerts = numAlertsSet;
 
 		// Only update the epaper struct data if there are active alerts
 		// If there are no alerts, the epaper will ignore what is currently set in the currAlertIndex and alertMessage variables
@@ -508,12 +511,16 @@ void updateEpaper()
 			{
 				epapData.currAlertIndex = indexNextAlert;
 				epapData.alertMessage = (char*)alerts[currAlertMessageIndex]->alertName;
+				displayData.currAlertIndex = indexNextAlert;
+				displayData.alertMessage = currAlertMessageIndex;
 			}
 			else
 			{
 				currAlertMessageIndex = indexMinAlert;
 				epapData.currAlertIndex = 1;
 				epapData.alertMessage = (char*)alerts[indexMinAlert]->alertName;
+				displayData.currAlertIndex = 1;
+				displayData.alertMessage = indexMinAlert;
 			}
 		}
 
@@ -733,6 +740,13 @@ void updateGopherCan()
 					update_and_queue_param_float(&soeByCoulombCounting_percent, gBms.soc.soeByCoulombCounting * 100.0f);
 
 					//TODO Potentially add sensor status bytes
+					break;
+
+				case GCAN_ALERTS:
+					update_and_queue_param_u8(&bmsNumActiveAlerts_state, displayData.numActiveAlerts);
+					update_and_queue_param_u8(&bmsCurrAlertIndex_state, displayData.currAlertIndex);
+					update_and_queue_param_u8(&bmsAlertMessage_state, displayData.alertMessage);
+
 					break;
 
 				default:
