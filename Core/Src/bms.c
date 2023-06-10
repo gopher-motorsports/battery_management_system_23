@@ -202,20 +202,20 @@ void updatePackData(uint32_t numBmbs)
 	if(HAL_GetTick() - lastPackUpdate > VOLTAGE_DATA_UPDATE_PERIOD_MS)
 	{
 		updateBmbData(gBms.bmb, numBmbs);
-		// TODO: Get rid of this
-		for (int i = 0; i < 12; i++)
-		{
-			gBms.bmb[0].brickV[i] = 3.7f;
-			gBms.bmb[0].brickVStatus[i] = GOOD;
-			gBms.bmb[0].brickTemp[i] = 25.0f;
-			gBms.bmb[0].brickTempStatus[i] = GOOD;
-		}
-		for (int i = 0; i < 4; i++)
-		{
-			gBms.bmb[0].boardTemp[i] = 30.0f;
-			gBms.bmb[0].boardTempStatus[i] = GOOD;
-		}
-		// TODO: Get rid of this ^
+		// // TODO: Get rid of this
+		// for (int i = 0; i < 12; i++)
+		// {
+		// 	gBms.bmb[0].brickV[i] = 3.7f;
+		// 	gBms.bmb[0].brickVStatus[i] = GOOD;
+		// 	gBms.bmb[0].brickTemp[i] = 25.0f;
+		// 	gBms.bmb[0].brickTempStatus[i] = GOOD;
+		// }
+		// for (int i = 0; i < 4; i++)
+		// {
+		// 	gBms.bmb[0].boardTemp[i] = 30.0f;
+		// 	gBms.bmb[0].boardTempStatus[i] = GOOD;
+		// }
+		// // TODO: Get rid of this ^
 		aggregatePackData(numBmbs);
 		updateInternalResistanceCalcs(&gBms);
 	}

@@ -75,26 +75,14 @@ void initMain()
 
 void runMain()
 {
-	if (gBms.bmsHwState != BMS_BMB_FAILURE)
+	if (gBms.bmsHwState == BMS_BMB_FAILURE)
 	{
 		// Retry initializing the BMBs
 		initBatteryPack(&numBmbs);
 	}
 	else
 	{
-		numBmbs = 1;
 		updateTractiveCurrent();
-		if (HAL_GetTick() > 10000)
-		{
-			if (HAL_GetTick() < 20000)
-			{
-				gBms.tractiveSystemCurrent = 200.0f;
-			}
-			else
-			{
-				gBms.tractiveSystemCurrent = 0.0f;
-			}
-		}
 
 		updateStateOfChargeAndEnergy();
 		
@@ -114,10 +102,10 @@ void runMain()
 
 		if((HAL_GetTick() - lastUpdateMain) >= 1000)
 		{
-			// if (leakyBucketFilled(&asciCommsLeakyBucket))
-			// {
-			// 	gBms.bmsHwState = BMS_BMB_FAILURE;
-			// }
+			if (leakyBucketFilled(&asciCommsLeakyBucket))
+			{
+				gBms.bmsHwState = BMS_BMB_FAILURE;
+			}
 			// Clear console
 			printf("\e[1;1H\e[2J");
 
