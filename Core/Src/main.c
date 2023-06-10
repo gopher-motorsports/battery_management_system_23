@@ -249,7 +249,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 	}
 }
 
-void custom_can_callback(CAN_HandleTypeDef *hcan, U32 fifo_num)
+void GCAN_RxMsgPendingCallback(CAN_HandleTypeDef *hcan, U32 fifo_num)
 {
   // Charger CAN
   if(hcan == &hcan1)
