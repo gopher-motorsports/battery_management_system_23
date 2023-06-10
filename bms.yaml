@@ -1839,4 +1839,19 @@ buckets:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
+
+            bmsNumActiveAlerts_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsCurrAlertIndex_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsAlertMessage_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
                 
