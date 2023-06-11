@@ -201,7 +201,7 @@ AlertStatus_E getAlertStatus(Alert_S* alert)
 */
 void runAlertMonitor(Bms_S* bms, Alert_S* alert)
 {
-    if (alert->alertStatus == ALERT_CLEARED)
+    if (alert->alertStatus == ALERT_CLEARED || alert->alertStatus == ALERT_LATCHED)
     {
         // Determine if we need to set the alert
         if (alert->alertConditionPresent(bms))
@@ -242,8 +242,17 @@ void runAlertMonitor(Bms_S* bms, Alert_S* alert)
         // Determine if alert was cleared or in the case that the timer threshold is 0 then check whether the alert condition is not present
         if (checkTimerExpired(&alert->alertTimer) && (!(alert->alertTimer.timThreshold <= 0) || !alert->alertConditionPresent(bms)))
         {
-            // Timer expired - Clear alert
-            alert->alertStatus = ALERT_CLEARED;
+            // Timer expired indicating alert is no longer present. Either set status to latched or clear
+            if (alert->latching)
+            {
+                // Latching alerts can't be cleared - set status to latched to indicate that conditions are no longer met
+                alert->alertStatus = ALERT_LATCHED;
+            }
+            else
+            {
+                // If non latching alert, the alert can be cleared
+                alert->alertStatus = ALERT_CLEARED;
+            }
             // Load timer with alert set time
             configureTimer(&alert->alertTimer, alert->setTime_MS);
         }
@@ -284,7 +293,7 @@ const AlertResponse_E overvoltageFaultAlertResponse[] = { DISABLE_CHARGING, EMER
 #define NUM_OVERVOLTAGE_FAULT_ALERT_RESPONSE sizeof(overvoltageFaultAlertResponse) / sizeof(AlertResponse_E)
 Alert_S overvoltageFaultAlert = 
 { 
-    .alertName = "OvervoltageFault",
+    .alertName = "OvervoltageFault", .latching = true,
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = OVERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = OVERVOLTAGE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = OVERVOLTAGE_FAULT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = overvoltageFaultPresent, 
@@ -296,7 +305,7 @@ const AlertResponse_E undervoltageFaultAlertResponse[] = { AMS_FAULT };
 #define NUM_UNDERVOLTAGE_FAULT_ALERT_RESPONSE sizeof(undervoltageFaultAlertResponse) / sizeof(AlertResponse_E)
 Alert_S undervoltageFaultAlert = 
 { 
-    .alertName = "UndervoltageFault",
+    .alertName = "UndervoltageFault", .latching = true,
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = UNDERVOLTAGE_WARNING_ALERT_SET_TIME_MS}, 
     .setTime_MS = UNDERVOLTAGE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = UNDERVOLTAGE_FAULT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = undervoltageFaultPresent,
@@ -332,7 +341,7 @@ const AlertResponse_E overtempFaultAlertResponse[] = { DISABLE_CHARGING, DISABLE
 #define NUM_OVERTEMP_FAULT_ALERT_RESPONSE sizeof(overtempFaultAlertResponse) / sizeof(AlertResponse_E)
 Alert_S overtempFaultAlert = 
 {
-    .alertName = "OvertempFault",
+    .alertName = "OvertempFault", .latching = true,
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS}, 
     .setTime_MS = OVERTEMPERATURE_FAULT_ALERT_SET_TIME_MS, .clearTime_MS = OVERTEMPERATURE_FAULT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = overtemperatureFaultPresent,
@@ -392,7 +401,7 @@ const AlertResponse_E bmbCommunicationFailureAlertResponse[] = { DISABLE_BALANCI
 #define NUM_BMB_COMMUNICATION_FAILURE_ALERT_RESPONSE sizeof(bmbCommunicationFailureAlertResponse) / sizeof(AlertResponse_E)
 Alert_S bmbCommunicationFailureAlert = 
 {
-    .alertName = "BmbCommunicationFailure",
+    .alertName = "BmbCommunicationFailure", .latching = true,
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = BMB_COMMUNICATION_FAILURE_ALERT_SET_TIME_MS}, 
     .setTime_MS = BMB_COMMUNICATION_FAILURE_ALERT_SET_TIME_MS, .clearTime_MS = BMB_COMMUNICATION_FAILURE_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = bmbCommunicationFailurePresent,
@@ -404,7 +413,7 @@ const AlertResponse_E badVoltageSenseStatusAlertResponse[] = { DISABLE_BALANCING
 #define NUM_BAD_VOLTAGE_SENSE_STATUS_ALERT_RESPONSE sizeof(badVoltageSenseStatusAlertResponse) / sizeof(AlertResponse_E)
 Alert_S badVoltageSenseStatusAlert = 
 {
-    .alertName = "BadVoltageSenseStatus",
+    .alertName = "BadVoltageSenseStatus", .latching = true,
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = BAD_VOLTAGE_SENSE_STATUS_ALERT_SET_TIME_MS}, 
     .setTime_MS = BAD_VOLTAGE_SENSE_STATUS_ALERT_SET_TIME_MS, .clearTime_MS = BAD_VOLTAGE_SENSE_STATUS_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = badVoltageSensorStatusPresent,
@@ -440,7 +449,7 @@ const AlertResponse_E insufficientTempSensorsAlertResponse[] = { DISABLE_BALANCI
 #define NUM_INSUFFICIENT_TEMP_SENSORS_ALERT_RESPONSE sizeof(insufficientTempSensorsAlertResponse) / sizeof(AlertResponse_E)
 Alert_S insufficientTempSensorsAlert = 
 {
-    .alertName = "InsufficientTempSensors",
+    .alertName = "InsufficientTempSensors", .latching = true,
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = INSUFFICIENT_TEMP_SENSOR_ALERT_SET_TIME_MS}, 
     .setTime_MS = INSUFFICIENT_TEMP_SENSOR_ALERT_SET_TIME_MS, .clearTime_MS = INSUFFICIENT_TEMP_SENSOR_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = insufficientTempSensePresent,
@@ -466,7 +475,7 @@ const AlertResponse_E chargerOverVoltageAlertResponse[] = { DISABLE_BALANCING, D
 #define NUM_CHARGER_OVERVOLTAGE_ALERT_RESPONSE sizeof(chargerOverVoltageAlertResponse) / sizeof(AlertResponse_E)
 Alert_S chargerOverVoltageAlert = 
 {
-    .alertName = "ChargerOvervoltage",
+    .alertName = "ChargerOvervoltage", .latching = true,
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CHARGER_OVERVOLTAGE_ALERT_SET_TIME_MS}, 
     .setTime_MS = CHARGER_OVERVOLTAGE_ALERT_SET_TIME_MS, .clearTime_MS = CHARGER_OVERVOLTAGE_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = chargerOverVoltagePresent,
@@ -478,7 +487,7 @@ const AlertResponse_E chargerOverCurrentAlertResponse[] = { DISABLE_BALANCING, D
 #define NUM_CHARGER_OVERCURRENT_ALERT_RESPONSE sizeof(chargerOverCurrentAlertResponse) / sizeof(AlertResponse_E)
 Alert_S chargerOverCurrentAlert = 
 {
-    .alertName = "ChargerOvercurrent",
+    .alertName = "ChargerOvercurrent", .latching = true,
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CHARGER_OVERCURRENT_ALERT_SET_TIME_MS}, 
     .setTime_MS = CHARGER_OVERCURRENT_ALERT_SET_TIME_MS, .clearTime_MS = CHARGER_OVERCURRENT_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = chargerOverCurrentPresent,
@@ -490,7 +499,7 @@ const AlertResponse_E chargerVoltageMismatchAlertResponse[] = { DISABLE_BALANCIN
 #define NUM_CHARGER_VOLTAGE_MISMATCH_ALERT_RESPONSE sizeof(chargerVoltageMismatchAlertResponse) / sizeof(AlertResponse_E)
 Alert_S chargerVoltageMismatchAlert = 
 {
-    .alertName = "ChargerVoltageMismatch",
+    .alertName = "ChargerVoltageMismatch", .latching = true,
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CHARGER_VOLTAGE_MISMATCH_ALERT_SET_TIME_MS}, 
     .setTime_MS = CHARGER_VOLTAGE_MISMATCH_ALERT_SET_TIME_MS, .clearTime_MS = CHARGER_VOLTAGE_MISMATCH_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = chargerVoltageMismatchPresent,
@@ -502,7 +511,7 @@ const AlertResponse_E chargerCurrentMismatchAlertResponse[] = { DISABLE_BALANCIN
 #define NUM_CHARGER_CURRENT_MISMATCH_ALERT_RESPONSE sizeof(chargerCurrentMismatchAlertResponse) / sizeof(AlertResponse_E)
 Alert_S chargerCurrentMismatchAlert = 
 {
-    .alertName = "ChargerCurrentMismatch",
+    .alertName = "ChargerCurrentMismatch", .latching = true,
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CHARGER_CURRENT_MISMATCH_ALERT_SET_TIME_MS}, 
     .setTime_MS = CHARGER_CURRENT_MISMATCH_ALERT_SET_TIME_MS, .clearTime_MS = CHARGER_CURRENT_MISMATCH_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = chargerCurrentMismatchPresent,
@@ -514,7 +523,7 @@ const AlertResponse_E chargerHardwareFailureAlertResponse[] = { DISABLE_BALANCIN
 #define NUM_CHARGER_HARDWARE_FAILURE_ALERT_RESPONSE sizeof(chargerHardwareFailureAlertResponse) / sizeof(AlertResponse_E)
 Alert_S chargerHardwareFailureAlert = 
 {
-    .alertName = "ChargerHardwareFailure",
+    .alertName = "ChargerHardwareFailure", .latching = true,
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CHARGER_DIAGNOSTIC_ALERT_SET_TIME_MS}, 
     .setTime_MS = CHARGER_DIAGNOSTIC_ALERT_SET_TIME_MS, .clearTime_MS = CHARGER_DIAGNOSTIC_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = chargerHardwareFailurePresent,
@@ -526,7 +535,7 @@ const AlertResponse_E chargerOverTempAlertResponse[] = { DISABLE_BALANCING, DISA
 #define NUM_CHARGER_OVER_TEMP_ALERT_RESPONSE sizeof(chargerOverTempAlertResponse) / sizeof(AlertResponse_E)
 Alert_S chargerOverTempAlert = 
 {
-    .alertName = "ChargerOverTemp",
+    .alertName = "ChargerOverTemp", .latching = true,
     .alertStatus = ALERT_CLEARED, .alertTimer = (Timer_S){.timCount = 0, .lastUpdate = 0, .timThreshold = CHARGER_DIAGNOSTIC_ALERT_SET_TIME_MS}, 
     .setTime_MS = CHARGER_DIAGNOSTIC_ALERT_SET_TIME_MS, .clearTime_MS = CHARGER_DIAGNOSTIC_ALERT_CLEAR_TIME_MS, 
     .alertConditionPresent = chargerOverTempPresent,
