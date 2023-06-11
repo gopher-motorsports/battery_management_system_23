@@ -638,17 +638,6 @@ void updateGopherCan()
 			{&seg7BMBAveBoardTemp_C, &seg7BMBMaxBoardTemp_C, &seg7BMBMinBoardTemp_C}
 		};
 
-		static U8_CAN_STRUCT *balswenParams[NUM_BMBS_IN_ACCUMULATOR][NUM_BRICKS_PER_BMB] =
-		{
-			{&seg1Cell1BalanceEnable_state, &seg1Cell2BalanceEnable_state, &seg1Cell3BalanceEnable_state, &seg1Cell4BalanceEnable_state, &seg1Cell5BalanceEnable_state, &seg1Cell6BalanceEnable_state, &seg1Cell7BalanceEnable_state, &seg1Cell8BalanceEnable_state, &seg1Cell9BalanceEnable_state, &seg1Cell10BalanceEnable_state, &seg1Cell11BalanceEnable_state, &seg1Cell12BalanceEnable_state},
-			{&seg2Cell1BalanceEnable_state, &seg2Cell2BalanceEnable_state, &seg2Cell3BalanceEnable_state, &seg2Cell4BalanceEnable_state, &seg2Cell5BalanceEnable_state, &seg2Cell6BalanceEnable_state, &seg2Cell7BalanceEnable_state, &seg2Cell8BalanceEnable_state, &seg2Cell9BalanceEnable_state, &seg2Cell10BalanceEnable_state, &seg2Cell11BalanceEnable_state, &seg2Cell12BalanceEnable_state},
-			{&seg3Cell1BalanceEnable_state, &seg3Cell2BalanceEnable_state, &seg3Cell3BalanceEnable_state, &seg3Cell4BalanceEnable_state, &seg3Cell5BalanceEnable_state, &seg3Cell6BalanceEnable_state, &seg3Cell7BalanceEnable_state, &seg3Cell8BalanceEnable_state, &seg3Cell9BalanceEnable_state, &seg3Cell10BalanceEnable_state, &seg3Cell11BalanceEnable_state, &seg3Cell12BalanceEnable_state},
-			{&seg4Cell1BalanceEnable_state, &seg4Cell2BalanceEnable_state, &seg4Cell3BalanceEnable_state, &seg4Cell4BalanceEnable_state, &seg4Cell5BalanceEnable_state, &seg4Cell6BalanceEnable_state, &seg4Cell7BalanceEnable_state, &seg4Cell8BalanceEnable_state, &seg4Cell9BalanceEnable_state, &seg4Cell10BalanceEnable_state, &seg4Cell11BalanceEnable_state, &seg4Cell12BalanceEnable_state},
-			{&seg5Cell1BalanceEnable_state, &seg5Cell2BalanceEnable_state, &seg5Cell3BalanceEnable_state, &seg5Cell4BalanceEnable_state, &seg5Cell5BalanceEnable_state, &seg5Cell6BalanceEnable_state, &seg5Cell7BalanceEnable_state, &seg5Cell8BalanceEnable_state, &seg5Cell9BalanceEnable_state, &seg5Cell10BalanceEnable_state, &seg5Cell11BalanceEnable_state, &seg5Cell12BalanceEnable_state},
-			{&seg6Cell1BalanceEnable_state, &seg6Cell2BalanceEnable_state, &seg6Cell3BalanceEnable_state, &seg6Cell4BalanceEnable_state, &seg6Cell5BalanceEnable_state, &seg6Cell6BalanceEnable_state, &seg6Cell7BalanceEnable_state, &seg6Cell8BalanceEnable_state, &seg6Cell9BalanceEnable_state, &seg6Cell10BalanceEnable_state, &seg6Cell11BalanceEnable_state, &seg6Cell12BalanceEnable_state},
-			{&seg7Cell1BalanceEnable_state, &seg7Cell2BalanceEnable_state, &seg7Cell3BalanceEnable_state, &seg7Cell4BalanceEnable_state, &seg7Cell5BalanceEnable_state, &seg7Cell6BalanceEnable_state, &seg7Cell7BalanceEnable_state, &seg7Cell8BalanceEnable_state, &seg7Cell9BalanceEnable_state, &seg7Cell10BalanceEnable_state, &seg7Cell11BalanceEnable_state, &seg7Cell12BalanceEnable_state}
-		};
-
 		static U8_CAN_STRUCT *alertParams[NUM_GSENSE_ALERTS] =
 		{
 			&bmsOvervoltageWarningAlert_state,
@@ -727,11 +716,6 @@ void updateGopherCan()
 						update_and_queue_param_float(cellTempStatsParams[i][2], gBms.bmb[i].minBrickTemp);
 					}
 
-					for (int32_t i = 0; i < NUM_BRICKS_PER_BMB; i++)
-					{
-						update_and_queue_param_u8(balswenParams[0][i], gBms.bmb[0].balSwEnabled[i]);
-					}
-
 					update_and_queue_param_u8(&amsFault_state, gBms.amsFaultStatus);
 					update_and_queue_param_u8(&bspdFault_state, gBms.bspdFaultStatus);
 
@@ -745,25 +729,12 @@ void updateGopherCan()
 						update_and_queue_param_float(boardTempStatsParams[i][2], gBms.bmb[i].minBoardTemp);
 					}
 
-					for (int32_t i = 0; i < NUM_BRICKS_PER_BMB; i++)
-					{
-						update_and_queue_param_u8(balswenParams[1][i], gBms.bmb[1].balSwEnabled[i]);
-					}
-
 					update_and_queue_param_u8(&imdFault_state, gBms.imdFaultStatus);
 					update_and_queue_param_u8(&imdFaultInfo_state, gBms.imdState);
 					
 					break;
 
-				case GCAN_BALSWEN:
-					for (int32_t i = 2; i < NUM_BMBS_IN_ACCUMULATOR; i++)
-					{
-						for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
-						{
-							update_and_queue_param_u8(balswenParams[i][j], gBms.bmb[i].balSwEnabled[j]);
-						}
-					}
-
+				case GCAN_ALERTS_AND_INFO:
 					// Multiply SOE values by 100 to convert to percent before sending over gcan
 					// SOE values sent over gcan maintain 2 values after decimal place of percentage. Ex: 98.34% 
 					update_and_queue_param_float(&soeByOCV_percent, gBms.soc.soeByOcv * 100.0f);
@@ -785,7 +756,6 @@ void updateGopherCan()
 					update_and_queue_param_u8(&bmsNumActiveAlerts_state, gBms.maxBoardTemp);
 					update_and_queue_param_u8(&bmsNumActiveAlerts_state, gBms.minBoardTemp);
 
-				case GCAN_ALERTS:
 					update_and_queue_param_u8(&bmsNumActiveAlerts_state, displayData.numActiveAlerts);
 					update_and_queue_param_u8(&bmsCurrAlertIndex_state, displayData.currAlertIndex);
 					update_and_queue_param_u8(&bmsAlertMessage_state, displayData.alertMessage);
