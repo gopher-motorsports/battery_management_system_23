@@ -471,7 +471,7 @@ void updateEpaper()
 			Alert_S* alert = alerts[i];
 
 			// Triggers only if alert is active
-			if (getAlertStatus(alert) == ALERT_SET)
+			if (getAlertStatus(alert) == ALERT_SET || getAlertStatus(alert) == ALERT_LATCHED)
 			{
 				// Increment active alert counter
 				numAlertsSet++;
