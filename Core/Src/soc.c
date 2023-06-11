@@ -1,5 +1,6 @@
 
-
+#include "cellData.h"
+#include "packData.h"
 #include "soc.h"
 #include "lookupTable.h"
 
@@ -64,5 +65,88 @@ float getSocFromCellVoltage(float cellVoltage)
 float getSoeFromSoc(float soc)
 {
     return lookup(soc, &soeFromSocTable);
+}
+
+
+// Soc_S soc = {.socByOcvGood = true, .socByOcvGoodTimer.lastUpdate = 0, .socByOcvGoodTimer.timCount = 0, .socByOcvGoodTimer.timThreshold = 5*1000*60};
+
+static uint32_t getMilliCoulombsFromSoc(float soc)
+{
+    return (uint32_t)(MAX_ACCUMULATOR_MILLICOULOMBS * soc);
+}
+
+static float getSocFromMilliCoulombs(uint32_t milliCoulombs)
+{
+    return ((float)milliCoulombs / MAX_ACCUMULATOR_MILLICOULOMBS);
+}
+
+static void updateSocMethod(Soc_S* soc)
+{
+    // Update the socByOcvGood timer to see if we should be using soc by ocv or coulomb counting
+    if (soc->curAccumulatorCurrent < 5.0f)
+    {
+        // Accumulator current is low enough where the polarization of the cells should be decaying.
+        // Update timer to see if we can rely on SOC by OCV
+        updateTimer(&soc->socByOcvGoodTimer);
+        if (checkTimerExpired(&soc->socByOcvGoodTimer))
+        {
+            // Indicates that the OCV has stabilized enough for a reliable SOC by OCV reading
+            soc->socByOcvGood = true;
+        }
+    }
+    else
+    {
+        // Accumulator current is too high to rely on SOC by OCV. Reset qualification timer
+        clearTimer(&soc->socByOcvGoodTimer);
+        if (soc->socByOcvGood)
+        {
+            // Save current SOC value as initial reference for coulomb counting and reset coulomb counter
+            soc->socByOcvGood = false;
+            soc->coulombCounter.accumulatedMilliCoulombs = 0;
+            soc->coulombCounter.initialMilliCoulombCount = getMilliCoulombsFromSoc(soc->socByOcv);
+        }
+    }
+}
+
+static void countCoulombs(Soc_S* soc)
+{
+    int32_t deltaMilliCoulombs =  soc->deltaTimeMs * soc->curAccumulatorCurrent;
+    soc->coulombCounter.accumulatedMilliCoulombs += deltaMilliCoulombs;
+}
+
+static void calculateSocAndSoe(Soc_S* soc)
+{
+    // Calculate current SOC either through SOC by OCV or through coulomb counting
+    if (soc->socByOcvGood)
+    {
+        // Currently soc by ocv is a reliable estimate
+        soc->socByOcv = getSocFromCellVoltage(soc->minBrickVoltage);
+        soc->soeByOcv = getSoeFromSoc(soc->socByOcv);
+        soc->socByCoulombCounting = 0;
+        soc->soeByCoulombCounting = 0;
+    }
+    else
+    {
+        // Currently soc by ocv is unreliable. Do coulomb counting
+        soc->socByOcv = getSocFromCellVoltage(soc->minBrickVoltage);
+        soc->soeByOcv = getSoeFromSoc(soc->socByOcv);
+
+        // Update coulomb counter
+        const uint32_t currentMilliCoulombs = soc->coulombCounter.initialMilliCoulombCount - soc->coulombCounter.accumulatedMilliCoulombs;
+        soc->socByCoulombCounting = getSocFromMilliCoulombs(currentMilliCoulombs);
+        soc->soeByCoulombCounting = getSoeFromSoc(soc->socByCoulombCounting);
+    }
+}
+
+void updateSocAndSoe(Soc_S* soc)
+{
+    updateSocMethod(soc);
+
+    if (!soc->socByOcvGood)
+    {
+        countCoulombs(soc);
+    }
+
+    calculateSocAndSoe(soc);
 }
 
