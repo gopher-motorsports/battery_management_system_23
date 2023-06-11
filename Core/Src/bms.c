@@ -757,6 +757,7 @@ void updateGopherCan()
 					update_and_queue_param_float(&bmsAveBoardTemp_C, gBms.avgBoardTemp);
 					update_and_queue_param_float(&bmsMaxBoardTemp_C, gBms.maxBoardTemp);
 					update_and_queue_param_float(&bmsMinBoardTemp_C, gBms.minBoardTemp);
+					break;
 
 				case GCAN_ALERTS:
 					update_and_queue_param_u8(&bmsNumActiveAlerts_state, displayData.numActiveAlerts);
