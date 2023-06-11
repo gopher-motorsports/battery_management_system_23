@@ -750,13 +750,9 @@ void updateGopherCan()
 					update_and_queue_param_u8(&bmsNumActiveAlerts_state, gBms.maxBrickV);
 					update_and_queue_param_u8(&bmsNumActiveAlerts_state, gBms.minBrickV);
 
-					update_and_queue_param_u8(&bmsNumActiveAlerts_state, gBms.avgBrickTemp);
-					update_and_queue_param_u8(&bmsNumActiveAlerts_state, gBms.maxBrickTemp);
-					update_and_queue_param_u8(&bmsNumActiveAlerts_state, gBms.minBrickTemp);
-
-					update_and_queue_param_u8(&bmsNumActiveAlerts_state, gBms.avgBoardTemp);
-					update_and_queue_param_u8(&bmsNumActiveAlerts_state, gBms.maxBoardTemp);
-					update_and_queue_param_u8(&bmsNumActiveAlerts_state, gBms.minBoardTemp);
+					update_and_queue_param_float(&bmsAveBoardTemp_C, gBms.avgBoardTemp);
+					update_and_queue_param_float(&bmsMaxBoardTemp_C, gBms.maxBoardTemp);
+					update_and_queue_param_float(&bmsMinBoardTemp_C, gBms.minBoardTemp);
 
 					update_and_queue_param_u8(&bmsNumActiveAlerts_state, displayData.numActiveAlerts);
 					update_and_queue_param_u8(&bmsCurrAlertIndex_state, displayData.currAlertIndex);
