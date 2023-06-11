@@ -204,20 +204,6 @@ void updatePackData(uint32_t numBmbs)
 	if(HAL_GetTick() - lastPackUpdate > VOLTAGE_DATA_UPDATE_PERIOD_MS)
 	{
 		updateBmbData(gBms.bmb, numBmbs);
-		// // TODO: Get rid of this
-		// for (int i = 0; i < 12; i++)
-		// {
-		// 	gBms.bmb[0].brickV[i] = 3.7f;
-		// 	gBms.bmb[0].brickVStatus[i] = GOOD;
-		// 	gBms.bmb[0].brickTemp[i] = 25.0f;
-		// 	gBms.bmb[0].brickTempStatus[i] = GOOD;
-		// }
-		// for (int i = 0; i < 4; i++)
-		// {
-		// 	gBms.bmb[0].boardTemp[i] = 30.0f;
-		// 	gBms.bmb[0].boardTempStatus[i] = GOOD;
-		// }
-		// // TODO: Get rid of this ^
 		aggregatePackData(numBmbs);
 		updateInternalResistanceCalcs(&gBms);
 	}
@@ -733,7 +719,7 @@ void updateGopherCan()
 
 					update_and_queue_param_u8(&imdFault_state, gBms.imdFaultStatus);
 					update_and_queue_param_u8(&imdFaultInfo_state, gBms.imdState);
-					
+
 					break;
 
 				case GCAN_ALERTS_AND_INFO:
@@ -742,10 +728,6 @@ void updateGopherCan()
 					update_and_queue_param_float(&soeByOCV_percent, gBms.soc.soeByOcv * 100.0f);
 					update_and_queue_param_float(&soeByCoulombCounting_percent, gBms.soc.soeByCoulombCounting * 100.0f);
 
-					//TODO Potentially add sensor status bytes
-					break;
-
-				case GCAN_DISPLAY_INFO:
 					update_and_queue_param_float(&bmsAveBrickVoltage_V, gBms.avgBrickV);
 					update_and_queue_param_float(&bmsMaxBrickVoltage_V, gBms.maxBrickV);
 					update_and_queue_param_float(&bmsMinBrickVoltage_V, gBms.minBrickV);
@@ -757,9 +739,7 @@ void updateGopherCan()
 					update_and_queue_param_float(&bmsAveBoardTemp_C, gBms.avgBoardTemp);
 					update_and_queue_param_float(&bmsMaxBoardTemp_C, gBms.maxBoardTemp);
 					update_and_queue_param_float(&bmsMinBoardTemp_C, gBms.minBoardTemp);
-					break;
 
-				case GCAN_ALERTS:
 					update_and_queue_param_u8(&bmsNumActiveAlerts_state, displayData.numActiveAlerts);
 					update_and_queue_param_u8(&bmsCurrAlertIndex_state, displayData.currAlertIndex);
 					update_and_queue_param_u8(&bmsAlertMessage_state, displayData.alertMessage);
@@ -778,9 +758,7 @@ void updateGopherCan()
 							update_and_queue_param_u8(alertParams[i], 0);
 						}
 					}
-
 					break;
-
 				default:
 					gcanUpdateState = 0;
 					break;
