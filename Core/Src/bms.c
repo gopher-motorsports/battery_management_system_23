@@ -92,7 +92,7 @@ static void setAmsFault(bool set)
 void initBmsGopherCan(CAN_HandleTypeDef* hcan)
 {
 	// initialize CAN
-	if (init_can(GCAN0, hcan, BMS_ID, BXTYPE_MASTER))
+	if (init_can(GCAN0, hcan, BMS_ID, BXTYPE_SLAVE))
 	{
 		gBms.bmsHwState = BMS_GSNS_FAILURE;
 	}
