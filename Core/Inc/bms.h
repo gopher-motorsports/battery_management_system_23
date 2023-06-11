@@ -129,6 +129,7 @@ typedef struct Display_Data
 	uint8_t numActiveAlerts;
 	uint8_t currAlertIndex;
 	uint8_t alertMessage;
+	uint8_t currAlertIsLatched;
 } Display_Data_S;
 
 

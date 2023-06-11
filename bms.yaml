@@ -1428,6 +1428,11 @@ buckets:
                 sensor: NON_ADC
                 samples_buffered: 1
 
+            bmsCurrAlertIsLatched_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
             # AMS Faults
             bmsOvervoltageFaultAlert_state:
                 ADC: NON_ADC
@@ -1560,3 +1565,4 @@ buckets:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
+                

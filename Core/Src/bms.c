@@ -513,6 +513,7 @@ void updateEpaper()
 				epapData.alertMessage = (char*)alerts[currAlertMessageIndex]->alertName;
 				displayData.currAlertIndex = indexNextAlert;
 				displayData.alertMessage = currAlertMessageIndex;
+				displayData.currAlertIsLatched = getAlertStatus(alerts[currAlertMessageIndex]);
 			}
 			else
 			{
@@ -521,6 +522,7 @@ void updateEpaper()
 				epapData.alertMessage = (char*)alerts[indexMinAlert]->alertName;
 				displayData.currAlertIndex = 1;
 				displayData.alertMessage = indexMinAlert;
+				displayData.currAlertIsLatched = getAlertStatus(alerts[indexMinAlert]);
 			}
 		}
 
@@ -759,6 +761,7 @@ void updateGopherCan()
 					update_and_queue_param_u8(&bmsNumActiveAlerts_state, displayData.numActiveAlerts);
 					update_and_queue_param_u8(&bmsCurrAlertIndex_state, displayData.currAlertIndex);
 					update_and_queue_param_u8(&bmsAlertMessage_state, displayData.alertMessage);
+					update_and_queue_param_u8(&bmsCurrAlertIsLatched_state, displayData.currAlertIsLatched);
 
 					// Cycle through all alerts
 					for (uint32_t i = 0; i < NUM_GSENSE_ALERTS; i++)
