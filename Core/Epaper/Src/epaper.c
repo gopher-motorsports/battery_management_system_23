@@ -10,7 +10,6 @@
 #include "epaperUtils.h"
 #include "bms.h"
 #include "utils.h"
-#include "soc.h"
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
@@ -478,10 +477,8 @@ void epdPopulateData(Epaper_Data_S* epapData)
 	Paint_DrawTableData(epapData->maxBoardTemp, DATA_BOARD_TEMP, DATA_MAX);
 	Paint_DrawTableData(epapData->minBoardTemp, DATA_BOARD_TEMP, DATA_MIN);
 
-	// Populate BMS image with current SOC percent
-	const float soc = getSocFromCellVoltage(epapData->minBrickV);
-	const float soe = getSoeFromSoc(soc);
-	Paint_DrawSOE(soe);
+	// Populate BMS image with current SOE percent
+	Paint_DrawSOE(epapData->stateOfEnergy);
 
 	// Populate BMS image with current sensor data
 	Paint_DrawCurrent(epapData->current);

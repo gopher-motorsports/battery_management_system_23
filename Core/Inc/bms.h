@@ -15,6 +15,7 @@
 #include "main.h"
 #include "bmb.h"
 #include "imd.h"
+#include "soc.h"
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
@@ -22,9 +23,6 @@
 
 // The number of BMBs in the accumulator
 #define NUM_BMBS_IN_ACCUMULATOR				7 
-
-// The number of Cells in a cell brick
-#define NUM_PARALLEL_CELLS          		7
 
 // Max allowable voltage difference between bricks for balancing
 #define BALANCE_THRESHOLD_V					0.001f
@@ -34,6 +32,9 @@
 
 // The delay between consecutive current sensor updates
 #define CURRENT_SENSOR_UPDATE_PERIOD_MS 	4
+
+// The rate at which we update the coulomb counter
+#define SOC_AND_SOE_UPDATE_PERIOD_MS		10
 
 // The delay between consecutive bmb updates
 #define VOLTAGE_DATA_UPDATE_PERIOD_MS		50
@@ -100,6 +101,9 @@ typedef struct Bms
 	Sensor_Status_E currentSensorStatusLO;
 	Sensor_Status_E tractiveSystemCurrentStatus;
 	float tractiveSystemCurrent;
+
+	// Struct to contain data for SOC calculations
+	Soc_S soc;
 
 	bool balancingDisabled;
 	bool emergencyBleed;
@@ -177,6 +181,12 @@ void updateEpaper();
   @brief   Update the tractive system current
 */
 void updateTractiveCurrent();
+
+/*!
+  @brief   Update the state of charge (SOC) and state of energy (SOE) using both SOC by 
+		   Open Cell Voltage (OCV) and Coulomb Counting
+*/
+void updateStateOfChargeAndEnergy();
 
 /*!
   @brief   Log non-ADC gopher can variables

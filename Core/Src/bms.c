@@ -38,7 +38,11 @@ Bms_S gBms =
         [4] = {.bmbIdx = 4},
         [5] = {.bmbIdx = 5},
         [6] = {.bmbIdx = 6}
-    }
+    },
+	/* Initially we can assume that the SOC by OCV method is reliable since pack was just initialized*/
+	.soc.socByOcvGoodTimer.timCount = SOC_BY_OCV_GOOD_QUALIFICATION_TIME_MS, 
+	.soc.socByOcvGoodTimer.lastUpdate = 0,
+	.soc.socByOcvGoodTimer.timThreshold = SOC_BY_OCV_GOOD_QUALIFICATION_TIME_MS
 };
 
 
@@ -198,6 +202,20 @@ void updatePackData(uint32_t numBmbs)
 	if(HAL_GetTick() - lastPackUpdate > VOLTAGE_DATA_UPDATE_PERIOD_MS)
 	{
 		updateBmbData(gBms.bmb, numBmbs);
+		// // TODO: Get rid of this
+		// for (int i = 0; i < 12; i++)
+		// {
+		// 	gBms.bmb[0].brickV[i] = 3.7f;
+		// 	gBms.bmb[0].brickVStatus[i] = GOOD;
+		// 	gBms.bmb[0].brickTemp[i] = 25.0f;
+		// 	gBms.bmb[0].brickTempStatus[i] = GOOD;
+		// }
+		// for (int i = 0; i < 4; i++)
+		// {
+		// 	gBms.bmb[0].boardTemp[i] = 30.0f;
+		// 	gBms.bmb[0].boardTempStatus[i] = GOOD;
+		// }
+		// // TODO: Get rid of this ^
 		aggregatePackData(numBmbs);
 		updateInternalResistanceCalcs(&gBms);
 	}
@@ -431,6 +449,8 @@ void updateEpaper()
 
 		epapData.current = gBms.tractiveSystemCurrent;
 
+		epapData.stateOfEnergy = gBms.soc.soeByOcv;
+
 		// Send the current state of the BMS state machine
 		epapData.stateMessage = "TEMP STATE";
 
@@ -511,6 +531,27 @@ void updateTractiveCurrent()
 	{
 		lastCurrentUpdate = HAL_GetTick();
 		getTractiveSystemCurrent(&gBms);
+	}	
+}
+
+/*!
+  @brief   Update the state of charge (SOC) and state of energy (SOE) using both SOC by 
+		   Open Cell Voltage (OCV) and Coulomb Counting
+*/
+void updateStateOfChargeAndEnergy()
+{
+	static uint32_t lastSocAndSoeUpdate = 0;
+	if ((HAL_GetTick() - lastSocAndSoeUpdate) >= SOC_AND_SOE_UPDATE_PERIOD_MS)
+	{
+		uint32_t deltaTimeMs = HAL_GetTick() - lastSocAndSoeUpdate;
+		lastSocAndSoeUpdate = HAL_GetTick();
+
+		// Populate data to be used in SOC and SOE calculation
+		Soc_S* pSoc = &gBms.soc;
+		pSoc->minBrickVoltage = gBms.minBrickV;
+		pSoc->curAccumulatorCurrent = gBms.tractiveSystemCurrent;
+		pSoc->deltaTimeMs = deltaTimeMs;
+		updateSocAndSoe(&gBms.soc);
 	}	
 }
 

@@ -55,6 +55,16 @@ void saturateTimer(Timer_S* timer)
 }
 
 /*!
+  @brief   Get the time remaining until the timer expires.
+  @param   timer - Pointer to the Timer_S struct containing the timer's threshold and count values.
+  @return  The time remaining in milliseconds until the timer expires.
+*/
+uint32_t getTimeTilExpirationMs(Timer_S* timer)
+{
+    return timer->timThreshold - timer->timCount;
+}
+
+/*!
     @brief   Check whether or not the timer has reached its threshold (expired)
     @param   timer - Pointer to the Timer_S struct to be checked
     @returns True if timer expired, false otherwise

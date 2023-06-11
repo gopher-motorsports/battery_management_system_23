@@ -8,6 +8,7 @@
 #include "shared.h"
 #include "bms.h"
 #include "cellData.h"
+#include "packData.h"
 
 /* ==================================================================== */
 /* ============================= DEFINES ============================== */
@@ -51,8 +52,9 @@
 #define HIGH_CHARGE_CURRENT_A               NUM_PARALLEL_CELLS * HIGH_CHARGE_C_RATING * CELL_CAPACITY_MAH * MAH_TO_AH
 #define LOW_CHARGE_CURRENT_A                NUM_PARALLEL_CELLS * LOW_CHARGE_C_RATING * CELL_CAPACITY_MAH * MAH_TO_AH
 
-#define CHARGER_INPUT_POWER_W               1500.0f
+#define CHARGER_INPUT_POWER_W               2400.0f
 #define MIN_CHARGER_EFFICIENCY              0.9f
+
 
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */
