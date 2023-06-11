@@ -1854,4 +1854,136 @@ buckets:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
-                
+
+            # AMS Faults
+            bmsOvervoltageFaultAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsUndervoltageFaultAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsOvertempFaultAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsBmbCommunicationFailureAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsBadVoltageSenseStatusAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsInsufficientTempSensorsAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsChargerOverVoltageAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsChargerOverCurrentAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsChargerVoltageMismatchAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsChargerCurrentMismatchAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsChargerHardwareFailureAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsChargerOverTempAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+
+            # Other Alerts
+            bmsOvervoltageWarningAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsUndervoltageWarningAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsCellImbalanceAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsOvertempWarningAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsAmsSdcFaultAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsBspdSdcFaultAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsImdSdcFaultAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsCurrentSensorErrorAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsBadBrickTempSenseStatusAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsBadBoardTempSenseStatusAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsStackVsSegmentImbalanceAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsChargerInputVoltageErrorAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsChargerBatteryNotDetectedErrorAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsChargerCommunicationErrorAlert_state:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1

@@ -24,6 +24,9 @@
 // The number of BMBs in the accumulator
 #define NUM_BMBS_IN_ACCUMULATOR				7 
 
+// The number of gsense alerts that need to be logged
+#define NUM_GSENSE_ALERTS					26
+
 // Max allowable voltage difference between bricks for balancing
 #define BALANCE_THRESHOLD_V					0.001f
 

@@ -649,6 +649,36 @@ void updateGopherCan()
 			{&seg7Cell1BalanceEnable_state, &seg7Cell2BalanceEnable_state, &seg7Cell3BalanceEnable_state, &seg7Cell4BalanceEnable_state, &seg7Cell5BalanceEnable_state, &seg7Cell6BalanceEnable_state, &seg7Cell7BalanceEnable_state, &seg7Cell8BalanceEnable_state, &seg7Cell9BalanceEnable_state, &seg7Cell10BalanceEnable_state, &seg7Cell11BalanceEnable_state, &seg7Cell12BalanceEnable_state}
 		};
 
+		static U8_CAN_STRUCT *alertParams[NUM_GSENSE_ALERTS] =
+		{
+			&bmsOvervoltageWarningAlert_state,
+			&bmsUndervoltageWarningAlert_state,
+			&bmsOvervoltageFaultAlert_state,
+			&bmsUndervoltageFaultAlert_state,
+			&bmsCellImbalanceAlert_state,
+			&bmsOvertempWarningAlert_state,
+			&bmsOvertempFaultAlert_state,
+			&bmsAmsSdcFaultAlert_state,
+			&bmsBspdSdcFaultAlert_state,
+			&bmsImdSdcFaultAlert_state,
+			&bmsCurrentSensorErrorAlert_state,
+			&bmsBmbCommunicationFailureAlert_state,
+			&bmsBadVoltageSenseStatusAlert_state,
+			&bmsBadBrickTempSenseStatusAlert_state,
+			&bmsBadBoardTempSenseStatusAlert_state,
+			&bmsInsufficientTempSensorsAlert_state,
+			&bmsStackVsSegmentImbalanceAlert_state,
+			&bmsChargerOverVoltageAlert_state,
+			&bmsChargerOverCurrentAlert_state,
+			&bmsChargerVoltageMismatchAlert_state,
+			&bmsChargerCurrentMismatchAlert_state,
+			&bmsChargerHardwareFailureAlert_state,
+			&bmsChargerOverTempAlert_state,
+			&bmsChargerInputVoltageErrorAlert_state,
+			&bmsChargerBatteryNotDetectedErrorAlert_state,
+			&bmsChargerCommunicationErrorAlert_state
+		};
+
 		// Log gcan variables across the alloted time period in data chunks
 		static uint32_t lastGcanUpdate = 0;
 		if((HAL_GetTick() - lastGcanUpdate) >= GOPHER_CAN_LOGGING_PERIOD_MS)
@@ -759,6 +789,20 @@ void updateGopherCan()
 					update_and_queue_param_u8(&bmsNumActiveAlerts_state, displayData.numActiveAlerts);
 					update_and_queue_param_u8(&bmsCurrAlertIndex_state, displayData.currAlertIndex);
 					update_and_queue_param_u8(&bmsAlertMessage_state, displayData.alertMessage);
+
+					// Cycle through all alerts
+					for (uint32_t i = 0; i < NUM_GSENSE_ALERTS; i++)
+					{
+						Alert_S* alert = alerts[i];
+
+						// Triggers only if alert is active
+						if (getAlertStatus(alert) == ALERT_SET)
+						{
+							update_and_queue_param_u8(alertParams[i], 1);
+						} else {
+							update_and_queue_param_u8(alertParams[i], 0);
+						}
+					}
 
 					break;
 
