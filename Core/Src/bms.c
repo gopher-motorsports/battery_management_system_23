@@ -513,7 +513,7 @@ void updateEpaper()
 				epapData.alertMessage = (char*)alerts[currAlertMessageIndex]->alertName;
 				displayData.currAlertIndex = indexNextAlert;
 				displayData.alertMessage = currAlertMessageIndex;
-				displayData.currAlertIsLatched = getAlertStatus(alerts[currAlertMessageIndex]);
+				displayData.currAlertIsLatched = getAlertStatus(alerts[currAlertMessageIndex]) == ALERT_LATCHED;
 			}
 			else
 			{
