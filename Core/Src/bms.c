@@ -497,18 +497,20 @@ void updateEpaper()
 			{
 				epapData.currAlertIndex = indexNextAlert;
 				epapData.alertMessage = (char*)alerts[currAlertMessageIndex]->alertName;
+				epapData.currAlertLatched = getAlertStatus(alerts[currAlertMessageIndex]) == ALERT_LATCHED;
 				displayData.currAlertIndex = indexNextAlert;
 				displayData.alertMessage = currAlertMessageIndex;
-				displayData.currAlertIsLatched = getAlertStatus(alerts[currAlertMessageIndex]) == ALERT_LATCHED;
+				displayData.currAlertIsLatched = epapData.currAlertLatched;
 			}
 			else
 			{
 				currAlertMessageIndex = indexMinAlert;
 				epapData.currAlertIndex = 1;
 				epapData.alertMessage = (char*)alerts[indexMinAlert]->alertName;
+				epapData.currAlertLatched = getAlertStatus(alerts[currAlertMessageIndex]) == ALERT_LATCHED;
 				displayData.currAlertIndex = 1;
 				displayData.alertMessage = indexMinAlert;
-				displayData.currAlertIsLatched = getAlertStatus(alerts[indexMinAlert]) == ALERT_LATCHED;
+				displayData.currAlertIsLatched = epapData.currAlertLatched;
 			}
 		}
 

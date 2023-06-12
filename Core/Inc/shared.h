@@ -64,6 +64,7 @@ typedef struct
 	char* alertMessage;			// String of alert message to be displayed on epaper
 	uint32_t currAlertIndex;	// The index of currenly active alerts
 	uint32_t numActiveAlerts;	// The number of active alerts, if 0, no alerts will be displayed
+	bool currAlertLatched;		// Whether or not the current alert is latched
 } Epaper_Data_S;
 
 #endif /* INC_SHARED_H_ */

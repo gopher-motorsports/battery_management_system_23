@@ -124,8 +124,7 @@ static bool insufficientTempSensePresent(Bms_S* bms)
 
 static bool currentSensorErrorPresent(Bms_S* bms)
 {
-    // TODO: Implement current sense error check
-    return false;
+    return (bms->tractiveSystemCurrentStatus == BAD);
 }
 
 static bool bmbCommunicationFailurePresent(Bms_S* bms)
