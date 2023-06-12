@@ -16,6 +16,19 @@ buckets:
                 sensor: current_sensor_2
                 samples_buffered: 1
     
+    medium_frequency_bms:
+        frequency_hz: 25
+        parameters:
+            soeByOCV_percent:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            soeByCoulombCounting_percent:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
     low_frequency_bms:
         frequency_hz: 2
         parameters:
@@ -1392,17 +1405,7 @@ buckets:
 
             # END SEGMENT 7
 
-            # Info
-            soeByOCV_percent:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            soeByCoulombCounting_percent:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-            
+            # Info LF
             bmsAveBrickVoltage_V:
                 ADC: NON_ADC
                 sensor: NON_ADC
