@@ -658,6 +658,27 @@ void updateGopherCan()
 			&bmsChargerCommunicationErrorAlert_state
 		};
 
+		static uint32_t lastHighFreqGcanUpdate = 0;
+		if((HAL_GetTick() - lastHighFreqGcanUpdate) >= 25)
+		{
+			lastHighFreqGcanUpdate = HAL_GetTick();
+
+			update_and_queue_param_float(&soeByOCV_percent, gBms.soc.soeByOcv * 100.0f);
+			update_and_queue_param_float(&soeByCoulombCounting_percent, gBms.soc.soeByCoulombCounting * 100.0f);
+
+			update_and_queue_param_float(&bmsAveBrickVoltage_V, gBms.avgBrickV);
+			update_and_queue_param_float(&bmsMaxBrickVoltage_V, gBms.maxBrickV);
+			update_and_queue_param_float(&bmsMinBrickVoltage_V, gBms.minBrickV);
+
+			update_and_queue_param_float(&bmsAveBrickTemp_C, gBms.avgBrickTemp);
+			update_and_queue_param_float(&bmsMaxBrickTemp_C, gBms.maxBrickTemp);
+			update_and_queue_param_float(&bmsMinBrickTemp_C, gBms.minBrickTemp);
+
+			update_and_queue_param_float(&bmsAveBoardTemp_C, gBms.avgBoardTemp);
+			update_and_queue_param_float(&bmsMaxBoardTemp_C, gBms.maxBoardTemp);
+			update_and_queue_param_float(&bmsMinBoardTemp_C, gBms.minBoardTemp);
+		}
+
 		// Log gcan variables across the alloted time period in data chunks
 		static uint32_t lastGcanUpdate = 0;
 		if((HAL_GetTick() - lastGcanUpdate) >= GOPHER_CAN_LOGGING_PERIOD_MS)
@@ -727,21 +748,6 @@ void updateGopherCan()
 				case GCAN_ALERTS_AND_INFO:
 					// Multiply SOE values by 100 to convert to percent before sending over gcan
 					// SOE values sent over gcan maintain 2 values after decimal place of percentage. Ex: 98.34% 
-					update_and_queue_param_float(&soeByOCV_percent, gBms.soc.soeByOcv * 100.0f);
-					update_and_queue_param_float(&soeByCoulombCounting_percent, gBms.soc.soeByCoulombCounting * 100.0f);
-
-					update_and_queue_param_float(&bmsAveBrickVoltage_V, gBms.avgBrickV);
-					update_and_queue_param_float(&bmsMaxBrickVoltage_V, gBms.maxBrickV);
-					update_and_queue_param_float(&bmsMinBrickVoltage_V, gBms.minBrickV);
-
-					update_and_queue_param_float(&bmsAveBrickTemp_C, gBms.avgBrickTemp);
-					update_and_queue_param_float(&bmsMaxBrickTemp_C, gBms.maxBrickTemp);
-					update_and_queue_param_float(&bmsMinBrickTemp_C, gBms.minBrickTemp);
-
-					update_and_queue_param_float(&bmsAveBoardTemp_C, gBms.avgBoardTemp);
-					update_and_queue_param_float(&bmsMaxBoardTemp_C, gBms.maxBoardTemp);
-					update_and_queue_param_float(&bmsMinBoardTemp_C, gBms.minBoardTemp);
-
 					update_and_queue_param_u8(&bmsNumActiveAlerts_state, displayData.numActiveAlerts);
 					update_and_queue_param_u8(&bmsCurrAlertIndex_state, displayData.currAlertIndex);
 					update_and_queue_param_u8(&bmsAlertMessage_state, displayData.alertMessage);

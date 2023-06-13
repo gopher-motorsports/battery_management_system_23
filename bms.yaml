@@ -29,8 +29,54 @@ buckets:
                 sensor: NON_ADC
                 samples_buffered: 1
 
+            # Info LF
+            bmsAveBrickVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsMaxBrickVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsMinBrickVoltage_V:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsAveBrickTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsMaxBrickTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsMinBrickTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsAveBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsMaxBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            bmsMinBoardTemp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
     low_frequency_bms:
-        frequency_hz: 2
+        frequency_hz: 4
         parameters:
             # Battery Management System
             # Segment 1 Overall
@@ -1404,52 +1450,6 @@ buckets:
                 samples_buffered: 1
 
             # END SEGMENT 7
-
-            # Info LF
-            bmsAveBrickVoltage_V:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            bmsMaxBrickVoltage_V:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            bmsMinBrickVoltage_V:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            bmsAveBrickTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            bmsMaxBrickTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            bmsMinBrickTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            bmsAveBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            bmsMaxBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            bmsMinBoardTemp_C:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
 
             # Error states
             amsFault_state:
