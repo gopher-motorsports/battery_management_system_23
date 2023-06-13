@@ -3,9 +3,14 @@
 /* ==================================================================== */
 #include "alerts.h"
 #include "cellData.h"
+#include "leakyBucket.h"
 #include "packData.h"
 #include "charger.h"
 #include <math.h>
+
+
+
+extern LeakyBucket_S asciCommsLeakyBucket;
 
 /* ==================================================================== */
 /* =================== LOCAL FUNCTION DEFINITIONS ===================== */
@@ -119,14 +124,12 @@ static bool insufficientTempSensePresent(Bms_S* bms)
 
 static bool currentSensorErrorPresent(Bms_S* bms)
 {
-    // TODO: Implement current sense error check
-    return false;
+    return (bms->tractiveSystemCurrentStatus == BAD);
 }
 
 static bool bmbCommunicationFailurePresent(Bms_S* bms)
 {
-    // STUB
-    return false;
+    return leakyBucketFilled(&asciCommsLeakyBucket);
 }
 
 static bool stackVsSegmentImbalancePresent(Bms_S* bms)

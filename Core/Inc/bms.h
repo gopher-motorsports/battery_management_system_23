@@ -24,6 +24,9 @@
 // The number of BMBs in the accumulator
 #define NUM_BMBS_IN_ACCUMULATOR				7 
 
+// The number of gsense alerts that need to be logged
+#define NUM_GSENSE_ALERTS					26
+
 // Max allowable voltage difference between bricks for balancing
 #define BALANCE_THRESHOLD_V					0.001f
 
@@ -41,7 +44,7 @@
 
 // Gophercan variable logging frequency. This value will be divided by the number of transactions
 // Frequency cannot exceed HW CONFIG max logging frequency
-#define GOPHER_CAN_LOGGING_FREQUENCY_HZ		1
+#define GOPHER_CAN_LOGGING_FREQUENCY_HZ		5
 
 /* ==================================================================== */
 /* ========================= ENUMERATED TYPES========================== */
@@ -65,7 +68,8 @@ typedef enum
 	GCAN_SEGMENT_7,
 	GCAN_CELL_TEMP_STATS,
 	GCAN_BOARD_TEMP_STATS,
-	GCAN_BALSWEN,
+	GCAN_ALERTS_AND_INFO,
+	GCAN_DISPLAY_INFO,
 	NUM_GCAN_STATES
 } Gcan_State_E;
 
@@ -120,6 +124,14 @@ typedef struct Bms
 	bool chargerConnected;
 	Charger_Data_S chargerData;
 } Bms_S;
+
+typedef struct Display_Data
+{
+	uint8_t numActiveAlerts;
+	uint8_t currAlertIndex;
+	uint8_t alertMessage;
+	uint8_t currAlertIsLatched;
+} Display_Data_S;
 
 
 /* ==================================================================== */

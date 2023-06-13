@@ -45,6 +45,8 @@ Bms_S gBms =
 	.soc.socByOcvGoodTimer.timThreshold = SOC_BY_OCV_GOOD_QUALIFICATION_TIME_MS
 };
 
+Display_Data_S displayData;
+
 
 /* ==================================================================== */
 /* ======================= EXTERNAL VARIABLES ========================= */
@@ -90,7 +92,7 @@ static void setAmsFault(bool set)
 void initBmsGopherCan(CAN_HandleTypeDef* hcan)
 {
 	// initialize CAN
-	if (init_can(GCAN0, hcan, BMS_ID, BXTYPE_MASTER))
+	if (init_can(GCAN0, hcan, BMS_ID, BXTYPE_SLAVE))
 	{
 		gBms.bmsHwState = BMS_GSNS_FAILURE;
 	}
@@ -202,20 +204,6 @@ void updatePackData(uint32_t numBmbs)
 	if(HAL_GetTick() - lastPackUpdate > VOLTAGE_DATA_UPDATE_PERIOD_MS)
 	{
 		updateBmbData(gBms.bmb, numBmbs);
-		// // TODO: Get rid of this
-		// for (int i = 0; i < 12; i++)
-		// {
-		// 	gBms.bmb[0].brickV[i] = 3.7f;
-		// 	gBms.bmb[0].brickVStatus[i] = GOOD;
-		// 	gBms.bmb[0].brickTemp[i] = 25.0f;
-		// 	gBms.bmb[0].brickTempStatus[i] = GOOD;
-		// }
-		// for (int i = 0; i < 4; i++)
-		// {
-		// 	gBms.bmb[0].boardTemp[i] = 30.0f;
-		// 	gBms.bmb[0].boardTempStatus[i] = GOOD;
-		// }
-		// // TODO: Get rid of this ^
 		aggregatePackData(numBmbs);
 		updateInternalResistanceCalcs(&gBms);
 	}
@@ -469,7 +457,7 @@ void updateEpaper()
 			Alert_S* alert = alerts[i];
 
 			// Triggers only if alert is active
-			if (getAlertStatus(alert) == ALERT_SET)
+			if (getAlertStatus(alert) == ALERT_SET || getAlertStatus(alert) == ALERT_LATCHED)
 			{
 				// Increment active alert counter
 				numAlertsSet++;
@@ -497,6 +485,7 @@ void updateEpaper()
 
 		// Update epaper data struct with the number of active alerts
 		epapData.numActiveAlerts = numAlertsSet;
+		displayData.numActiveAlerts = numAlertsSet;
 
 		// Only update the epaper struct data if there are active alerts
 		// If there are no alerts, the epaper will ignore what is currently set in the currAlertIndex and alertMessage variables
@@ -508,12 +497,20 @@ void updateEpaper()
 			{
 				epapData.currAlertIndex = indexNextAlert;
 				epapData.alertMessage = (char*)alerts[currAlertMessageIndex]->alertName;
+				epapData.currAlertLatched = getAlertStatus(alerts[currAlertMessageIndex]) == ALERT_LATCHED;
+				displayData.currAlertIndex = indexNextAlert;
+				displayData.alertMessage = currAlertMessageIndex;
+				displayData.currAlertIsLatched = epapData.currAlertLatched;
 			}
 			else
 			{
 				currAlertMessageIndex = indexMinAlert;
 				epapData.currAlertIndex = 1;
 				epapData.alertMessage = (char*)alerts[indexMinAlert]->alertName;
+				epapData.currAlertLatched = getAlertStatus(alerts[currAlertMessageIndex]) == ALERT_LATCHED;
+				displayData.currAlertIndex = 1;
+				displayData.alertMessage = indexMinAlert;
+				displayData.currAlertIsLatched = epapData.currAlertLatched;
 			}
 		}
 
@@ -631,16 +628,56 @@ void updateGopherCan()
 			{&seg7BMBAveBoardTemp_C, &seg7BMBMaxBoardTemp_C, &seg7BMBMinBoardTemp_C}
 		};
 
-		static U8_CAN_STRUCT *balswenParams[NUM_BMBS_IN_ACCUMULATOR][NUM_BRICKS_PER_BMB] =
+		static U8_CAN_STRUCT *alertParams[NUM_GSENSE_ALERTS] =
 		{
-			{&seg1Cell1BalanceEnable_state, &seg1Cell2BalanceEnable_state, &seg1Cell3BalanceEnable_state, &seg1Cell4BalanceEnable_state, &seg1Cell5BalanceEnable_state, &seg1Cell6BalanceEnable_state, &seg1Cell7BalanceEnable_state, &seg1Cell8BalanceEnable_state, &seg1Cell9BalanceEnable_state, &seg1Cell10BalanceEnable_state, &seg1Cell11BalanceEnable_state, &seg1Cell12BalanceEnable_state},
-			{&seg2Cell1BalanceEnable_state, &seg2Cell2BalanceEnable_state, &seg2Cell3BalanceEnable_state, &seg2Cell4BalanceEnable_state, &seg2Cell5BalanceEnable_state, &seg2Cell6BalanceEnable_state, &seg2Cell7BalanceEnable_state, &seg2Cell8BalanceEnable_state, &seg2Cell9BalanceEnable_state, &seg2Cell10BalanceEnable_state, &seg2Cell11BalanceEnable_state, &seg2Cell12BalanceEnable_state},
-			{&seg3Cell1BalanceEnable_state, &seg3Cell2BalanceEnable_state, &seg3Cell3BalanceEnable_state, &seg3Cell4BalanceEnable_state, &seg3Cell5BalanceEnable_state, &seg3Cell6BalanceEnable_state, &seg3Cell7BalanceEnable_state, &seg3Cell8BalanceEnable_state, &seg3Cell9BalanceEnable_state, &seg3Cell10BalanceEnable_state, &seg3Cell11BalanceEnable_state, &seg3Cell12BalanceEnable_state},
-			{&seg4Cell1BalanceEnable_state, &seg4Cell2BalanceEnable_state, &seg4Cell3BalanceEnable_state, &seg4Cell4BalanceEnable_state, &seg4Cell5BalanceEnable_state, &seg4Cell6BalanceEnable_state, &seg4Cell7BalanceEnable_state, &seg4Cell8BalanceEnable_state, &seg4Cell9BalanceEnable_state, &seg4Cell10BalanceEnable_state, &seg4Cell11BalanceEnable_state, &seg4Cell12BalanceEnable_state},
-			{&seg5Cell1BalanceEnable_state, &seg5Cell2BalanceEnable_state, &seg5Cell3BalanceEnable_state, &seg5Cell4BalanceEnable_state, &seg5Cell5BalanceEnable_state, &seg5Cell6BalanceEnable_state, &seg5Cell7BalanceEnable_state, &seg5Cell8BalanceEnable_state, &seg5Cell9BalanceEnable_state, &seg5Cell10BalanceEnable_state, &seg5Cell11BalanceEnable_state, &seg5Cell12BalanceEnable_state},
-			{&seg6Cell1BalanceEnable_state, &seg6Cell2BalanceEnable_state, &seg6Cell3BalanceEnable_state, &seg6Cell4BalanceEnable_state, &seg6Cell5BalanceEnable_state, &seg6Cell6BalanceEnable_state, &seg6Cell7BalanceEnable_state, &seg6Cell8BalanceEnable_state, &seg6Cell9BalanceEnable_state, &seg6Cell10BalanceEnable_state, &seg6Cell11BalanceEnable_state, &seg6Cell12BalanceEnable_state},
-			{&seg7Cell1BalanceEnable_state, &seg7Cell2BalanceEnable_state, &seg7Cell3BalanceEnable_state, &seg7Cell4BalanceEnable_state, &seg7Cell5BalanceEnable_state, &seg7Cell6BalanceEnable_state, &seg7Cell7BalanceEnable_state, &seg7Cell8BalanceEnable_state, &seg7Cell9BalanceEnable_state, &seg7Cell10BalanceEnable_state, &seg7Cell11BalanceEnable_state, &seg7Cell12BalanceEnable_state}
+			&bmsOvervoltageWarningAlert_state,
+			&bmsUndervoltageWarningAlert_state,
+			&bmsOvervoltageFaultAlert_state,
+			&bmsUndervoltageFaultAlert_state,
+			&bmsCellImbalanceAlert_state,
+			&bmsOvertempWarningAlert_state,
+			&bmsOvertempFaultAlert_state,
+			&bmsAmsSdcFaultAlert_state,
+			&bmsBspdSdcFaultAlert_state,
+			&bmsImdSdcFaultAlert_state,
+			&bmsCurrentSensorErrorAlert_state,
+			&bmsBmbCommunicationFailureAlert_state,
+			&bmsBadVoltageSenseStatusAlert_state,
+			&bmsBadBrickTempSenseStatusAlert_state,
+			&bmsBadBoardTempSenseStatusAlert_state,
+			&bmsInsufficientTempSensorsAlert_state,
+			&bmsStackVsSegmentImbalanceAlert_state,
+			&bmsChargerOverVoltageAlert_state,
+			&bmsChargerOverCurrentAlert_state,
+			&bmsChargerVoltageMismatchAlert_state,
+			&bmsChargerCurrentMismatchAlert_state,
+			&bmsChargerHardwareFailureAlert_state,
+			&bmsChargerOverTempAlert_state,
+			&bmsChargerInputVoltageErrorAlert_state,
+			&bmsChargerBatteryNotDetectedErrorAlert_state,
+			&bmsChargerCommunicationErrorAlert_state
 		};
+
+		static uint32_t lastHighFreqGcanUpdate = 0;
+		if((HAL_GetTick() - lastHighFreqGcanUpdate) >= 25)
+		{
+			lastHighFreqGcanUpdate = HAL_GetTick();
+
+			update_and_queue_param_float(&soeByOCV_percent, gBms.soc.soeByOcv * 100.0f);
+			update_and_queue_param_float(&soeByCoulombCounting_percent, gBms.soc.soeByCoulombCounting * 100.0f);
+
+			update_and_queue_param_float(&bmsAveBrickVoltage_V, gBms.avgBrickV);
+			update_and_queue_param_float(&bmsMaxBrickVoltage_V, gBms.maxBrickV);
+			update_and_queue_param_float(&bmsMinBrickVoltage_V, gBms.minBrickV);
+
+			update_and_queue_param_float(&bmsAveBrickTemp_C, gBms.avgBrickTemp);
+			update_and_queue_param_float(&bmsMaxBrickTemp_C, gBms.maxBrickTemp);
+			update_and_queue_param_float(&bmsMinBrickTemp_C, gBms.minBrickTemp);
+
+			update_and_queue_param_float(&bmsAveBoardTemp_C, gBms.avgBoardTemp);
+			update_and_queue_param_float(&bmsMaxBoardTemp_C, gBms.maxBoardTemp);
+			update_and_queue_param_float(&bmsMinBoardTemp_C, gBms.minBoardTemp);
+		}
 
 		// Log gcan variables across the alloted time period in data chunks
 		static uint32_t lastGcanUpdate = 0;
@@ -690,11 +727,6 @@ void updateGopherCan()
 						update_and_queue_param_float(cellTempStatsParams[i][2], gBms.bmb[i].minBrickTemp);
 					}
 
-					for (int32_t i = 0; i < NUM_BRICKS_PER_BMB; i++)
-					{
-						update_and_queue_param_u8(balswenParams[0][i], gBms.bmb[0].balSwEnabled[i]);
-					}
-
 					update_and_queue_param_u8(&amsFault_state, gBms.amsFaultStatus);
 					update_and_queue_param_u8(&bspdFault_state, gBms.bspdFaultStatus);
 
@@ -708,33 +740,33 @@ void updateGopherCan()
 						update_and_queue_param_float(boardTempStatsParams[i][2], gBms.bmb[i].minBoardTemp);
 					}
 
-					for (int32_t i = 0; i < NUM_BRICKS_PER_BMB; i++)
-					{
-						update_and_queue_param_u8(balswenParams[1][i], gBms.bmb[1].balSwEnabled[i]);
-					}
-
 					update_and_queue_param_u8(&imdFault_state, gBms.imdFaultStatus);
 					update_and_queue_param_u8(&imdFaultInfo_state, gBms.imdState);
-					
+
 					break;
 
-				case GCAN_BALSWEN:
-					for (int32_t i = 2; i < NUM_BMBS_IN_ACCUMULATOR; i++)
-					{
-						for (int32_t j = 0; j < NUM_BRICKS_PER_BMB; j++)
-						{
-							update_and_queue_param_u8(balswenParams[i][j], gBms.bmb[i].balSwEnabled[j]);
-						}
-					}
-
+				case GCAN_ALERTS_AND_INFO:
 					// Multiply SOE values by 100 to convert to percent before sending over gcan
 					// SOE values sent over gcan maintain 2 values after decimal place of percentage. Ex: 98.34% 
-					update_and_queue_param_float(&soeByOCV_percent, gBms.soc.soeByOcv * 100.0f);
-					update_and_queue_param_float(&soeByCoulombCounting_percent, gBms.soc.soeByCoulombCounting * 100.0f);
+					update_and_queue_param_u8(&bmsNumActiveAlerts_state, displayData.numActiveAlerts);
+					update_and_queue_param_u8(&bmsCurrAlertIndex_state, displayData.currAlertIndex);
+					update_and_queue_param_u8(&bmsAlertMessage_state, displayData.alertMessage);
+					update_and_queue_param_u8(&bmsCurrAlertIsLatched_state, displayData.currAlertIsLatched);
 
-					//TODO Potentially add sensor status bytes
+					// Cycle through all alerts
+					for (uint32_t i = 0; i < NUM_GSENSE_ALERTS; i++)
+					{
+						Alert_S* alert = alerts[i];
+
+						// Triggers only if alert is active
+						if (getAlertStatus(alert) == ALERT_SET)
+						{
+							update_and_queue_param_u8(alertParams[i], 1);
+						} else {
+							update_and_queue_param_u8(alertParams[i], 0);
+						}
+					}
 					break;
-
 				default:
 					gcanUpdateState = 0;
 					break;

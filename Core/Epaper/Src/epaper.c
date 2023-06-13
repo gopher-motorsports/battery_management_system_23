@@ -491,7 +491,7 @@ void epdPopulateData(Epaper_Data_S* epapData)
 	else
 	{
 		char faultString[64];
-		sprintf(faultString, "(%lu/%lu) %s", epapData->currAlertIndex, epapData->numActiveAlerts, epapData->alertMessage);
+		sprintf(faultString, "(%lu/%lu) %s%s", epapData->currAlertIndex, epapData->numActiveAlerts, (epapData->currAlertLatched ? "L-" : ""), epapData->alertMessage);
 		Paint_DrawFault(faultString);
 	}
 

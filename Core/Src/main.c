@@ -74,6 +74,7 @@ osStaticThreadDef_t ePaperControlBlock;
 osThreadId idleHandle;
 uint32_t idleBuffer[ 256 ];
 osStaticThreadDef_t idleControlBlock;
+osThreadId serviceGopherCaHandle;
 osMessageQId epaperQueueHandle;
 /* USER CODE BEGIN PV */
 volatile uint32_t imdFrequency;
@@ -101,6 +102,7 @@ void StartDefaultTask(void const * argument);
 void StartMainTask(void const * argument);
 void StartEPaper(void const * argument);
 void StartIdle(void const * argument);
+void runServiceGopherCan(void const * argument);
 
 /* USER CODE BEGIN PFP */
 #ifdef __GNUC__
@@ -367,6 +369,10 @@ int main(void)
   osThreadStaticDef(idle, StartIdle, osPriorityLow, 0, 256, idleBuffer, &idleControlBlock);
   idleHandle = osThreadCreate(osThread(idle), NULL);
 
+  /* definition and creation of serviceGopherCa */
+  osThreadDef(serviceGopherCa, runServiceGopherCan, osPriorityHigh, 0, 1024);
+  serviceGopherCaHandle = osThreadCreate(osThread(serviceGopherCa), NULL);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -403,12 +409,11 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 12;
   RCC_OscInitStruct.PLL.PLLN = 160;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 2;
@@ -951,6 +956,25 @@ void StartIdle(void const * argument)
     osDelay(10);
   }
   /* USER CODE END StartIdle */
+}
+
+/* USER CODE BEGIN Header_runServiceGopherCan */
+/**
+* @brief Function implementing the serviceGopherCa thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_runServiceGopherCan */
+void runServiceGopherCan(void const * argument)
+{
+  /* USER CODE BEGIN runServiceGopherCan */
+  /* Infinite loop */
+  for(;;)
+  {
+    service_can_rx_buffer();
+    osDelay(1);
+  }
+  /* USER CODE END runServiceGopherCan */
 }
 
 /**

@@ -15,7 +15,7 @@
 /* ============================= DEFINES ============================== */
 /* ==================================================================== */
 #define BITS_IN_BYTE					8
-#define RAILED_MARGIN_COUNT	  			5
+#define RAILED_MARGIN_COUNT	  			200
 #define MAX_12_BIT						0x0FFF
 #define MAX_14_BIT						0x3FFF
 #define WATCHDOG_1S_STEP_SIZE 			0x1000
