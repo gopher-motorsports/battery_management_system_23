@@ -1013,14 +1013,15 @@ void Paint_DrawCurrent(float current)
     if(current > 0)
     {
         Paint_DrawLine(268, 25, 268, 40, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
-        Paint_DrawLine(268, 40, 273, 35, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
-        Paint_DrawLine(268, 40, 263, 35, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(268, 25, 273, 30, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(268, 25, 263, 30, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        
     }
     else if(current < 0)
     {
         Paint_DrawLine(268, 25, 268, 40, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
-        Paint_DrawLine(268, 25, 273, 30, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
-        Paint_DrawLine(268, 25, 263, 30, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(268, 40, 273, 35, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
+        Paint_DrawLine(268, 40, 263, 35, BLACK, DOT_PIXEL_2X2, LINE_STYLE_SOLID);
     }
 	
 }
