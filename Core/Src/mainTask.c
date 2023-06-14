@@ -95,7 +95,7 @@ void runMain()
 
 	checkForNewChargerInfo();
 
-	// chargeAccumulator();
+	chargeAccumulator();
 
 	checkAndHandleAlerts();
 

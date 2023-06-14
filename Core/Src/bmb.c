@@ -349,8 +349,10 @@ void updateBmbData(Bmb_S* bmb, uint32_t numBmbs)
 						const uint32_t brickIdx = muxState + ((auxChannel == AIN2) ? (NUM_BRICKS_PER_BMB/2) : 0);
 						// Convert from frame index (starts with last BMB) to bmb index (starts with first BMB) 
 						const uint32_t bmbIdx = numBmbs - j - 1;
-						bmb[bmbIdx].brickTemp[brickIdx] = lookup(auxV, &zenerTable);
+						float cellTemp = lookup(auxV, &zenerTable);
+						bmb[bmbIdx].brickTemp[brickIdx] = cellTemp;
 						bmb[bmbIdx].brickTempStatus[brickIdx] = is12BitSensorRailed(auxRaw) ? BAD : GOOD;
+						bmb[bmbIdx].brickTempStatus[brickIdx] = (cellTemp > 100) ? BAD : GOOD;
 					}
 				}
 			}
