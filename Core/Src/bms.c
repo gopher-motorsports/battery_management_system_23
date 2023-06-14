@@ -441,7 +441,8 @@ void updateEpaper()
 		epapData.stateOfEnergy = gBms.soc.soeByOcv;
 
 		// Send the current state of the BMS state machine
-		epapData.stateMessage = "TEMP STATE";
+		// epapData.stateMessage = "TEMP STATE";
+		epapData.chargerConnected = gBms.chargerConnected;
 
 		// Active Alert Cycling
 		static uint32_t currAlertMessageIndex = 0;	// Holds the index of the alert array that is currently being displayed
@@ -788,11 +789,13 @@ void checkForNewChargerInfo()
 	{
 		lastChargerRX = HAL_GetTick();
 		gBms.chargerConnected = true;
+		balancePack(gBms.numBmbs, true);
 		updateChargerData(&gBms.chargerData);
 		newChargerMessage = false;
 	}
 	if (gBms.chargerConnected && ((HAL_GetTick() - lastChargerRX) > CHARGER_RX_TIMEOUT_MS))
 	{
+		balancePack(gBms.numBmbs, false);
 		gBms.chargerConnected = false;
 	}
 }

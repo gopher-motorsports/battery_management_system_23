@@ -59,7 +59,8 @@ typedef struct
 
 	float current;
 
-	char* stateMessage;			// String of bms state to be displayed on epaper
+	// char* stateMessage;			// String of bms state to be displayed on epaper
+	bool chargerConnected;
 
 	char* alertMessage;			// String of alert message to be displayed on epaper
 	uint32_t currAlertIndex;	// The index of currenly active alerts

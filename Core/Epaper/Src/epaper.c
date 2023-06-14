@@ -496,7 +496,21 @@ void epdPopulateData(Epaper_Data_S* epapData)
 	}
 
 	// Populate BMS image with current State
-	Paint_DrawState(epapData->stateMessage);
+	if(epapData->chargerConnected)
+	{
+		if(epapData->current > 1.0f)
+		{
+			Paint_DrawState("Charging");
+		}
+		else
+		{
+			Paint_DrawState("Charger Connected");
+		}
+	}
+	else
+	{
+		Paint_DrawState("Nominal");
+	}
 }
 
 /*!

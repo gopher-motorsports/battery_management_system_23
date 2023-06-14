@@ -39,7 +39,7 @@ uint32_t numBmbs = 0;
 static uint32_t initRetries = 5;
 static uint32_t lastUpdateMain = 0;
 
-bool balancingEnabled = false;
+// bool balancingEnabled = false;
 uint32_t lastBalancingUpdate = 0;
 
 /* ==================================================================== */
@@ -109,15 +109,15 @@ void runMain()
 		// Clear console
 		printf("\e[1;1H\e[2J");
 
-		if(balancingEnabled)
-		{
-			printf("Balancing Enabled: TRUE\n");
-		}
-		else
-		{
-			printf("Balancing Enabled: FALSE\n");
-		}
-		balancePack(numBmbs, balancingEnabled);
+		// if(balancingEnabled)
+		// {
+		// 	printf("Balancing Enabled: TRUE\n");
+		// }
+		// else
+		// {
+		// 	printf("Balancing Enabled: FALSE\n");
+		// }
+		balancePack(numBmbs, gBms.chargerConnected);
 		// balancePackToVoltage(numBmbs, 3.87f);
 
 		printCellVoltages();
