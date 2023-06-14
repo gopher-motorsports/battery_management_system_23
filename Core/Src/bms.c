@@ -731,8 +731,8 @@ void updateGopherCan()
 						update_and_queue_param_float(cellVoltageParams[gcanUpdateState][i], gBms.bmb[gcanUpdateState].brickV[i]);
 						update_and_queue_param_float(cellTempParams[gcanUpdateState][i], gBms.bmb[gcanUpdateState].brickTemp[i]);
 
-						update_and_queue_param_float(cellVoltageStatusParams[gcanUpdateState][i], gBms.bmb[gcanUpdateState].brickVStatus[i]);
-						update_and_queue_param_float(cellTempStatusParams[gcanUpdateState][i], gBms.bmb[gcanUpdateState].brickTempStatus[i]);
+						update_and_queue_param_u8(cellVoltageStatusParams[gcanUpdateState][i], gBms.bmb[gcanUpdateState].brickVStatus[i]);
+						update_and_queue_param_u8(cellTempStatusParams[gcanUpdateState][i], gBms.bmb[gcanUpdateState].brickTempStatus[i]);
 					}
 
 					for (int32_t i = 0; i < NUM_BOARD_TEMP_PER_BMB; i++)
