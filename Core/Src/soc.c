@@ -137,7 +137,7 @@ static float getSocFromMilliCoulombs(uint32_t milliCoulombs)
 static void updateSocMethod(Soc_S* soc)
 {
     // Update the socByOcvGood timer to see if we should be using soc by ocv or coulomb counting
-    if (fabsf(soc->curAccumulatorCurrent) < 3.0f)
+    if (fabsf(soc->curAccumulatorCurrent) < 2.0f)
     {
         // Accumulator current is low enough where the polarization of the cells should be decaying.
         // Update timer to see if we can rely on SOC by OCV
