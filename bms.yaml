@@ -273,6 +273,128 @@ buckets:
                 sensor: NON_ADC
                 samples_buffered: 1
 
+            # Segment 1 Voltage Status
+            seg1Cell1VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell2VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell3VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell4VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell5VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell6VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell7VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell8VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell9VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell10VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell11VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell12VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 1 Temp Status
+            seg1Cell1TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell2TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell3TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell4TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell5TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell6TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell7TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell8TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell9TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell10TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell11TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg1Cell12TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
             # END SEGMENT 1
             
             # Segment 2 Overall
@@ -465,6 +587,128 @@ buckets:
                 samples_buffered: 1
 
             seg2Cell12Temp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 2 Voltage Status
+            seg2Cell1VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell2VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell3VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell4VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell5VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell6VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell7VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell8VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell9VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell10VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell11VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell12VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 2 Temp Status
+            seg2Cell1TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell2TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell3TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell4TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell5TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell6TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell7TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell8TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell9TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell10TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell11TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg2Cell12TempStatus:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
@@ -665,6 +909,128 @@ buckets:
                 sensor: NON_ADC
                 samples_buffered: 1
 
+            # Segment 3 Voltage Status
+            seg3Cell1VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell2VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell3VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell4VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell5VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell6VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell7VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell8VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell9VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell10VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell11VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell12VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 3 Temp Status
+            seg3Cell1TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell2TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell3TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell4TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell5TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell6TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell7TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell8TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell9TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell10TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell11TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg3Cell12TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
             # END SEGMENT 3
             
             # Segment 4 Overall
@@ -857,6 +1223,128 @@ buckets:
                 samples_buffered: 1
 
             seg4Cell12Temp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 4 Voltage Status
+            seg4Cell1VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell2VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell3VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell4VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell5VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell6VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell7VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell8VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell9VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell10VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell11VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell12VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 4 Temp Status
+            seg4Cell1TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell2TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell3TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell4TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell5TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell6TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell7TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell8TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell9TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell10TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell11TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg4Cell12TempStatus:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
@@ -1057,6 +1545,128 @@ buckets:
                 sensor: NON_ADC
                 samples_buffered: 1
 
+            # Segment 5 Voltage Status
+            seg5Cell1VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell2VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell3VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell4VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell5VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell6VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell7VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell8VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell9VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell10VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell11VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell12VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 5 Temp Status
+            seg5Cell1TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell2TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell3TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell4TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell5TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell6TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell7TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell8TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell9TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell10TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell11TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg5Cell12TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
             # END SEGMENT 5
             
             # Segment 6 Overall
@@ -1253,6 +1863,128 @@ buckets:
                 sensor: NON_ADC
                 samples_buffered: 1
 
+            # Segment 6 Voltage Status
+            seg6Cell1VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell2VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell3VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell4VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell5VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell6VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell7VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell8VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell9VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell10VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell11VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell12VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 6 Temp Status
+            seg6Cell1TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell2TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell3TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell4TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell5TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell6TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell7TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell8TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell9TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell10TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell11TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg6Cell12TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
             # END SEGMENT 6
             
             # Segment 7 Overall
@@ -1445,6 +2177,128 @@ buckets:
                 samples_buffered: 1
 
             seg7Cell12Temp_C:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 7 Voltage Status
+            seg7Cell1VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell2VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell3VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell4VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell5VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell6VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell7VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell8VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell9VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell10VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell11VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell12VoltageStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            # Segment 7 Temp Status
+            seg7Cell1TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell2TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell3TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell4TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell5TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell6TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell7TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell8TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell9TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell10TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell11TempStatus:
+                ADC: NON_ADC
+                sensor: NON_ADC
+                samples_buffered: 1
+
+            seg7Cell12TempStatus:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1

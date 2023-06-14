@@ -659,6 +659,28 @@ void updateGopherCan()
 			&bmsChargerCommunicationErrorAlert_state
 		};
 
+		static U8_CAN_STRUCT *cellVoltageStatusParams[NUM_BMBS_IN_ACCUMULATOR][NUM_BRICKS_PER_BMB] =
+		{
+			{&seg1Cell1VoltageStatus, &seg1Cell2VoltageStatus, &seg1Cell3VoltageStatus, &seg1Cell4VoltageStatus, &seg1Cell5VoltageStatus, &seg1Cell6VoltageStatus, &seg1Cell7VoltageStatus, &seg1Cell8VoltageStatus, &seg1Cell9VoltageStatus, &seg1Cell10VoltageStatus, &seg1Cell11VoltageStatus, &seg1Cell12VoltageStatus},
+			{&seg2Cell1VoltageStatus, &seg2Cell2VoltageStatus, &seg2Cell3VoltageStatus, &seg2Cell4VoltageStatus, &seg2Cell5VoltageStatus, &seg2Cell6VoltageStatus, &seg2Cell7VoltageStatus, &seg2Cell8VoltageStatus, &seg2Cell9VoltageStatus, &seg2Cell10VoltageStatus, &seg2Cell11VoltageStatus, &seg2Cell12VoltageStatus},
+			{&seg3Cell1VoltageStatus, &seg3Cell2VoltageStatus, &seg3Cell3VoltageStatus, &seg3Cell4VoltageStatus, &seg3Cell5VoltageStatus, &seg3Cell6VoltageStatus, &seg3Cell7VoltageStatus, &seg3Cell8VoltageStatus, &seg3Cell9VoltageStatus, &seg3Cell10VoltageStatus, &seg3Cell11VoltageStatus, &seg3Cell12VoltageStatus},
+			{&seg4Cell1VoltageStatus, &seg4Cell2VoltageStatus, &seg4Cell3VoltageStatus, &seg4Cell4VoltageStatus, &seg4Cell5VoltageStatus, &seg4Cell6VoltageStatus, &seg4Cell7VoltageStatus, &seg4Cell8VoltageStatus, &seg4Cell9VoltageStatus, &seg4Cell10VoltageStatus, &seg4Cell11VoltageStatus, &seg4Cell12VoltageStatus},
+			{&seg5Cell1VoltageStatus, &seg5Cell2VoltageStatus, &seg5Cell3VoltageStatus, &seg5Cell4VoltageStatus, &seg5Cell5VoltageStatus, &seg5Cell6VoltageStatus, &seg5Cell7VoltageStatus, &seg5Cell8VoltageStatus, &seg5Cell9VoltageStatus, &seg5Cell10VoltageStatus, &seg5Cell11VoltageStatus, &seg5Cell12VoltageStatus},
+			{&seg6Cell1VoltageStatus, &seg6Cell2VoltageStatus, &seg6Cell3VoltageStatus, &seg6Cell4VoltageStatus, &seg6Cell5VoltageStatus, &seg6Cell6VoltageStatus, &seg6Cell7VoltageStatus, &seg6Cell8VoltageStatus, &seg6Cell9VoltageStatus, &seg6Cell10VoltageStatus, &seg6Cell11VoltageStatus, &seg6Cell12VoltageStatus},
+			{&seg7Cell1VoltageStatus, &seg7Cell2VoltageStatus, &seg7Cell3VoltageStatus, &seg7Cell4VoltageStatus, &seg7Cell5VoltageStatus, &seg7Cell6VoltageStatus, &seg7Cell7VoltageStatus, &seg7Cell8VoltageStatus, &seg7Cell9VoltageStatus, &seg7Cell10VoltageStatus, &seg7Cell11VoltageStatus, &seg7Cell12VoltageStatus}
+		};
+
+		static U8_CAN_STRUCT *cellTempStatusParams[NUM_BMBS_IN_ACCUMULATOR][NUM_BRICKS_PER_BMB] =
+		{
+			{&seg1Cell1TempStatus, &seg1Cell2TempStatus, &seg1Cell3TempStatus, &seg1Cell4TempStatus, &seg1Cell5TempStatus, &seg1Cell6TempStatus, &seg1Cell7TempStatus, &seg1Cell8TempStatus, &seg1Cell9TempStatus, &seg1Cell10TempStatus, &seg1Cell11TempStatus, &seg1Cell12TempStatus},
+			{&seg2Cell1TempStatus, &seg2Cell2TempStatus, &seg2Cell3TempStatus, &seg2Cell4TempStatus, &seg2Cell5TempStatus, &seg2Cell6TempStatus, &seg2Cell7TempStatus, &seg2Cell8TempStatus, &seg2Cell9TempStatus, &seg2Cell10TempStatus, &seg2Cell11TempStatus, &seg2Cell12TempStatus},
+			{&seg3Cell1TempStatus, &seg3Cell2TempStatus, &seg3Cell3TempStatus, &seg3Cell4TempStatus, &seg3Cell5TempStatus, &seg3Cell6TempStatus, &seg3Cell7TempStatus, &seg3Cell8TempStatus, &seg3Cell9TempStatus, &seg3Cell10TempStatus, &seg3Cell11TempStatus, &seg3Cell12TempStatus},
+			{&seg4Cell1TempStatus, &seg4Cell2TempStatus, &seg4Cell3TempStatus, &seg4Cell4TempStatus, &seg4Cell5TempStatus, &seg4Cell6TempStatus, &seg4Cell7TempStatus, &seg4Cell8TempStatus, &seg4Cell9TempStatus, &seg4Cell10TempStatus, &seg4Cell11TempStatus, &seg4Cell12TempStatus},
+			{&seg5Cell1TempStatus, &seg5Cell2TempStatus, &seg5Cell3TempStatus, &seg5Cell4TempStatus, &seg5Cell5TempStatus, &seg5Cell6TempStatus, &seg5Cell7TempStatus, &seg5Cell8TempStatus, &seg5Cell9TempStatus, &seg5Cell10TempStatus, &seg5Cell11TempStatus, &seg5Cell12TempStatus},
+			{&seg6Cell1TempStatus, &seg6Cell2TempStatus, &seg6Cell3TempStatus, &seg6Cell4TempStatus, &seg6Cell5TempStatus, &seg6Cell6TempStatus, &seg6Cell7TempStatus, &seg6Cell8TempStatus, &seg6Cell9TempStatus, &seg6Cell10TempStatus, &seg6Cell11TempStatus, &seg6Cell12TempStatus},
+			{&seg7Cell1TempStatus, &seg7Cell2TempStatus, &seg7Cell3TempStatus, &seg7Cell4TempStatus, &seg7Cell5TempStatus, &seg7Cell6TempStatus, &seg7Cell7TempStatus, &seg7Cell8TempStatus, &seg7Cell9TempStatus, &seg7Cell10TempStatus, &seg7Cell11TempStatus, &seg7Cell12TempStatus}
+		};
+
 		static uint32_t lastHighFreqGcanUpdate = 0;
 		if((HAL_GetTick() - lastHighFreqGcanUpdate) >= 25)
 		{
@@ -707,11 +729,10 @@ void updateGopherCan()
 					for (int32_t i = 0; i < NUM_BRICKS_PER_BMB; i++)
 					{
 						update_and_queue_param_float(cellVoltageParams[gcanUpdateState][i], gBms.bmb[gcanUpdateState].brickV[i]);
-					}
-
-					for (int32_t i = 0; i < NUM_BRICKS_PER_BMB; i++)
-					{
 						update_and_queue_param_float(cellTempParams[gcanUpdateState][i], gBms.bmb[gcanUpdateState].brickTemp[i]);
+
+						update_and_queue_param_float(cellVoltageStatusParams[gcanUpdateState][i], gBms.bmb[gcanUpdateState].brickVStatus[i]);
+						update_and_queue_param_float(cellTempStatusParams[gcanUpdateState][i], gBms.bmb[gcanUpdateState].brickTempStatus[i]);
 					}
 
 					for (int32_t i = 0; i < NUM_BOARD_TEMP_PER_BMB; i++)
