@@ -118,6 +118,7 @@ void runMain()
 		// 	printf("Balancing Enabled: FALSE\n");
 		// }
 		balancePack(numBmbs, gBms.chargerConnected);
+		// balancePack(numBmbs, true);
 		// balancePackToVoltage(numBmbs, 3.87f);
 
 		printCellVoltages();
